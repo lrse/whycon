@@ -10,13 +10,14 @@
 //#include "CTimer.h"
 #include <opencv2/opencv.hpp>
 #include <math.h>
+#include <vector>
 
 namespace cv {
   class CircleDetector
   {
     public:
       class Circle;
-      CircleDetector(int width, int height, int max_circles = 10000, int color_precision = 32, int color_step = 8);
+      CircleDetector(int width, int height, int color_precision = 32, int color_step = 8);
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
@@ -44,14 +45,13 @@ namespace cv {
       float centerDistanceToleranceRatio;
       int centerDistanceToleranceAbs;
 
-      Circle* segmentArray;
+      std::vector<Circle> segmentArray;
 
       float outerAreaRatio,innerAreaRatio,areasRatio;
       int queueStart,queueEnd,queueOldStart,numSegments;
       int width,height,len,siz;
       int expand[4];
-      int *buffer;
-      int *queue;
+      std::vector<int> buffer, queue;
       unsigned char *ptr;
       //CTimer timer;
       int tima,timb,timc,timd,sizer,sizerAll;

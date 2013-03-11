@@ -5,10 +5,11 @@ using namespace std;
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
+#define MAX_SEGMENTS 10000
+
 //Variable initialization
-cv::CircleDetector::CircleDetector(int _width,int _height, int _max_circles, int _color_precision, int _color_step)
+cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision, int _color_step)
 {
-  max_circles = _max_circles;
   color_precision = _color_precision;
   color_step = _color_step;
         
@@ -32,8 +33,8 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _max_circles, int
 	height = _height;
 	len = width*height;
 	siz = len*3;
-	buffer = new int[len];
-	queue = new int[len];
+  buffer.resize(len);
+  queue.resize(len);
 	float diameterRatio = 5.0/14;
 	//diameterRatio = 3.1/7.0;
 	//diameterRatio = 7/20.5;
@@ -43,15 +44,12 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _max_circles, int
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
 
 	tima = timb = timc =timd = sizer = sizerAll = 0;
-  segmentArray = new Circle[max_circles];
+  segmentArray.resize(MAX_SEGMENTS);
 }
 
 cv::CircleDetector::~CircleDetector()
 {
 	printf("Timi %i %i %i %i\n",tima,timb,sizer,sizerAll);
-  delete[] segmentArray;
-	delete[] buffer;
-	delete[] queue;
 }
 
 bool cv::CircleDetector::changeThreshold()
@@ -177,7 +175,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	//image thresholding 
 	//timer.reset();
 	//timer.start();
-	memset(buffer,0,sizeof(int)*len);
+	memset(&buffer[0],0,sizeof(int)*len);
 	//tima += timer.getTime();
   
 	//image delimitation
@@ -206,7 +204,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 			ptr = &image.data[ii*3];
 			buffer[ii]=((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
 		}
-		if (buffer[ii] == -2 && numSegments < max_circles){
+		if (numSegments < MAX_SEGMENTS && buffer[ii] == -2){
 			//new segment found
 			queueEnd = 0;
 			queueStart = 0;
@@ -217,7 +215,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 					ptr = &image.data[pos*3];
 					buffer[pos]=((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
 				}
-				if (buffer[pos] == -1 && numSegments < max_circles){
+				if (numSegments < MAX_SEGMENTS && buffer[pos] == -1){
 					if (examineCircle(image,segmentArray[numSegments],pos,innerAreaRatio)){
 						//the inside area is a circle. now what is the area ratio of the black and white ? also, are the circles concentric ?
 
@@ -259,12 +257,12 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							fm0 = ((float)cm0)/queueEnd;
 							fm1 = ((float)cm1)/queueEnd;
 							fm2 = ((float)cm2)/queueEnd;
-							float f0 = ((fm0+fm2)+sqrt((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
-							float f1 = ((fm0+fm2)-sqrt((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
-							segmentArray[numSegments-1].m0 = sqrt(f0);
-							segmentArray[numSegments-1].m1 = sqrt(f1);
-							segmentArray[numSegments-1].v0 = -fm1/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
-							segmentArray[numSegments-1].v1 = (fm0-f0)/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
+							float f0 = ((fm0+fm2)+sqrtf((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
+							float f1 = ((fm0+fm2)-sqrtf((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
+							segmentArray[numSegments-1].m0 = sqrtf(f0);
+							segmentArray[numSegments-1].m1 = sqrtf(f1);
+							segmentArray[numSegments-1].v0 = -fm1/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
+							segmentArray[numSegments-1].v1 = (fm0-f0)/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
 							segmentArray[numSegments-1].bwRatio = (float)segmentArray[numSegments-2].size/segmentArray[numSegments-1].size;
 
 							if (track) ii = start -1;
@@ -281,12 +279,12 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		if (ii >= len) ii = 0;
 		cont = (ii != start);
 	}
-	fprintf(stdout,"Numsegments: %i\n",numSegments);
-	fprintf(stdout,"Pos: %.2f \n",segmentArray[0].x-segmentArray[1].x);
+	/*fprintf(stdout,"Numsegments: %i\n",numSegments);
+	fprintf(stdout,"Pos: %.2f \n",segmentArray[0].x-segmentArray[1].x);*/
 	for (int i = 0;i< numSegments;i++){
 		if (segmentArray[i].size > minSize && (segmentArray[i].valid || debug)){
 			if (debug)fprintf(stdout,"Segment %i Type: %i Pos: %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f Roundness: %03f\n",i,segmentArray[i].type,segmentArray[i].x,segmentArray[i].y,segmentArray[i].size,segmentArray[i].maxx-segmentArray[i].minx,segmentArray[i].maxy-segmentArray[i].miny,segmentArray[i].mean,threshold,segmentArray[i].m0,segmentArray[i].m1,segmentArray[i].roundness);
-			if (segmentArray[i].valid) result = segmentArray[i];
+			if (segmentArray[i].valid) { result = segmentArray[i]; break; }
 		}
 	}
 
@@ -303,16 +301,17 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		if (changeThreshold()==false) numFailed = 0;
 		if (debug) drawAll = true;
 	}
-	int j = 0;
-	for (int i = 0;i<len && draw;i++){
-		j = buffer[i];
-		if (j > 0){
-			if (drawAll || segmentArray[j-1].valid){
-				image.data[i*3+j%3] = 0;
-				image.data[i*3+(j+1)%3] = 255;
-				image.data[i*3+(j+2)%3] = 255;
-			}
-		}
-	}
+  if (draw) {
+    for (int i = 0;i<len;i++){
+      int j = buffer[i];
+      if (j > 0){
+        if (drawAll || segmentArray[j-1].valid){
+          image.data[i*3+j%3] = 0;
+          image.data[i*3+(j+1)%3] = 0;
+          image.data[i*3+(j+2)%3] = 0;
+        }
+      }
+    }
+  }
 	return result;
 }
