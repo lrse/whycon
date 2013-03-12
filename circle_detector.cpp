@@ -49,7 +49,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
 
 cv::CircleDetector::~CircleDetector()
 {
-	printf("Timi %i %i %i %i\n",tima,timb,sizer,sizerAll);
+	//printf("Timi %i %i %i %i\n",tima,timb,sizer,sizerAll);
 }
 
 bool cv::CircleDetector::changeThreshold()
@@ -284,7 +284,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	for (int i = 0;i< numSegments;i++){
 		if (segmentArray[i].size > minSize && (segmentArray[i].valid || debug)){
 			if (debug)fprintf(stdout,"Segment %i Type: %i Pos: %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f Roundness: %03f\n",i,segmentArray[i].type,segmentArray[i].x,segmentArray[i].y,segmentArray[i].size,segmentArray[i].maxx-segmentArray[i].minx,segmentArray[i].maxy-segmentArray[i].miny,segmentArray[i].mean,threshold,segmentArray[i].m0,segmentArray[i].m1,segmentArray[i].roundness);
-			if (segmentArray[i].valid) { result = segmentArray[i]; break; }
+			if (segmentArray[i].valid) result = segmentArray[i]; // TODO: only assign first?
 		}
 	}
 

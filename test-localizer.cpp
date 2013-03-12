@@ -37,23 +37,23 @@ int main(int argc, char** argv) {
     cv::Mat input_img;
     while (!stop) {
       img.copyTo(input_img);
-      cout << "localizing" << endl;
+      //cout << "localizing" << endl;
       ticks = cv::getTickCount();
       localizer.localize(input_img);
       delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
       cout << "t: " << delta << " " << " fps: " << 1/delta << "[total]" << endl;
       
-      for (int i = 0; i < number_of_circles; i++) {
+      /*for (int i = 0; i < number_of_circles; i++) {
         if (localizer.circles[i].valid) {
           cout << "circle at " << localizer.circles[i].x << " " << localizer.circles[i].y << endl;
           //cv::circle(input_img, cv::Point(localizer.circles[i].x, localizer.circles[i].y), 5, cv::Scalar(0,255,0,128), -1);
         }
-      }
+      }*/
       /*cv::imshow("results", input_img);
       if (cv::waitKey() == 27) break;*/
     }
   }
-  /*else if (mode == "-video" || mode == "-cam")
+  else if (mode == "-video" || mode == "-cam")
   {
     bool is_video = (mode == "-video");
     cv::VideoCapture capture;
@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
     
     int width = capture.get(CV_CAP_PROP_FRAME_WIDTH);
     int height = capture.get(CV_CAP_PROP_FRAME_HEIGHT);
-    cv::CircleDetector detector(width, height);
+    cv::CircleLocalizer localizer(number_of_circles, width, height);
+    bool initialized = false;
     
     cvStartWindowThread();
     cv::namedWindow("result");
@@ -74,14 +75,14 @@ int main(int argc, char** argv) {
     while (!stop) {
       if (!capture.read(img)) break;
       
-      int64_t ticks = cv::getTickCount();
-      previous_circle = detector.detect(img, previous_circle);
-      double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-      cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
-      cout << previous_circle.x << " " << previous_circle.y << endl;
+      if (!initialized) {
+        if (!localizer.initialize(img)) { cout << "circles not detected" << endl; break; }
+      }
+      
+      localizer.localize(img);
       cv::imshow("result", img);
     }
-  }*/
+  }
   else {
     cout << "Unknown mode '" << argv[1] << "'" << endl;
     return 1;

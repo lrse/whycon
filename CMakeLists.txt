@@ -22,3 +22,7 @@ target_link_libraries(circle-detector ${LIBS})
 SET(localizer_sources test-localizer.cpp circle_detector.cpp circle_localizer.cpp)
 add_executable(circle-localizer ${localizer_sources})
 target_link_libraries(circle-localizer ${LIBS})
+
+SET(system_sources test-system.cpp circle_detector.cpp circle_localizer.cpp localization_system.cpp)
+add_executable(localization-system ${system_sources})
+target_link_libraries(localization-system ${LIBS})

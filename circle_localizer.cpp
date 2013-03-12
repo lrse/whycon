@@ -2,24 +2,14 @@
 #include "circle_localizer.h"
 using namespace std;
 
-cv::CircleLocalizer::CircleLocalizer(int _number_of_circles, int _width, int _height) : stop(false),
-  start_barrier(_number_of_circles + 1), end_barrier(_number_of_circles + 1), width(_width), height(_height), 
-  number_of_circles(_number_of_circles)
+cv::CircleLocalizer::CircleLocalizer(int _number_of_circles, int _width, int _height) : 
+  width(_width), height(_height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
   detectors.resize(number_of_circles, CircleDetector(width, height));
-  
-  /*threads.resize(number_of_circles);
-  for (int i = 0; i < number_of_circles; i++)
-    threads[i] = boost::shared_ptr<boost::thread>(new boost::thread(&CircleLocalizer::localize_individual, this, i));*/
 }
 
 cv::CircleLocalizer::~CircleLocalizer(void) {
-  stop = true;
-  
-  /*start_barrier.wait(); // wake up all threads, so they abort their loop
-  for (int i = 0; i < number_of_circles; i++)
-    threads[i]->join();*/
 }
 
 bool cv::CircleLocalizer::initialize(const cv::Mat& image) {
@@ -50,42 +40,18 @@ bool cv::CircleLocalizer::initialize(const cv::Mat& image) {
 }
 
 void cv::CircleLocalizer::localize(const cv::Mat& image) {
-  image.copyTo(current_image);
-  
-  /*start_barrier.wait(); // wakes up all threads
-  end_barrier.wait(); // blocks until all threads finish*/
-  
-  /*for (int i = 0; i < number_of_circles; i++) {
+  for (int i = 0; i < number_of_circles; i++) {
     //int64_t ticks = cv::getTickCount();
-    circles[i] = detectors[i].detect(current_image, circles[i]); // TODO: modify current
+    circles[i] = detectors[i].detect(image, circles[i]); // TODO: modify current
     //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
     //cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
-  }*/
-  
-  static tbb::affinity_partitioner ap;
-  tbb::parallel_for(tbb::blocked_range<int>(0, number_of_circles, 4), Functor(*this), ap);
-}
-
-void cv::CircleLocalizer::localize_individual(int id) {  
-  CircleDetector::Circle& circle = circles[id];
-  CircleDetector& detector = detectors[id];
-  
-  cv::Mat test;
-  current_image.copyTo(test);
-  while(true) {
-    start_barrier.wait();
-    if (stop) break;
-    current_image.copyTo(test);
-    int64_t ticks = cv::getTickCount();
-    circle = detector.detect(test, circle); // TODO: modify current
-    double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-    cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
-    
-    end_barrier.wait();
   }
+  
+  /*static tbb::affinity_partitioner ap;
+  tbb::parallel_for(tbb::blocked_range<int>(0, number_of_circles, 8), Functor(*this, image), ap);*/
 }
 
-cv::CircleLocalizer::Functor::Functor(cv::CircleLocalizer& _localizer) : image(_localizer.current_image), localizer(_localizer), detectors(_localizer.detectors), circles(_localizer.circles)
+cv::CircleLocalizer::Functor::Functor(cv::CircleLocalizer& _localizer, const cv::Mat& _image) : image(_image), localizer(_localizer), detectors(_localizer.detectors), circles(_localizer.circles)
 {
 }
 
