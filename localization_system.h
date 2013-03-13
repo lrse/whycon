@@ -36,6 +36,7 @@ namespace cv {
       int targets, width, height;
       
       
+      cv::Mat K, dist_coeff;
       float circle_diameter;
       double fc[2]; // focal length X,Y
       double cc[2]; // principal point X,Y

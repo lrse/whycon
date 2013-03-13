@@ -8,10 +8,13 @@
 using std::cout;
 using std::endl;
 
-cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& K, const cv::Mat& dist_coeff, 
-  float _circle_diamater) :
-  targets(_targets), width(_width), height(_height), xscale(1), yscale(1), circle_diameter(_circle_diamater), localizer(_targets, _width, _height)
+cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
+  float _circle_diameter) :
+  targets(_targets), width(_width), height(_height), xscale(1), yscale(1), circle_diameter(_circle_diameter), localizer(_targets, _width, _height)
 {
+  _K.copyTo(K);
+  _dist_coeff.copyTo(dist_coeff);
+  
   fc[0] = K.at<double>(0,0);
   fc[1] = K.at<double>(1,1);
   cc[0] = K.at<double>(0,2);
@@ -20,12 +23,12 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   cout.precision(30);
   cout << "fc " << fc[0] << " " << fc[1] << endl;
   cout << "cc " << cc[0] << " " << cc[1] << endl;
-  cout << "kc ";
-  for (int i = 0; i < 6; i++) {
-    kc[i] = dist_coeff.at<double>(i);
-    cout << kc[i] << " ";
+  kc[0] = 1;
+  cout << "kc " << kc[0] << " ";
+  for (int i = 0; i < 5; i++) {
+    kc[i + 1] = dist_coeff.at<double>(i);
+    cout << kc[i + 1] << " ";
   }
-  kc[0] = 1; // WHY?
   cout << endl;  
 }
 
@@ -52,11 +55,29 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	y2 = transform_y(sx2,sy2);
 	z = sqrtf((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
 	result.pos(0) = circle_diameter / z;
-	result.pos(1) = -y * result.pos(0);
-	result.pos(2) = -x * result.pos(0);
+	result.pos(2) = -y * result.pos(0);
+	result.pos(1) = -x * result.pos(0);
 	result.rot(0) = acos(circle.m1 / circle.m0) / M_PI * 180.0;
 	result.rot(1) = 0;
 	result.rot(2) = 0;
+  
+  /*Pose result;
+  double sx1 = circle.x + circle.v0 * circle.m0 * 2;
+	double sx2 = circle.x - circle.v0 * circle.m0 * 2;
+	double sy1 = circle.y + circle.v1 * circle.m0 * 2;
+	double sy2 = circle.y - circle.v1 * circle.m0 * 2;
+	
+  cv::Mat in_points = (cv::Mat_<double>(3,2) << circle.x, circle.y, sx1, sy1, sx2, sy2);
+  in_points = in_points.reshape(2, 3);
+  cv::Mat out_points;
+  cv::undistortPoints(in_points, out_points, K, dist_coeff);
+  float z = cv::norm(out_points.row(1), out_points.row(2));
+  result.pos(2) = circle_diameter / z;
+  result.pos(0) = -out_points.row(0).at<double>(0) * result.pos(2);
+  result.pos(1) = -out_points.row(0).at<double>(1) * result.pos(2);
+  result.rot(0) = acos(circle.m1 / circle.m0) / M_PI * 180.0;
+	result.rot(1) = 0;
+	result.rot(2) = 0;*/
   
   // TODO: scale?
 	return result;
@@ -85,6 +106,8 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   distances[1] = cv::norm(circle_poses[1].pos, circle_poses[2].pos);
   distances[2] = cv::norm(circle_poses[2].pos, circle_poses[0].pos);
   cout << "dist: " << distances[0] << " " << distances[1] << " " << distances[2] << endl;
+  
+  cout << "poses: " << circle_poses[0].pos << " " << circle_poses[1].pos << " " << circle_poses[2].pos << endl;
   vector<float>::const_iterator max_it = std::max_element(distances.begin(), distances.end());
   vector<float>::const_iterator min_it = std::min_element(distances.begin(), distances.end());
   int min_idx = min_it - distances.begin();
@@ -129,6 +152,19 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   origin_circles[0] = axis_localizer.circles[center_circle_idx];
   origin_circles[1] = axis_localizer.circles[unit_two_circle_idx];
   origin_circles[2] = axis_localizer.circles[unit_one_circle_idx];
+  
+  vector<float> ortogonality(3);
+  /*ortogonality[0] = (origin_circles[1].pos - origin_circles[0].pos).dot(origin_circles[2].pos - origin_circles[1].pos);
+  ortogonality[1] = (origin_circles[2].pos - origin_circles[1].pos).dot(origin_circles[2].pos - origin_circles[0].pos);
+  ortogonality[2] = (origin_circles[2].pos - origin_circles[0].pos).dot(origin_circles[1].pos - origin_circles[0].pos);*/
+  ortogonality[0] = (one - zero).dot(two - zero);
+  ortogonality[1] = (two - zero).dot(two - one);
+  ortogonality[2] = (one - two).dot(zero - two);
+  cout << "ort: " << ortogonality[0] << " " << ortogonality[1] << " " << ortogonality[2] << endl;
+  cout << "segm: " << axis_localizer.circles[0].x << " " << axis_localizer.circles[0].y << endl;
+  cout << "segm: " << axis_localizer.circles[1].x << " " << axis_localizer.circles[1].y << endl;
+  cout << "segm: " << axis_localizer.circles[2].x << " " << axis_localizer.circles[2].y << endl;
+  
   cout << "transform: " << coordinates_transform << endl;
   return true;
 }
@@ -171,8 +207,8 @@ void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_fi
   if (!file) throw std::runtime_error("calibration file not found");
   std::string line;
   
-  K.create(3, 3, CV_64FC1);
-  dist_coeff.create(6, 1, CV_64FC1);
+  K = cv::Mat::eye(3, 3, CV_64FC1);
+  dist_coeff.create(5, 1, CV_64FC1);
   dist_coeff = cv::Scalar(0);
   
   while (std::getline(file, line)) {
@@ -185,7 +221,6 @@ void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_fi
       istr >> K.at<double>(1,1);
     }
     else if (s == "cc") {
-      cout << "cosa: " << K.at<double>(1,1) << endl;
       istr >> s >> s >> K.at<double>(0,2);
       istr >> s >> K.at<double>(1,2);
     }

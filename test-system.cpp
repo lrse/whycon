@@ -22,7 +22,10 @@ int main(int argc, char** argv) {
   }
   
   int number_of_circles = atoi(argv[1]);
-  cv::VideoCapture capture(atoi(argv[2]));
+  cv::VideoCapture capture;
+  capture.open(atoi(argv[2]));
+  capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+  capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
   if (!capture.isOpened()) { cout << "error opening camera" << endl; return 1; }
   
   cv::Mat frame;
@@ -80,7 +83,7 @@ int main(int argc, char** argv) {
       ostringstream ostr;
       ostr << coord;
       cv::putText(frame, ostr.str(), cv::Point(system.localizer.circles[0].x, system.localizer.circles[0].y), CV_FONT_HERSHEY_SIMPLEX,
-      0.8, cv::Scalar(0,0,0), 3);
+      0.4, cv::Scalar(0,0,0), 1, CV_AA);
     }
     cv::imshow("output", frame);
   }
