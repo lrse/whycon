@@ -75,6 +75,7 @@ int main(int argc, char** argv) {
       outfile << "axis center " << system.get_pose(system.origin_circles[0]).pos << endl;
       outfile << "axis x " << system.get_pose(system.origin_circles[1]).pos << endl;
       outfile << "axis y " << system.get_pose(system.origin_circles[2]).pos << endl;
+      outfile << "transform " << system.coordinates_transform << endl;
     }
     
     // draw axis
