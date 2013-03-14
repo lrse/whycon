@@ -65,10 +65,16 @@ int main(int argc, char** argv) {
     
     // set axis
     if (!axis_was_set && clicked) {
-      cv::imwrite(output_directory + string("/axis.png"), original_frame);
       system.set_axis(original_frame); // set user-set axis 
       clicked = false;
       axis_was_set = true;
+      
+      cv::imwrite(output_directory + string("/axis.png"), original_frame);
+      ofstream outfile((output_directory + string("/axis.log")).c_str(), ios_base::out);
+      outfile << "scale: " << unit_scale << endl;
+      outfile << "axis center " << system.get_pose(system.origin_circles[0]).pos << endl;
+      outfile << "axis x " << system.get_pose(system.origin_circles[1]).pos << endl;
+      outfile << "axis y " << system.get_pose(system.origin_circles[2]).pos << endl;
     }
     
     // draw axis
@@ -76,7 +82,7 @@ int main(int argc, char** argv) {
       string names[3] = { "center", "x", "y" };
       for (int i = 0; i < 3; i++) {
         cv::ellipse(frame, cv::Point(system.origin_circles[i].x, system.origin_circles[i].y), cv::Size((int)system.origin_circles[i].m0 * 2, (int)system.origin_circles[i].m1 * 2),
-                          atan2(system.origin_circles[i].v1, system.origin_circles[i].v0), 0, 360, cv::Scalar(255,255,0), 2, CV_AA);
+                          atan2(system.origin_circles[i].v1, system.origin_circles[i].v0)  * 180.0 / M_PI, 0, 360, cv::Scalar(255,255,0), 2, CV_AA);
         cv::putText(frame, names[i], cv::Point(system.origin_circles[i].maxx, system.origin_circles[i].maxy), CV_FONT_HERSHEY_SIMPLEX,
                           1.0, cv::Scalar((i == 0) * 255, (i == 1) * 255, (i == 2) * 255), 3);
       }
@@ -94,7 +100,9 @@ int main(int argc, char** argv) {
       for (int i = 0; i < number_of_circles; i++) {
         const cv::CircleDetector::Circle& circle = system.get_circle(i);
         cv::Vec2f coord = system.coordinates_transform * system.get_pose(circle).pos;
-        cv::circle(frame, cv::Point(circle.x, circle.y), 3, cv::Scalar(255,255,0), -1);
+        cv::ellipse(frame, cv::Point(circle.x, circle.y), cv::Size((int)circle.m0 * 2, (int)circle.m1 * 2),
+                          atan2(circle.v1, circle.v0) * 180.0 / M_PI, 0, 360, cv::Scalar(255,255,0), 2, CV_AA);
+        //cv::circle(frame, cv::Point(circle.x, circle.y), 3, cv::Scalar(255,255,0), -1);
         ostringstream ostr;
         ostr << fixed << setprecision(5) << coord;
         cv::putText(frame, ostr.str(), cv::Point(circle.maxx, circle.maxy), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255,0,255), 1.5, CV_AA);
@@ -110,7 +118,7 @@ int main(int argc, char** argv) {
         ofstream out_file((out_filename + string(".log")).c_str());
         out_file << "scale: " << unit_scale << endl;
         for (int i = 0; i < number_of_circles; i++) {
-          cv::Vec2f coord = system.coordinates_transform * system.get_pose(0).pos * unit_scale;
+          cv::Vec2f coord = system.coordinates_transform * system.get_pose(i).pos * unit_scale;
           out_file << "circle " << i << " " << coord << endl;
         }
         saved_frame_count++;
