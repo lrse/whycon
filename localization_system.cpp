@@ -241,3 +241,11 @@ void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_fi
     }
   }    
 }
+
+void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) {
+  cv::FileStorage file(calib_file, cv::FileStorage::READ);
+  if (!file.isOpened()) throw std::runtime_error("calibration file not found");
+  
+  file["K"] >> K;
+  file["dist"] >> dist_coeff;
+}

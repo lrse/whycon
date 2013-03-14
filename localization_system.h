@@ -27,6 +27,7 @@ namespace cv {
       const CircleDetector::Circle& get_circle(int id);
       
       static void load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
+      static void load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       
       CircleDetector::Circle origin_circles[3]; // center, X, Y
       cv::Matx23f coordinates_transform;

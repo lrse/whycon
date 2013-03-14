@@ -10,9 +10,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 
 find_package(TBB)
 find_package(OpenCV REQUIRED)
-find_package(Boost COMPONENTS thread filesystem system REQUIRED)
+#find_package(Boost COMPONENTS thread filesystem system REQUIRED)
 
-set(LIBS ${OpenCV_LIBS} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+#set(LIBS ${OpenCV_LIBS} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES})
 
 #file(GLOB detector_sources *.cpp)
 SET(detector_sources detector.cpp circle_detector.cpp)
@@ -26,3 +27,7 @@ target_link_libraries(circle-localizer ${LIBS})
 SET(system_sources test-system.cpp circle_detector.cpp circle_localizer.cpp localization_system.cpp)
 add_executable(localization-system ${system_sources})
 target_link_libraries(localization-system ${LIBS})
+
+SET(calibrator_sources calibrator.cpp)
+add_executable(calibrator ${calibrator_sources})
+target_link_libraries(calibrator ${OpenCV_LIBS})

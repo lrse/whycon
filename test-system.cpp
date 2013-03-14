@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
   /* load calibration and setup system */
   cv::Mat frame;
   cv::Mat K, dist_coeff;
+  //cv::LocalizationSystem::load_opencv_calibration("calibration.xml.m", K, dist_coeff);
   cv::LocalizationSystem::load_matlab_calibration("../Calib_Results.m", K, dist_coeff);
   int number_of_circles = atoi(argv[1]);
   cv::LocalizationSystem system(number_of_circles, capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT),
