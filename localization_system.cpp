@@ -83,6 +83,11 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	return result;
 }
 
+const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)
+{
+  return localizer.circles[id];
+}
+
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id)
 {
   return get_pose(localizer.circles[id]);
@@ -141,7 +146,9 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     0, 0, 0, zero(0), zero(1), zero(2)
   );
   cv::Mat x;
-  cv::Mat b = (Mat_<double>(6,1) << 0, 1, 2, 0, 0, 0); // TODO: check order (X-Y or Y-X)?
+  float longer_axis_scale = 6;
+  float shorter_axis_scale = 5;
+  cv::Mat b = (Mat_<double>(6,1) << 0, shorter_axis_scale, longer_axis_scale, 0, 0, 0); // TODO: check order (X-Y or Y-X)?
   
   cout << "A " << A << endl;
   cout << "b " << b << endl;

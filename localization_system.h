@@ -24,6 +24,7 @@ namespace cv {
       
       Pose get_pose(int id);
       Pose get_pose(const CircleDetector::Circle& circle);
+      const CircleDetector::Circle& get_circle(int id);
       
       static void load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       
