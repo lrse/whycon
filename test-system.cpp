@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
   int saved_frame_idx = 0;
   
   int current_frame = 0;
-  if (!is_camera) cv::createTrackbar("frame", "output", &current_frame, capture.get(CV_CAP_PROP_FRAME_COUNT));
+  if (!is_camera) cv::createTrackbar("frame", "output", &current_frame, capture.get(CV_CAP_PROP_FRAME_COUNT) - 1);
   
   while (!stop) {
     if (!is_camera) {
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
     
     // localize and draw circles
     if (is_tracking) {
-      system.localize(original_frame); // track detected circles and localize
+      system.localize(original_frame, 50); // track detected circles and localize
       for (int i = 0; i < number_of_circles; i++) {
         const cv::CircleDetector::Circle& circle = system.get_circle(i);
         

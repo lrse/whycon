@@ -13,7 +13,7 @@ namespace cv {
       ~CircleLocalizer(void);
       
       bool initialize(const cv::Mat& image);
-      void localize(const cv::Mat& image);
+      bool localize(const cv::Mat& image);
       
       void set_scales(const CircleDetector::Circle& x, const CircleDetector::Circle& center, const CircleDetector::Circle& y);
       void load_calibration(const cv::Mat& k, const cv::Mat& dist_coeff);

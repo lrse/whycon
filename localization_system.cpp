@@ -38,8 +38,11 @@ bool cv::LocalizationSystem::initialize(const cv::Mat& image) {
   return localizer.initialize(image);
 }
 
-void cv::LocalizationSystem::localize(const cv::Mat& image) {
-  localizer.localize(image);
+void cv::LocalizationSystem::localize(const cv::Mat& image, int attempts) {
+  for (int i = 0; i < attempts; i++) {
+    if (localizer.localize(image)) return;
+    else cout << "localization failed, attempt " << i << endl;
+  }
 }
 
      

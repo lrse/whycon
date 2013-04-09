@@ -39,13 +39,16 @@ bool cv::CircleLocalizer::initialize(const cv::Mat& image) {
   return true;
 }
 
-void cv::CircleLocalizer::localize(const cv::Mat& image) {
+bool cv::CircleLocalizer::localize(const cv::Mat& image) {
+  bool all_detected = true;
   for (int i = 0; i < number_of_circles; i++) {
     //int64_t ticks = cv::getTickCount();
     circles[i] = detectors[i].detect(image, circles[i]); // TODO: modify current
+    if (!circles[i].valid) all_detected = false;
     //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
     //cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
   }
+  return all_detected;
   
   /*static tbb::affinity_partitioner ap;
   tbb::parallel_for(tbb::blocked_range<int>(0, number_of_circles, 8), Functor(*this, image), ap);*/

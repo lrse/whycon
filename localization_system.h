@@ -14,7 +14,7 @@ namespace cv {
       void draw_axis(cv::Mat& image);
       
       bool initialize(const cv::Mat& image);
-      void localize(const cv::Mat& image);
+      void localize(const cv::Mat& image, int attempts = 1);
       
       float xscale, yscale;
       
