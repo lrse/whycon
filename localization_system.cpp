@@ -197,8 +197,8 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     0, 0, 0, zero(0), zero(1), zero(2)
   );
   cv::Mat x;
-  float longer_axis_scale = 6;
-  float shorter_axis_scale = 5;
+  float longer_axis_scale = 2;
+  float shorter_axis_scale = 1;
   cv::Mat b = (Mat_<double>(6,1) << 0, shorter_axis_scale, longer_axis_scale, 0, 0, 0); // TODO: check order (X-Y or Y-X)?
   
   cout << "A " << A << endl;
