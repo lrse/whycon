@@ -169,7 +169,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 
 cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, const cv::CircleDetector::Circle& previous_circle)
 {
-	int tx,ty;
+	//int tx,ty;
 	Circle result;
 	numSegments = 0;
 
@@ -359,4 +359,10 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
     }
   }
 	return result;
+}
+
+void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color) const
+{
+  cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, 2, CV_AA);
+  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255,255,0), 1.5, CV_AA);
 }

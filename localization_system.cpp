@@ -12,7 +12,7 @@ using std::endl;
 
 cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
   float _circle_diameter) :
-  targets(_targets), width(_width), height(_height), xscale(1), yscale(1), circle_diameter(_circle_diameter), localizer(_targets, _width, _height)
+  xscale(1), yscale(1), localizer(_targets, _width, _height), targets(_targets), width(_width), height(_height),  circle_diameter(_circle_diameter)
 {
   _K.copyTo(K);
   _dist_coeff.copyTo(dist_coeff);
@@ -168,7 +168,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   vector<float>::const_iterator min_it = std::min_element(distances.begin(), distances.end());
   int min_idx = min_it - distances.begin();
   int max_idx = max_it - distances.begin();
-  int middle_idx;
+  int middle_idx = -1;
   for (int i = 0; i < 3; i++) { if (i != min_idx && i != max_idx) { middle_idx = i; break; } }
   
   /* determine which circle is which by looking which circle is shared by the minimum and second minimum length segment */
@@ -182,7 +182,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     unit_one_circle_idx = min_idx;
   }
   
-  int unit_two_circle_idx;
+  int unit_two_circle_idx = -1;
   for (int i = 0; i < 3; i++) { if (i != center_circle_idx && i != unit_one_circle_idx) { unit_two_circle_idx = i; break; } }
   
   cv::Vec3f one = circle_poses[unit_one_circle_idx].pos;
@@ -225,6 +225,14 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   
   cout << "transform: " << coordinates_transform << endl;
   return true;
+}
+
+void cv::LocalizationSystem::draw_axis(cv::Mat& image)
+{
+  static string names[3] = { "center", "x", "y" };
+  for (int i = 0; i < 3; i++) {
+    origin_circles[i].draw(image, names[i], cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
+  }
 }
 
 float cv::LocalizationSystem::unbarrel_x(float x, float y)

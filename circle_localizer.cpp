@@ -51,13 +51,13 @@ void cv::CircleLocalizer::localize(const cv::Mat& image) {
   tbb::parallel_for(tbb::blocked_range<int>(0, number_of_circles, 8), Functor(*this, image), ap);*/
 }
 
-cv::CircleLocalizer::Functor::Functor(cv::CircleLocalizer& _localizer, const cv::Mat& _image) : image(_image), localizer(_localizer), detectors(_localizer.detectors), circles(_localizer.circles)
+cv::CircleLocalizer::Functor::Functor(cv::CircleLocalizer& _localizer, const cv::Mat& _image) : image(_image), localizer(_localizer), circles(_localizer.circles), detectors(_localizer.detectors)
 {
 }
 
 void cv::CircleLocalizer::Functor::operator()(tbb::blocked_range<int>& r) const
 {
-  for (uint i = r.begin(); i != r.end(); i++) {
+  for (int i = r.begin(); i != r.end(); i++) {
     //int64_t ticks = cv::getTickCount();
     circles[i] = detectors[i].detect(image, circles[i]); // TODO: modify current
     //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();

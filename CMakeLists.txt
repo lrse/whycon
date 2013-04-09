@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 #option(ENABLE_GUI "Enable graphic output on display" ON)
 #CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
 
-find_package(TBB)
+#find_package(TBB)
 find_package(OpenCV REQUIRED)
 find_package(GSL REQUIRED)
 #find_package(Boost COMPONENTS thread filesystem system REQUIRED)

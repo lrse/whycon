@@ -77,6 +77,8 @@ namespace cv {
           bool valid;
           float m0,m1;
           float v0,v1;
+          
+          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0)) const;
       };
   };
 }

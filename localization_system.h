@@ -11,6 +11,7 @@ namespace cv {
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff, float diameter);
       
       bool set_axis(const cv::Mat& image);
+      void draw_axis(cv::Mat& image);
       
       bool initialize(const cv::Mat& image);
       void localize(const cv::Mat& image);
