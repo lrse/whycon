@@ -29,7 +29,7 @@ namespace cv {
     
       int max_circles, color_precision, color_step;
 
-      bool track;
+      bool track, lastTrackOK;
       int maxFailed;
       int numFailed;
       int threshold; 
@@ -39,6 +39,7 @@ namespace cv {
       int thresholdBias; 
       int maxThreshold; 
 
+      float diameterRatio;
       int thresholdStep;
       float circularTolerance;
       float ratioTolerance;

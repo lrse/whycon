@@ -3,6 +3,8 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_eigen.h>
 #include "localization_system.h"
 #include "circle_detector.h"
 using std::cout;
@@ -40,47 +42,96 @@ void cv::LocalizationSystem::localize(const cv::Mat& image) {
   localizer.localize(image);
 }
 
+     
+/* TODO: use cv::eigen */
+cv::Vec3f cv::LocalizationSystem::eigen(double data[])
+{
+	gsl_matrix_view m = gsl_matrix_view_array (data, 3, 3);
+	gsl_vector *eval = gsl_vector_alloc (3);
+	gsl_matrix *evec = gsl_matrix_alloc (3, 3);
+
+	gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (3);
+	gsl_eigen_symmv (&m.matrix, eval, evec, w);
+	gsl_eigen_symmv_free (w);
+	gsl_eigen_symmv_sort (eval, evec,GSL_EIGEN_SORT_ABS_ASC);
+
+	float L1 =gsl_vector_get(eval,1);
+	float L2 =gsl_vector_get(eval,2);
+	float L3 =gsl_vector_get(eval,0);
+	int V2=2;
+	int V3=0;
+
+	float z = circle_diameter/sqrt(-L2*L3)/2.0;
+	float z0 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,0,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,0,V3);
+	float z1 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,1,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,1,V3);
+	float z2 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,2,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,2,V3);
+	if (z2*z < 0){
+		 z2 = -z2;
+		 z1 = -z1;
+		 z0 = -z0;
+	}
+  cv::Vec3f result(z2*z, -z0*z, -z1*z);
+	gsl_vector_free (eval);
+	gsl_matrix_free (evec);
+
+	return result;
+}
+
+
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) {
   Pose result;
-	float x,y,z,x1,x2,y1,y2,sx1,sx2,sy1,sy2;
+	float x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
+  
+  //transform the center
 	x = transform_x(circle.x,circle.y);
 	y = transform_y(circle.x,circle.y);
+  
+  //calculate the major axis 
+	//endpoints in image coords
 	sx1 = circle.x + circle.v0 * circle.m0 * 2;
 	sx2 = circle.x - circle.v0 * circle.m0 * 2;
 	sy1 = circle.y + circle.v1 * circle.m0 * 2;
 	sy2 = circle.y - circle.v1 * circle.m0 * 2;
+  //endpoints in camera coords 
 	x1 = transform_x(sx1,sy1);
 	x2 = transform_x(sx2,sy2);
 	y1 = transform_y(sx1,sy1);
 	y2 = transform_y(sx2,sy2);
-	z = sqrtf((x1-x2) * (x1-x2) + (y1-y2) * (y1-y2));
-	result.pos(0) = circle_diameter / z;
-	result.pos(2) = -y * result.pos(0);
-	result.pos(1) = -x * result.pos(0);
-	result.rot(0) = acos(circle.m1 / circle.m0) / M_PI * 180.0;
-	result.rot(1) = 0;
-	result.rot(2) = 0;
+  //semiaxis length 
+	major = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
+	v0 = (x2-x1)/major/2.0;
+	v1 = (y2-y1)/major/2.0;
+
+	//calculate the minor axis 
+	//endpoints in image coords
+	sx1 = circle.x + circle.v1 * circle.m1 * 2;
+	sx2 = circle.x - circle.v1 * circle.m1 * 2;
+	sy1 = circle.y - circle.v0 * circle.m1 * 2;
+	sy2 = circle.y + circle.v0 * circle.m1 * 2;
+	//endpoints in camera coords 
+	x1 = transform_x(sx1,sy1);
+	x2 = transform_x(sx2,sy2);
+	y1 = transform_y(sx1,sy1);
+	y2 = transform_y(sx2,sy2);
+	//semiaxis length 
+	minor = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
+
+	//construct the conic
+	float a,b,c,d,e,f;
+	a = v0*v0/(major*major)+v1*v1/(minor*minor);
+	b = v0*v1*(1/(major*major)-1/(minor*minor));
+	c = v0*v0/(minor*minor)+v1*v1/(major*major);
+	d = (-x*a-b*y);
+	e = (-y*c-b*x);
+	f = (a*x*x+c*y*y+2*b*x*y-1);
+	double data[] ={a,b,d,b,c,e,d,e,f}; 
+
+  result.pos = eigen(data);
+  result.rot(0) = acos(circle.m1/circle.m0)/M_PI*180.0;
+	result.rot(1) = atan2(circle.v1,circle.v0)/M_PI*180.0;
+	result.rot(2) = circle.v1/circle.v0;
   
-  /*Pose result;
-  double sx1 = circle.x + circle.v0 * circle.m0 * 2;
-	double sx2 = circle.x - circle.v0 * circle.m0 * 2;
-	double sy1 = circle.y + circle.v1 * circle.m0 * 2;
-	double sy2 = circle.y - circle.v1 * circle.m0 * 2;
-	
-  cv::Mat in_points = (cv::Mat_<double>(3,2) << circle.x, circle.y, sx1, sy1, sx2, sy2);
-  in_points = in_points.reshape(2, 3);
-  cv::Mat out_points;
-  cv::undistortPoints(in_points, out_points, K, dist_coeff);
-  float z = cv::norm(out_points.row(1), out_points.row(2));
-  result.pos(2) = circle_diameter / z;
-  result.pos(0) = -out_points.row(0).at<double>(0) * result.pos(2);
-  result.pos(1) = -out_points.row(0).at<double>(1) * result.pos(2);
-  result.rot(0) = acos(circle.m1 / circle.m0) / M_PI * 180.0;
-	result.rot(1) = 0;
-	result.rot(2) = 0;*/
-  
-  // TODO: scale?
-	return result;
+  return result;
 }
 
 const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)

@@ -48,7 +48,8 @@ namespace cv {
       float transform_x(float xc,float yc);
       float transform_y(float xc,float yc);
       void transform(float x, float y);
-        
+      
+      cv::Vec3f eigen(double data[]);        
   };
 }
 

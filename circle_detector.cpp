@@ -13,7 +13,8 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
   color_precision = _color_precision;
   color_step = _color_step;
         
-	debug = false; 
+	debug = false;
+	lastTrackOK = false;
 	draw = false; 
 	drawAll = true;
 	maxFailed = 0;
@@ -23,7 +24,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
 	centerDistanceToleranceRatio = 0.1;
 	centerDistanceToleranceAbs = 5;
 	circularTolerance = 0.3;
-	ratioTolerance = 0.4;
+	ratioTolerance = 1.0;
 	threshold = maxThreshold/2;       
 	numFailed = maxFailed;
 	track = true;
@@ -35,7 +36,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
 	siz = len*3;
   buffer.resize(len);
   queue.resize(len);
-	float diameterRatio = 5.0/14;
+	diameterRatio = 4.8/13.5;
 	//diameterRatio = 3.1/7.0;
 	//diameterRatio = 7/20.5;
 	float areaRatioInner_Outer = diameterRatio*diameterRatio;
@@ -175,26 +176,39 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	//image thresholding 
 	//timer.reset();
 	//timer.start();
-	memset(&buffer[0],0,sizeof(int)*len);
+	//memset(&buffer[0],0,sizeof(int)*len); -> REMOVED: ok?
 	//tima += timer.getTime();
   
 	//image delimitation
 	int pos = (height-1)*width;
-	for (int i = 0;i<width;i++){
+	/*for (int i = 0;i<width;i++){
 		buffer[i] = -1000;	
 		buffer[pos+i] = -1000;
 	}
 	for (int i = 0;i<height;i++){
 		buffer[width*i] = -1000;	
 		buffer[width*i+width-1] = -1000;
-	}
+	}*/
 
 	int ii = 0;
 	int start = 0;
 	bool cont = true;
 
+  if (!previous_circle.valid || !track || !lastTrackOK || true){
+		memset(&buffer[0],0,sizeof(int)*len);
+		//image delimitation
+		for (int i = 0;i<width;i++){
+			buffer[i] = -1000;	
+			buffer[pos+i] = -1000;
+		}
+		for (int i = 0;i<height;i++){
+			buffer[width*i] = -1000;	
+			buffer[width*i+width-1] = -1000;
+		}
+	}
+
 	if (previous_circle.valid && track){
-		ii = previous_circle.y*width+previous_circle.x;
+		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
 		start = ii;
 	}
   
@@ -226,24 +240,31 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 								(fabsf(segmentArray[numSegments-1].y-segmentArray[numSegments-2].y) <= centerDistanceToleranceAbs+centerDistanceToleranceRatio*((float)(segmentArray[numSegments-2].maxy-segmentArray[numSegments-2].miny)))
 
 						   ){
-							int cm0,cm1,cm2;
+							float tx,ty,cm0,cm1,cm2;
 							cm0=cm1=cm2=0;
 							segmentArray[numSegments-1].x = segmentArray[numSegments-2].x;
 							segmentArray[numSegments-1].y = segmentArray[numSegments-2].y;
 
 							float sx = 0;
-							int ss = segmentArray[numSegments-2].size;
+              float sy = 0;
+							/*int ss = segmentArray[numSegments-2].size;
 							for (int p = 0;p<ss;p++){
 								pos = queue[p];
 								sx += pos%width;
 							}
-							segmentArray[numSegments-2].x = sx/ss;
+							segmentArray[numSegments-2].x = sx/ss;*/
 							sx = 0;
-							for (int p = queueOldStart;p<queueEnd;p++){
+							sy = 0;
+							queueOldStart = 0;
+							for (int p = 0;p<queueEnd;p++){
 								pos = queue[p];
 								sx += pos%width;
+                sy += pos/width;
 							}
-							segmentArray[numSegments-1].x = sx/(queueEnd-queueOldStart);
+							segmentArray[numSegments-1].x = sx/queueEnd;
+							segmentArray[numSegments-1].y = sy/queueEnd;
+							segmentArray[numSegments-2].x = sx/queueEnd;
+							segmentArray[numSegments-2].y = sy/queueEnd;
 
 							for (int p = 0;p<queueEnd;p++){
 								pos = queue[p];
@@ -251,7 +272,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 								ty = pos/width-segmentArray[numSegments-2].y;
 								cm0+=tx*tx; 
 								cm2+=ty*ty; 
-								cm1+=tx*ty; 
+								cm1+=tx*ty;
+								//buffer[pos] = 0; 
 							}
 							float fm0,fm1,fm2;
 							fm0 = ((float)cm0)/queueEnd;
@@ -266,11 +288,32 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							segmentArray[numSegments-1].bwRatio = (float)segmentArray[numSegments-2].size/segmentArray[numSegments-1].size;
 
 							if (track) ii = start -1;
-							sizer+=segmentArray[numSegments-2].size + segmentArray[numSegments-1].size;
-							sizerAll+=len;
-							segmentArray[numSegments-2].valid = segmentArray[numSegments-1].valid = true;
-							threshold = (segmentArray[numSegments-2].mean+segmentArray[numSegments-1].mean)/2;
-						}
+							sizer+=segmentArray[numSegments-2].size + segmentArray[numSegments-1].size; //for debugging
+							sizerAll+=len; 								    //for debugging
+							float circularity = M_PI*4*(segmentArray[numSegments-1].m0)*(segmentArray[numSegments-1].m1)/queueEnd;
+							if (circularity < 1.02 && circularity > 0.98){
+								segmentArray[numSegments-2].valid = segmentArray[numSegments-1].valid = true;
+                threshold = (segmentArray[numSegments-2].mean+segmentArray[numSegments-1].mean)/2;
+								if (debug) fprintf(stdout,"Circularity: %i %03f %03f %03f \n",queueEnd,M_PI*4*(segmentArray[numSegments-1].m0)*(segmentArray[numSegments-1].m1)/queueEnd,M_PI*4*(segmentArray[numSegments-1].m0)*(segmentArray[numSegments-1].m1),segmentArray[numSegments-1].x/1000.0);
+                
+                //pixel leakage correction
+								float r = diameterRatio*diameterRatio;
+								float m0o = sqrt(f0);
+								float m1o = sqrt(f1);
+								float ratio = (float)segmentArray[numSegments-1].size/(segmentArray[numSegments-2].size + segmentArray[numSegments-1].size);
+								float m0i = sqrt(ratio)*m0o;
+								float m1i = sqrt(ratio)*m1o;
+								float a = (1-r);
+								float b = -(m0i+m1i)-(m0o+m1o)*r;
+								float c = (m0i*m1i)-(m0o*m1o)*r;
+							 	float t = (-b-sqrt(b*b-4*a*c))/(2*a);
+							 	//float t = (m0i-diameterRatio*m0o)/(diameterRatio+1);
+								m0i-=t;m1i-=t;m0o+=t;m1o+=t;
+								fprintf(stdout,"UUU: %f %f %f %f %f\n",t,ratio,(m1i-t)/(m1o+t)*0.14,(m0i-t)/(m0o+t)*0.14,(m0o*m1o-m0i*m1i)/(m0i*m1i));
+								segmentArray[numSegments-1].m0 = sqrt(f0)+t;
+								segmentArray[numSegments-1].m1 = sqrt(f1)+t;
+							}
+            }
 					}
 				}
 			}
@@ -283,10 +326,12 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	fprintf(stdout,"Pos: %.2f \n",segmentArray[0].x-segmentArray[1].x);*/
 	for (int i = 0;i< numSegments;i++){
 		if (segmentArray[i].size > minSize && (segmentArray[i].valid || debug)){
-			if (debug)fprintf(stdout,"Segment %i Type: %i Pos: %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f Roundness: %03f\n",i,segmentArray[i].type,segmentArray[i].x,segmentArray[i].y,segmentArray[i].size,segmentArray[i].maxx-segmentArray[i].minx,segmentArray[i].maxy-segmentArray[i].miny,segmentArray[i].mean,threshold,segmentArray[i].m0,segmentArray[i].m1,segmentArray[i].roundness);
+			if (debug)fprintf(stdout,"Segment %i Type: %i Pos: %.2f %.2f Area: %i Vx: %i Vy: %i Mean: %i Thr: %i Eigen: %03f %03f %03f Roundness: %03f\n",i,segmentArray[i].type,segmentArray[i].x,segmentArray[i].y,segmentArray[i].size,segmentArray[i].maxx-segmentArray[i].minx,segmentArray[i].maxy-segmentArray[i].miny,segmentArray[i].mean,threshold,segmentArray[i].m0,segmentArray[i].m1,M_PI*4*segmentArray[i].m0*segmentArray[i].m1,segmentArray[i].roundness);
 			if (segmentArray[i].valid) result = segmentArray[i]; // TODO: only assign first?
 		}
 	}
+  
+  if (numSegments == 2 && segmentArray[0].valid && segmentArray[1].valid) lastTrackOK = true; else lastTrackOK = false;
 
 	//Drawing results 
 	if (result.valid){

@@ -10,10 +10,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 
 find_package(TBB)
 find_package(OpenCV REQUIRED)
+find_package(GSL REQUIRED)
 #find_package(Boost COMPONENTS thread filesystem system REQUIRED)
 
 #set(LIBS ${OpenCV_LIBS} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
-set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES})
+set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES} ${GSL_LIBRARIES})
 
 #file(GLOB detector_sources *.cpp)
 SET(detector_sources detector.cpp circle_detector.cpp)
