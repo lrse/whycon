@@ -94,11 +94,12 @@ int main(int argc, char** argv) {
       
       system.draw_axis(frame);
       writer << frame;
-      data_file << "axis frame " << current_frame << endl;
-      data_file << "axis center " << system.get_pose(system.origin_circles[0]).pos << endl;
-      data_file << "axis x " << system.get_pose(system.origin_circles[1]).pos << endl;
-      data_file << "axis y " << system.get_pose(system.origin_circles[2]).pos << endl;
-      data_file << "transform " << system.coordinates_transform << endl;
+      ofstream data_file_axis((output_name + "_axis.log").c_str(), ios_base::out | ios_base::trunc);
+      data_file_axis << "axis frame " << current_frame << endl;
+      data_file_axis << "axis center " << system.get_pose(system.origin_circles[0]).pos << endl;
+      data_file_axis << "axis x " << system.get_pose(system.origin_circles[1]).pos << endl;
+      data_file_axis << "axis y " << system.get_pose(system.origin_circles[2]).pos << endl;
+      data_file_axis << "transform " << system.coordinates_transform << endl;
     }
     
     // draw axis
@@ -115,20 +116,28 @@ int main(int argc, char** argv) {
     
     // localize and draw circles
     if (is_tracking) {
-      system.localize(original_frame, 50); // track detected circles and localize
-      for (int i = 0; i < number_of_circles; i++) {
-        const cv::CircleDetector::Circle& circle = system.get_circle(i);
-        
-        cv::Vec2f coord = system.coordinates_transform * system.get_pose(circle).pos;
-        ostringstream ostr;
-        ostr << fixed << setprecision(5) << coord;
-        circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+      bool localized_correctly = system.localize(original_frame, 50); // track detected circles and localize
+      
+      if (localized_correctly) {
+        for (int i = 0; i < number_of_circles; i++) {
+          const cv::CircleDetector::Circle& circle = system.get_circle(i);
+          
+          cv::Vec2f coord = system.coordinates_transform * system.get_pose(circle).pos;
+          ostringstream ostr;
+          ostr << fixed << setprecision(5) << coord;
+          circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+        }
       }
       
       writer << frame;
-      for (int i = 0; i < number_of_circles; i++) {
-        cv::Vec2f coord = system.coordinates_transform * system.get_pose(i).pos;
-        data_file << "frame " << saved_frame_idx << " circle " << i << " " << coord << endl;
+      if (localized_correctly) {
+        for (int i = 0; i < number_of_circles; i++) {
+          cv::Vec3f coord3d = system.get_pose(i).pos;
+          cv::Vec2f coord = system.coordinates_transform * system.get_pose(i).pos;
+          data_file << "frame " << saved_frame_idx << " circle " << i
+            << " 2d: " << coord(0) << " " << coord(1)
+            << " 3d: " << coord3d(0) << " " << coord3d(1) << " " << coord3d(2) << endl;
+        }
       }
       saved_frame_idx++;
     }
