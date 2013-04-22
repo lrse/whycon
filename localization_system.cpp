@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_eigen.h>
+#include <sstream>
+#include <iomanip>
 #include "localization_system.h"
 #include "circle_detector.h"
 using std::cout;
@@ -148,6 +150,27 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id)
   return get_pose(localizer.circles[id]);
 }
 
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) {
+  return get_transformed_pose(localizer.circles[id]);
+}
+
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle)
+{
+  Pose pose;
+  
+  #ifdef ENABLE_PROJECTIVITY
+  cv::Vec2f out2d = coordinates_transform * get_pose(circle).pos;
+  pose.pos(0) = out2d(0);
+  pose.pos(1) = out2d(1);
+  pose.pos(2) = 0;
+  #else
+  pose.pos = coordinates_transform * (get_pose(circle).pos - get_pose(origin_circles[0]).pos); // TODO: save center circle pose!!!
+  cout << "third: " << get_pose(circle).pos(2) << endl;
+  #endif  
+  
+  return pose;
+}
+
 /* this assumes that the X axis is twice as long as the Y axis */
 bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
 {
@@ -192,6 +215,12 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   cv::Vec3f one = circle_poses[unit_one_circle_idx].pos;
   cv::Vec3f two = circle_poses[unit_two_circle_idx].pos;
   cv::Vec3f zero = circle_poses[center_circle_idx].pos;
+  
+  origin_circles[0] = axis_localizer.circles[center_circle_idx];
+  origin_circles[1] = axis_localizer.circles[unit_two_circle_idx];
+  origin_circles[2] = axis_localizer.circles[unit_one_circle_idx];
+  
+#ifdef ENABLE_PROJECTIVITY
   cv::Mat A = (Mat_<double>(6,6) <<
     one(0), one(1), one(2), 0, 0, 0,
     0, 0, 0, one(0), one(1), one(2),
@@ -210,10 +239,30 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   
   cv::solve(A, b, x, DECOMP_SVD);
   coordinates_transform = x.reshape(1, 2);
+#else
+  cout << "one: " << one << " " << unit_one_circle_idx << endl;
+  cout << "two: " << two << " " << unit_two_circle_idx << endl;
+  cout << "zero: " << zero << " " << center_circle_idx << endl;
+  // move to origin
+  one -= zero;
+  two -= zero;
   
-  origin_circles[0] = axis_localizer.circles[center_circle_idx];
-  origin_circles[1] = axis_localizer.circles[unit_two_circle_idx];
-  origin_circles[2] = axis_localizer.circles[unit_one_circle_idx];
+  cv::Vec3f one_normalized, two_normalized, up_normalized;
+  cv::normalize(one, one_normalized);
+  cv::normalize(two, two_normalized);
+  cout << "one: " << one_normalized << endl;
+  cout << "two: " << two_normalized << endl;
+  cv::Vec3f up = one_normalized.cross(two_normalized);
+  //cv::Vec3f up = one.cross(two);
+  cv::normalize(up, up_normalized);
+  cv::Mat A = (Mat_<float>(3,3) <<
+    one(0), two(0), up(0),
+    one(1), two(1), up(1),
+    one(2), two(2), up(2)
+  );
+  cv::invert(A, coordinates_transform, DECOMP_SVD);
+  cout << "up: " << up << endl;
+#endif
   
   vector<float> ortogonality(3);
   /*ortogonality[0] = (origin_circles[1].pos - origin_circles[0].pos).dot(origin_circles[2].pos - origin_circles[1].pos);
@@ -235,7 +284,9 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 {
   static string names[3] = { "center", "x", "y" };
   for (int i = 0; i < 3; i++) {
-    origin_circles[i].draw(image, names[i], cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
+    std::ostringstream ostr;
+    ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
+    origin_circles[i].draw(image, ostr.str(), cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
   }
 }
 

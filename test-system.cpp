@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         capture.set(CV_CAP_PROP_POS_FRAMES, current_frame);
         saved_frame_idx = current_frame;
       }
-      else cv::setTrackbarPos("frame", "output", current_frame);        
+      else cv::setTrackbarPos("frame", "output", saved_frame_idx);        
     }
     
     if (!capture.read(original_frame)) break;
@@ -116,29 +116,24 @@ int main(int argc, char** argv) {
     
     // localize and draw circles
     if (is_tracking) {
-      bool localized_correctly = system.localize(original_frame, 50); // track detected circles and localize
+      bool localized_correctly = system.localize(original_frame, (is_camera ? 1 : 50)); // track detected circles and localize
       
       if (localized_correctly) {
         for (int i = 0; i < number_of_circles; i++) {
           const cv::CircleDetector::Circle& circle = system.get_circle(i);
-          
-          cv::Vec2f coord = system.coordinates_transform * system.get_pose(circle).pos;
+          cv::Vec3f coord = system.get_pose(circle).pos;
+          cv::Vec3f coord_trans = system.get_transformed_pose(circle).pos;
           ostringstream ostr;
-          ostr << fixed << setprecision(5) << coord;
+          ostr << fixed << setprecision(5) << coord_trans;
           circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+          cout << capture.get(CV_CAP_PROP_POS_FRAMES) << endl;
+          data_file << "frame " << saved_frame_idx + 1 << " circle " << i
+            << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
+            << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
         }
       }
       
       writer << frame;
-      if (localized_correctly) {
-        for (int i = 0; i < number_of_circles; i++) {
-          cv::Vec3f coord3d = system.get_pose(i).pos;
-          cv::Vec2f coord = system.coordinates_transform * system.get_pose(i).pos;
-          data_file << "frame " << saved_frame_idx << " circle " << i
-            << " 2d: " << coord(0) << " " << coord(1)
-            << " 3d: " << coord3d(0) << " " << coord3d(1) << " " << coord3d(2) << endl;
-        }
-      }
       saved_frame_idx++;
     }
     cv::imshow("output", frame);
