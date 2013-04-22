@@ -285,8 +285,8 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   static string names[3] = { "center", "x", "y" };
   for (int i = 0; i < 3; i++) {
     std::ostringstream ostr;
-    ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
-    origin_circles[i].draw(image, ostr.str(), cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
+    //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
+    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
   }
 }
 
