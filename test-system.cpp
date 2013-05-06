@@ -22,7 +22,7 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 4) {
+  if (argc < 5) {
     cout << "usage: test-localizer <number of circles> [-cam <camera-number> | -video <video file>]  <output name>" << endl;
     return 1;
   }
@@ -109,6 +109,7 @@ int main(int argc, char** argv) {
       if (!is_tracking && clicked) {
         clicked = false;
         is_tracking = true;
+        cout << "initialization" << endl;
         system.initialize(original_frame); // find circles in image
         
       }
@@ -116,6 +117,7 @@ int main(int argc, char** argv) {
     
     // localize and draw circles
     if (is_tracking) {
+      cout << "tracking current frame" << endl;
       bool localized_correctly = system.localize(original_frame, (is_camera ? 1 : 50)); // track detected circles and localize
       
       if (localized_correctly) {

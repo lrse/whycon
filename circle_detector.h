@@ -22,6 +22,8 @@ namespace cv {
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
       bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio);
+      
+      void improveEllipse(const cv::Mat& image, Circle& c);
 
       bool changeThreshold();
       bool debug,draw,drawAll;

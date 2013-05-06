@@ -43,8 +43,9 @@ bool cv::CircleLocalizer::localize(const cv::Mat& image) {
   bool all_detected = true;
   for (int i = 0; i < number_of_circles; i++) {
     //int64_t ticks = cv::getTickCount();
+    cout << "detecting circle " << i << endl;
     circles[i] = detectors[i].detect(image, circles[i]); // TODO: modify current
-    if (!circles[i].valid) all_detected = false;
+    if (!circles[i].valid) { all_detected = false; break; }
     //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
     //cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
   }

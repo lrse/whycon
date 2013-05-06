@@ -172,6 +172,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	//int tx,ty;
 	Circle result;
 	numSegments = 0;
+  cv::Mat original_image;
+  image.copyTo(original_image);
 
 	//image thresholding 
 	//timer.reset();
@@ -312,6 +314,11 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 								fprintf(stdout,"UUU: %f %f %f %f %f\n",t,ratio,(m1i-t)/(m1o+t)*0.14,(m0i-t)/(m0o+t)*0.14,(m0o*m1o-m0i*m1i)/(m0i*m1i));
 								segmentArray[numSegments-1].m0 = sqrt(f0)+t;
 								segmentArray[numSegments-1].m1 = sqrt(f1)+t;
+                segmentArray[numSegments-1].minx = segmentArray[numSegments-2].minx;
+                segmentArray[numSegments-1].maxx = segmentArray[numSegments-2].maxx;
+                segmentArray[numSegments-1].maxy = segmentArray[numSegments-2].maxy;
+                segmentArray[numSegments-1].miny = segmentArray[numSegments-2].miny;
+							
 							}
             }
 					}
@@ -358,7 +365,60 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
       }
     }
   }
+  
+  if (result.valid) improveEllipse(original_image, result); 
+  cout << "here" << endl;
 	return result;
+}
+
+void cv::CircleDetector::improveEllipse(const cv::Mat& image, Circle& c)
+{
+  cv::Mat subimg;
+  int delta = 10;
+  cout << image.rows << " x " << image.cols << endl;
+  cv::Range row_range(max(0, c.miny - delta), min(c.maxy + delta, image.rows));
+  cv::Range col_range(max(0, c.minx - delta), min(c.maxx + delta, image.cols));
+  cout << row_range.start << " " << row_range.end << " " << col_range.start << " " << col_range.end << endl;
+  image(row_range, col_range).copyTo(subimg);
+  cv::Mat cannified;
+  cv::Canny(subimg, cannified, 4000, 8000, 5, true);
+  
+  /*cv::namedWindow("bleh");
+  cv::imshow("bleh", subimg);
+  cv::waitKey();*/
+  
+  std::vector< std::vector<cv::Point> > contours;
+  cv::findContours(cannified, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+  if (contours.empty() || contours[0].size() < 5) return;
+  
+  cv::Mat contour_img;
+  subimg.copyTo(contour_img);
+  cv::drawContours(contour_img, contours, 0, cv::Scalar(255,0,255), 1);
+  
+  /*cv::namedWindow("bleh2");
+  cv::imshow("bleh2", contour_img);
+  cv::waitKey();*/
+  
+  
+  cv::RotatedRect rect = cv::fitEllipse(contours[0]);
+  cout << "old: " << c.x << " " << c.y << " " << c.m0 << " " << c.m1 << " " << c.v0 << " " << c.v1 << endl;
+  c.x = rect.center.x + col_range.start;
+  c.y = rect.center.y + row_range.start;
+  float max_size = max(rect.size.width, rect.size.height);
+  float min_size = min(rect.size.width, rect.size.height);
+  c.m0 = rect.size.width * 0.25;      
+  c.m1 = rect.size.height * 0.25;
+  c.v0 = cos(rect.angle / 180.0 * M_PI);
+  c.v1 = sin(rect.angle / 180.0 * M_PI);
+  cout << "new: " << c.x << " " << c.y << " " << c.m0 << " " << c.m1 << " " << c.v0 << " " << c.v1 << endl;
+  
+  /*cv::Mat ellipse_img;
+  image(row_range, col_range).copyTo(subimg);
+  subimg.copyTo(ellipse_img);
+  cv::ellipse(ellipse_img, rect, cv::Scalar(255,0,255));
+  cv::namedWindow("bleh3");
+  cv::imshow("bleh3", ellipse_img);
+  cv::waitKey();*/
 }
 
 void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color) const
