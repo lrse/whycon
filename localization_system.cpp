@@ -157,137 +157,77 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id
 
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle)
 {
-  Pose pose;
-  
-  #ifdef ENABLE_PROJECTIVITY
-  cv::Vec2f out2d = coordinates_transform * get_pose(circle).pos;
-  pose.pos(0) = out2d(0);
-  pose.pos(1) = out2d(1);
+  Pose pose;  
+  pose.pos = coordinates_transform * get_pose(circle).pos;
+  pose.pos(0) /= pose.pos(2);
+  pose.pos(1) /= pose.pos(2);
   pose.pos(2) = 0;
-  #else
-  pose.pos = coordinates_transform * (get_pose(circle).pos - get_pose(origin_circles[0]).pos); // TODO: save center circle pose!!!
-  cout << "third: " << get_pose(circle).pos(2) << endl;
-  #endif  
-  
   return pose;
 }
 
-/* this assumes that the X axis is twice as long as the Y axis */
+// TODO: allow user to choose calibration circles, now the circles are read in the order of detection
 bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
 {
-  CircleLocalizer axis_localizer(3, width, height);
+  CircleLocalizer axis_localizer(4, width, height);
   if (!axis_localizer.initialize(image)) return false;
-  
-  axis_localizer.localize(image);
-  Pose circle_poses[3];
-  for (int i = 0; i < 3; i++) {
+
+  // get poses of each calibration circle
+  if (!axis_localizer.localize(image)) return false;
+  Pose circle_poses[4];
+  for (int i = 0; i < 4; i++) {
+    origin_circles[i] = axis_localizer.circles[i];
     circle_poses[i] = get_pose(axis_localizer.circles[i]); 
   }
   
-  vector<float> distances(3);
-  /* note that indices of distances correspond to indices of first circle position */
-  distances[0] = cv::norm(circle_poses[0].pos, circle_poses[1].pos);
-  distances[1] = cv::norm(circle_poses[1].pos, circle_poses[2].pos);
-  distances[2] = cv::norm(circle_poses[2].pos, circle_poses[0].pos);
-  cout << "dist: " << distances[0] << " " << distances[1] << " " << distances[2] << endl;
-  
-  cout << "poses: " << circle_poses[0].pos << " " << circle_poses[1].pos << " " << circle_poses[2].pos << endl;
-  vector<float>::const_iterator max_it = std::max_element(distances.begin(), distances.end());
-  vector<float>::const_iterator min_it = std::min_element(distances.begin(), distances.end());
-  int min_idx = min_it - distances.begin();
-  int max_idx = max_it - distances.begin();
-  int middle_idx = -1;
-  for (int i = 0; i < 3; i++) { if (i != min_idx && i != max_idx) { middle_idx = i; break; } }
-  
-  /* determine which circle is which by looking which circle is shared by the minimum and second minimum length segment */
-  int center_circle_idx, unit_one_circle_idx;
-  if (min_idx == middle_idx || min_idx == (middle_idx + 1) % 3) {
-    center_circle_idx = min_idx;
-    unit_one_circle_idx = (min_idx + 1) % 3;
+  cv::Vec3f x_axis = circle_poses[1].pos - circle_poses[0].pos;
+  cv::Vec3f y_axis = circle_poses[2].pos - circle_poses[0].pos;
+  float dim_x = cv::norm(x_axis);
+  float dim_y = cv::norm(y_axis);
+  cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
+
+  // build matrix of coefficients and independent term for linear eq. system
+  cv::Mat A(8, 8, CV_64FC1), b(8, 1, CV_64FC1), x(8, 1, CV_64FC1);
+  cv::Vec2f tmp[4];
+
+  for (int i = 0; i < 4; i++) {
+    //tmp[i] = -cv::Vec2f(circle_poses[i].pos(1), circle_poses[i].pos(2)) / circle_poses[i].pos(0);
+    tmp[i] = -cv::Vec2f(circle_poses[i].pos(0), circle_poses[i].pos(1)) / circle_poses[i].pos(2);
   }
-  else {
-    center_circle_idx = (min_idx + 1) % 3;
-    unit_one_circle_idx = min_idx;
+  for (int i = 0; i < 4; i++) {
+    cv::Mat r_even = (cv::Mat_<double>(1, 8) << -tmp[i](0), -tmp[i](1), -1, 0, 0, 0, targets[i](0) * tmp[i](0), targets[i](0) * tmp[i](1));
+    cv::Mat r_odd = (cv::Mat_<double>(1, 8) << 0, 0, 0, -tmp[i](0), -tmp[i](1), -1, targets[i](1) * tmp[i](0), targets[i](1) * tmp[i](1));
+    r_even.copyTo(A.row(2 * i));
+    r_odd.copyTo(A.row(2 * i + 1));    
+    b.at<double>(2 * i)     = -targets[i](0);
+    b.at<double>(2 * i + 1) = -targets[i](1);
   }
+
+  cout << "A" << endl;
+  cout << A << endl;
+  cout << "b" << endl;
+  cout << b << endl;
   
-  int unit_two_circle_idx = -1;
-  for (int i = 0; i < 3; i++) { if (i != center_circle_idx && i != unit_one_circle_idx) { unit_two_circle_idx = i; break; } }
-  
-  cv::Vec3f one = circle_poses[unit_one_circle_idx].pos;
-  cv::Vec3f two = circle_poses[unit_two_circle_idx].pos;
-  cv::Vec3f zero = circle_poses[center_circle_idx].pos;
-  
-  origin_circles[0] = axis_localizer.circles[center_circle_idx];
-  origin_circles[1] = axis_localizer.circles[unit_two_circle_idx];
-  origin_circles[2] = axis_localizer.circles[unit_one_circle_idx];
-  
-#ifdef ENABLE_PROJECTIVITY
-  cv::Mat A = (Mat_<double>(6,6) <<
-    one(0), one(1), one(2), 0, 0, 0,
-    0, 0, 0, one(0), one(1), one(2),
-    two(0), two(1), two(2), 0, 0, 0,
-    0, 0, 0, two(0), two(1), two(2),
-    zero(0), zero(1), zero(2), 0, 0, 0,
-    0, 0, 0, zero(0), zero(1), zero(2)
-  );
-  cv::Mat x;
-  float longer_axis_scale = 2;
-  float shorter_axis_scale = 1;
-  cv::Mat b = (Mat_<double>(6,1) << 0, shorter_axis_scale, longer_axis_scale, 0, 0, 0); // TODO: check order (X-Y or Y-X)?
-  
-  cout << "A " << A << endl;
-  cout << "b " << b << endl;
-  
-  cv::solve(A, b, x, DECOMP_SVD);
-  coordinates_transform = x.reshape(1, 2);
-#else
-  cout << "one: " << one << " " << unit_one_circle_idx << endl;
-  cout << "two: " << two << " " << unit_two_circle_idx << endl;
-  cout << "zero: " << zero << " " << center_circle_idx << endl;
-  // move to origin
-  one -= zero;
-  two -= zero;
-  
-  cv::Vec3f one_normalized, two_normalized, up_normalized;
-  cv::normalize(one, one_normalized);
-  cv::normalize(two, two_normalized);
-  cout << "one: " << one_normalized << endl;
-  cout << "two: " << two_normalized << endl;
-  cv::Vec3f up = one_normalized.cross(two_normalized);
-  //cv::Vec3f up = one.cross(two);
-  cv::normalize(up, up_normalized);
-  cv::Mat A = (Mat_<float>(3,3) <<
-    one(0), two(0), up(0),
-    one(1), two(1), up(1),
-    one(2), two(2), up(2)
-  );
-  cv::invert(A, coordinates_transform, DECOMP_SVD);
-  cout << "up: " << up << endl;
-#endif
-  
-  vector<float> ortogonality(3);
-  /*ortogonality[0] = (origin_circles[1].pos - origin_circles[0].pos).dot(origin_circles[2].pos - origin_circles[1].pos);
-  ortogonality[1] = (origin_circles[2].pos - origin_circles[1].pos).dot(origin_circles[2].pos - origin_circles[0].pos);
-  ortogonality[2] = (origin_circles[2].pos - origin_circles[0].pos).dot(origin_circles[1].pos - origin_circles[0].pos);*/
-  ortogonality[0] = (one - zero).dot(two - zero);
-  ortogonality[1] = (two - zero).dot(two - one);
-  ortogonality[2] = (one - two).dot(zero - two);
-  cout << "ort: " << ortogonality[0] << " " << ortogonality[1] << " " << ortogonality[2] << endl;
-  cout << "segm: " << axis_localizer.circles[0].x << " " << axis_localizer.circles[0].y << endl;
-  cout << "segm: " << axis_localizer.circles[1].x << " " << axis_localizer.circles[1].y << endl;
-  cout << "segm: " << axis_localizer.circles[2].x << " " << axis_localizer.circles[2].y << endl;
-  
-  cout << "transform: " << coordinates_transform << endl;
+
+  cv::solve(A, b, x);
+  //cout << "product " << (A * x) << endl;
+  cout << x << endl;
+  x.push_back(1.0);
+  coordinates_transform = x.reshape(1, 3);
+
+  cout << (coordinates_transform * circle_poses[0].pos) << endl;
+  cout << (coordinates_transform * circle_poses[1].pos) << endl;
+  cout << (coordinates_transform * circle_poses[2].pos) << endl;
+  cout << (coordinates_transform * circle_poses[3].pos) << endl;
   return true;
 }
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 {
-  static string names[3] = { "center", "x", "y" };
-  for (int i = 0; i < 3; i++) {
+  static string names[4] = { "c0", "c1", "c2", "c3" };
+  for (int i = 0; i < 4; i++) {
     std::ostringstream ostr;
     //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
-    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Scalar((i == 0 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 ? 255 : 0)));
+    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Scalar((i == 0 || i == 3 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 || i == 3 ? 255 : 0)));
   }
 }
 

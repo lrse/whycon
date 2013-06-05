@@ -5,8 +5,7 @@ SET(CMAKE_BUILD_TYPE debug)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O4 -march=native -Wfatal-errors")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}") 
 
-option(ENABLE_PROJECTIVITY "Use projective transformation" ON)
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
+#CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
 
 #find_package(TBB)
 find_package(OpenCV REQUIRED)

@@ -34,14 +34,9 @@ namespace cv {
       static void load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       static void load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       
-      CircleDetector::Circle origin_circles[3]; // center, X, Y
+      CircleDetector::Circle origin_circles[4]; // center, X, Y
       
-      #ifdef ENABLE_PROJECTIVITY
-      cv::Matx23f coordinates_transform;
-      #else
-      cv::Matx33f coordinates_transform;
-      #endif
-      
+      cv::Matx33f coordinates_transform;      
       CircleLocalizer localizer;
       
     private:
