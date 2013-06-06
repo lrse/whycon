@@ -23,7 +23,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 
 int main(int argc, char** argv) {
   if (argc < 5) {
-    cout << "usage: test-localizer <number of circles> [-cam <camera-number> | -video <video file>]  <output name>" << endl;
+    cout << "usage: test-localizer <number of circles> [-cam <camera-number> | -video <video file> | -img <dir/pattern>]  <output name>" << endl;
+    cout << "For -img use something like 'directory/%03d.png', for images numbered 000.png to 999.png under 'directory'" << endl;
     return 1;
   }
   
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
   
   int number_of_circles = atoi(argv[1]);
   bool is_camera = (std::string(argv[2]) == "-cam");
+  bool is_img = (std::string(argv[2]) == "-img");
   std::string output_name(argv[4]);
   
   /* setup camera */
@@ -53,7 +55,7 @@ int main(int argc, char** argv) {
   //cv::LocalizationSystem::load_opencv_calibration("calibration.xml.m", K, dist_coeff);
   cv::LocalizationSystem::load_matlab_calibration("../Calib_Results.m", K, dist_coeff);
   cv::LocalizationSystem system(number_of_circles, capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT),
-    K, dist_coeff, 0.123);
+    K, dist_coeff, 0.122);
     
   /* create output directory */
   cv::Size frame_size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT));

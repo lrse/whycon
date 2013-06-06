@@ -17,7 +17,7 @@ namespace cv {
   {
     public:
       class Circle;
-      CircleDetector(int width, int height, int color_precision = 32, int color_step = 8);
+      CircleDetector(int width, int height, float diameter_ratio = (5/14.0), int color_precision = 32, int color_step = 8);
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());

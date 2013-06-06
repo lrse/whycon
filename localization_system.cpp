@@ -77,7 +77,7 @@ cv::Vec3f cv::LocalizationSystem::eigen(double data[])
 		 z1 = -z1;
 		 z0 = -z0;
 	}
-  cv::Vec3f result(z2*z, -z0*z, -z1*z);
+  cv::Vec3f result(-z0*z, -z1*z, z2*z); // NOTE: ZXY ordering XYZ
 	gsl_vector_free (eval);
 	gsl_matrix_free (evec);
 
@@ -179,20 +179,18 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     circle_poses[i] = get_pose(axis_localizer.circles[i]); 
   }
   
-  cv::Vec3f x_axis = circle_poses[1].pos - circle_poses[0].pos;
-  cv::Vec3f y_axis = circle_poses[2].pos - circle_poses[0].pos;
-  float dim_x = cv::norm(x_axis);
-  float dim_y = cv::norm(y_axis);
+  /*cv::Vec3f x_axis = circle_poses[1].pos - circle_poses[0].pos;
+  cv::Vec3f y_axis = circle_poses[2].pos - circle_poses[0].pos;*/
+  float dim_x = /*cv::norm(x_axis)*/ 3.125;
+  float dim_y = /*cv::norm(y_axis)*/ 2.5;
+  cout << "dimx/dimy " << dim_x << " " << dim_y << endl;
   cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
-
+  
   // build matrix of coefficients and independent term for linear eq. system
   cv::Mat A(8, 8, CV_64FC1), b(8, 1, CV_64FC1), x(8, 1, CV_64FC1);
+  
   cv::Vec2f tmp[4];
-
-  for (int i = 0; i < 4; i++) {
-    //tmp[i] = -cv::Vec2f(circle_poses[i].pos(1), circle_poses[i].pos(2)) / circle_poses[i].pos(0);
-    tmp[i] = -cv::Vec2f(circle_poses[i].pos(0), circle_poses[i].pos(1)) / circle_poses[i].pos(2);
-  }
+  for (int i = 0; i < 4; i++) tmp[i] = cv::Vec2f(circle_poses[i].pos(0), circle_poses[i].pos(1)) / circle_poses[i].pos(2);
   for (int i = 0; i < 4; i++) {
     cv::Mat r_even = (cv::Mat_<double>(1, 8) << -tmp[i](0), -tmp[i](1), -1, 0, 0, 0, targets[i](0) * tmp[i](0), targets[i](0) * tmp[i](1));
     cv::Mat r_odd = (cv::Mat_<double>(1, 8) << 0, 0, 0, -tmp[i](0), -tmp[i](1), -1, targets[i](1) * tmp[i](0), targets[i](1) * tmp[i](1));
@@ -202,22 +200,22 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     b.at<double>(2 * i + 1) = -targets[i](1);
   }
 
-  cout << "A" << endl;
-  cout << A << endl;
-  cout << "b" << endl;
-  cout << b << endl;
-  
-
+  // solve linear system and obtain transformation
   cv::solve(A, b, x);
-  //cout << "product " << (A * x) << endl;
-  cout << x << endl;
   x.push_back(1.0);
   coordinates_transform = x.reshape(1, 3);
 
-  cout << (coordinates_transform * circle_poses[0].pos) << endl;
-  cout << (coordinates_transform * circle_poses[1].pos) << endl;
-  cout << (coordinates_transform * circle_poses[2].pos) << endl;
-  cout << (coordinates_transform * circle_poses[3].pos) << endl;
+  // TODO: compare H obtained by OpenCV with the hand approach
+  std::vector<cv::Vec2d> src(4), dsts(4);
+  for (int i = 0; i < 4; i++) {
+    src[i] = tmp[i];
+    dsts[i] = targets[i];
+    cout << tmp[i] << " -> " << targets[i] << endl;
+  }
+  cv::Matx33d H = cv::findHomography(src, dsts, CV_LMEDS);
+  cout << "H " << H << endl;
+
+  
   return true;
 }
 

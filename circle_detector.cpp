@@ -8,7 +8,7 @@ using namespace std;
 #define MAX_SEGMENTS 10000
 
 //Variable initialization
-cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision, int _color_step)
+cv::CircleDetector::CircleDetector(int _width,int _height, float _diameter_ratio, int _color_precision, int _color_step)
 {
   color_precision = _color_precision;
   color_step = _color_step;
@@ -36,9 +36,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
 	siz = len*3;
   buffer.resize(len);
   queue.resize(len);
-	diameterRatio = 4.8/13.5;
-	//diameterRatio = 3.1/7.0;
-	//diameterRatio = 7/20.5;
+  diameterRatio = _diameter_ratio;
 	float areaRatioInner_Outer = diameterRatio*diameterRatio;
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;
@@ -50,7 +48,6 @@ cv::CircleDetector::CircleDetector(int _width,int _height, int _color_precision,
 
 cv::CircleDetector::~CircleDetector()
 {
-	//printf("Timi %i %i %i %i\n",tima,timb,sizer,sizerAll);
 }
 
 bool cv::CircleDetector::changeThreshold()
@@ -404,8 +401,8 @@ void cv::CircleDetector::improveEllipse(const cv::Mat& image, Circle& c)
   cout << "old: " << c.x << " " << c.y << " " << c.m0 << " " << c.m1 << " " << c.v0 << " " << c.v1 << endl;
   c.x = rect.center.x + col_range.start;
   c.y = rect.center.y + row_range.start;
-  float max_size = max(rect.size.width, rect.size.height);
-  float min_size = min(rect.size.width, rect.size.height);
+  /*float max_size = max(rect.size.width, rect.size.height);
+  float min_size = min(rect.size.width, rect.size.height);*/
   c.m0 = rect.size.width * 0.25;      
   c.m1 = rect.size.height * 0.25;
   c.v0 = cos(rect.angle / 180.0 * M_PI);
