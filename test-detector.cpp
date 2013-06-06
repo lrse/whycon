@@ -2,7 +2,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <string>
 #include <signal.h>
-#include "circle_localizer.h"
+#include "many_circle_detector.h"
 using namespace std;
 
 bool stop = false;
@@ -23,10 +23,10 @@ int main(int argc, char** argv) {
     //cvStartWindowThread();
     //cv::namedWindow("results");
     cv::Mat img = cv::imread(argv[3]);
-    cv::CircleLocalizer localizer(number_of_circles, img.size().width, img.size().height);
+    cv::ManyCircleDetector detector(number_of_circles, img.size().width, img.size().height);
     
     int64_t ticks = cv::getTickCount();
-    bool initialized = localizer.initialize(img);
+    bool initialized = detector.initialize(img);
     double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
     cout << "t: " << delta << " " << " fps: " << 1/delta << " [initialize]" << endl;
     if (!initialized) {
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
       img.copyTo(input_img);
       //cout << "localizing" << endl;
       ticks = cv::getTickCount();
-      localizer.localize(input_img);
+      detector.detect(input_img);
       delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
       cout << "t: " << delta << " " << " fps: " << 1/delta << "[total]" << endl;
       
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     
     int width = capture.get(CV_CAP_PROP_FRAME_WIDTH);
     int height = capture.get(CV_CAP_PROP_FRAME_HEIGHT);
-    cv::CircleLocalizer localizer(number_of_circles, width, height);
+    cv::ManyCircleDetector detector(number_of_circles, width, height);
     bool initialized = false;
     
     cvStartWindowThread();
@@ -76,10 +76,10 @@ int main(int argc, char** argv) {
       if (!capture.read(img)) break;
       
       if (!initialized) {
-        if (!localizer.initialize(img)) { cout << "circles not detected" << endl; break; }
+        if (!detector.initialize(img)) { cout << "circles not detected" << endl; break; }
       }
       
-      localizer.localize(img);
+      detector.detect(img);
       cv::imshow("result", img);
     }
   }

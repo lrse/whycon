@@ -2,7 +2,7 @@
 #define __LOCALIZATION_SYSYEM__
 
 #include <opencv2/opencv.hpp>
-#include "circle_localizer.h"
+#include "many_circle_detector.h"
 #include "config.h"
 
 namespace cv {
@@ -37,7 +37,7 @@ namespace cv {
       CircleDetector::Circle origin_circles[4]; // center, X, Y
       
       cv::Matx33f coordinates_transform;      
-      CircleLocalizer localizer;
+      ManyCircleDetector detector;
       
     private:
       int targets, width, height;

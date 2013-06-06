@@ -14,7 +14,7 @@ using std::endl;
 
 cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
   float _circle_diameter) :
-  xscale(1), yscale(1), localizer(_targets, _width, _height), targets(_targets), width(_width), height(_height),  circle_diameter(_circle_diameter)
+  xscale(1), yscale(1), detector(_targets, _width, _height), targets(_targets), width(_width), height(_height),  circle_diameter(_circle_diameter)
 {
   _K.copyTo(K);
   _dist_coeff.copyTo(dist_coeff);
@@ -37,13 +37,13 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
 }
 
 bool cv::LocalizationSystem::initialize(const cv::Mat& image) {
-  return localizer.initialize(image);
+  return detector.initialize(image);
 }
 
 bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts) {
   for (int i = 0; i < attempts; i++) {
     cout << "localization attempt " << i << endl;
-    if (localizer.localize(image)) return true;
+    if (detector.detect(image)) return true;
     else cout << "localization failed, not all circles detected" << i << endl;
   }
   return false;
@@ -143,16 +143,16 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 
 const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)
 {
-  return localizer.circles[id];
+  return detector.circles[id];
 }
 
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id)
 {
-  return get_pose(localizer.circles[id]);
+  return get_pose(detector.circles[id]);
 }
 
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) {
-  return get_transformed_pose(localizer.circles[id]);
+  return get_transformed_pose(detector.circles[id]);
 }
 
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle)
@@ -168,15 +168,15 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
 // TODO: allow user to choose calibration circles, now the circles are read in the order of detection
 bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
 {
-  CircleLocalizer axis_localizer(4, width, height);
-  if (!axis_localizer.initialize(image)) return false;
+  ManyCircleDetector axis_detector(4, width, height);
+  if (!axis_detector.initialize(image)) return false;
 
   // get poses of each calibration circle
-  if (!axis_localizer.localize(image)) return false;
+  if (!axis_detector.detect(image)) return false;
   Pose circle_poses[4];
   for (int i = 0; i < 4; i++) {
-    origin_circles[i] = axis_localizer.circles[i];
-    circle_poses[i] = get_pose(axis_localizer.circles[i]); 
+    origin_circles[i] = axis_detector.circles[i];
+    circle_poses[i] = get_pose(axis_detector.circles[i]); 
   }
   
   /*cv::Vec3f x_axis = circle_poses[1].pos - circle_poses[0].pos;

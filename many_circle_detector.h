@@ -7,28 +7,25 @@
 #include "circle_detector.h"
 
 namespace cv {
-  class CircleLocalizer {
+  class ManyCircleDetector {
     public:
-      CircleLocalizer(int number_of_circles, int width, int height);
-      ~CircleLocalizer(void);
+      ManyCircleDetector(int number_of_circles, int width, int height);
+      ~ManyCircleDetector(void);
       
       bool initialize(const cv::Mat& image);
-      bool localize(const cv::Mat& image);
-      
-      void set_scales(const CircleDetector::Circle& x, const CircleDetector::Circle& center, const CircleDetector::Circle& y);
-      void load_calibration(const cv::Mat& k, const cv::Mat& dist_coeff);
-      void compute_position(const CircleDetector::Circle& circle);
+      bool detect(const cv::Mat& image);
       
       cv::Mat current_image;
       std::vector<CircleDetector::Circle> circles;
-      
+
+      // for parallel computation
       class Functor {
         public:
-          Functor(CircleLocalizer& localizer, const cv::Mat& image);
+          Functor(ManyCircleDetector& localizer, const cv::Mat& image);
           void operator()(tbb::blocked_range<int>& r) const;
           
           const cv::Mat& image;
-          CircleLocalizer& localizer;
+          ManyCircleDetector& detector;
           std::vector<CircleDetector::Circle>& circles;
           std::vector<CircleDetector>& detectors;          
       };
