@@ -163,30 +163,14 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 
 cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, const cv::CircleDetector::Circle& previous_circle)
 {
-	//int tx,ty;
 	Circle result;
 	numSegments = 0;
-  cv::Mat original_image;
-  image.copyTo(original_image);
+  /*cv::Mat original_image;
+  image.copyTo(original_image);*/
 
-	//image thresholding 
-	//timer.reset();
-	//timer.start();
-	//memset(&buffer[0],0,sizeof(int)*len); -> REMOVED: ok?
-	//tima += timer.getTime();
-  
 	//image delimitation
 	int pos = (height-1)*width;
-	/*for (int i = 0;i<width;i++){
-		buffer[i] = -1000;	
-		buffer[pos+i] = -1000;
-	}
-	for (int i = 0;i<height;i++){
-		buffer[width*i] = -1000;	
-		buffer[width*i+width-1] = -1000;
-	}*/
-
-	int ii = 0;
+  int ii = 0;
 	int start = 0;
 	bool cont = true;
 

@@ -3,13 +3,11 @@
 
 #include <opencv2/opencv.hpp>
 #include "many_circle_detector.h"
-#include "config.h"
 
 namespace cv {
   class LocalizationSystem {
     public:
-      // current diameter = 0.123
-      LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff, float diameter);
+      LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff, float diameter = 0.122);
       
       bool set_axis(const cv::Mat& image);
       void draw_axis(cv::Mat& image);

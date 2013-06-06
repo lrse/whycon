@@ -12,14 +12,9 @@ find_package(OpenCV REQUIRED)
 find_package(GSL REQUIRED)
 #find_package(Boost COMPONENTS thread filesystem system REQUIRED)
 
-#set(LIBS ${OpenCV_LIBS} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
 set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES} ${GSL_LIBRARIES})
 
-SET(detector_sources test-detector.cpp circle_detector.cpp many_circle_detector.cpp)
-add_executable(circle-detector ${detector_sources})
-target_link_libraries(circle-detector ${LIBS})
-
-SET(system_sources test-system.cpp circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
+SET(system_sources main.cpp circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
 add_executable(localization-system ${system_sources})
 target_link_libraries(localization-system ${LIBS})
 
