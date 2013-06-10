@@ -17,7 +17,7 @@ Publication and citation
 =====================
 
 _WhyCon_ was first presented on ICRA2013 conference and will be published as a full article soon, where the details of the algorithm will be presented.
-In the meantime, if you use this software for your publication pleace use the following URL for citations: [http://purl.org/robotics/whycon].
+In the meantime, if you use this software for your publication please use the following URL for citations: [http://purl.org/robotics/whycon].
 
 Installation
 ===========
