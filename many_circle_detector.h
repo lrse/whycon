@@ -15,7 +15,6 @@ namespace cv {
       bool initialize(const cv::Mat& image);
       bool detect(const cv::Mat& image);
       
-      cv::Mat current_image;
       std::vector<CircleDetector::Circle> circles;
 
       // for parallel computation

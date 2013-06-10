@@ -13,7 +13,7 @@ cv::ManyCircleDetector::~ManyCircleDetector(void) {
 }
 
 bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
-  cv::Mat marked_image;
+  cv::Mat marked_image, current_image;
   image.copyTo(marked_image);
   
   int attempts = 100;

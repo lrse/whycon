@@ -179,11 +179,8 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     circle_poses[i] = get_pose(axis_detector.circles[i]); 
   }
   
-  /*cv::Vec3f x_axis = circle_poses[1].pos - circle_poses[0].pos;
-  cv::Vec3f y_axis = circle_poses[2].pos - circle_poses[0].pos;*/
-  float dim_x = /*cv::norm(x_axis)*/ 3.125;
-  float dim_y = /*cv::norm(y_axis)*/ 2.5;
-  cout << "dimx/dimy " << dim_x << " " << dim_y << endl;
+  float dim_x = 1.0;
+  float dim_y = 1.0;
   cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
   
   // build matrix of coefficients and independent term for linear eq. system
@@ -221,7 +218,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 {
-  static string names[4] = { "c0", "c1", "c2", "c3" };
+  static string names[4] = { "0,0", "1,0", "0,1", "1,1" };
   for (int i = 0; i < 4; i++) {
     std::ostringstream ostr;
     //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;

@@ -102,10 +102,10 @@ int main(int argc, char** argv) {
         writer << frame;
         ofstream data_file_axis((output_name + "_axis.log").c_str(), ios_base::out | ios_base::trunc);
         data_file_axis << "axis frame " << current_frame << endl;
-        data_file_axis << "axis c0 " << system.get_pose(system.origin_circles[0]).pos << endl;
-        data_file_axis << "axis c1 " << system.get_pose(system.origin_circles[1]).pos << endl;
-        data_file_axis << "axis c2 " << system.get_pose(system.origin_circles[2]).pos << endl;
-        data_file_axis << "axis c3 " << system.get_pose(system.origin_circles[3]).pos << endl;
+        data_file_axis << "axis 0,0 " << system.get_pose(system.origin_circles[0]).pos << endl;
+        data_file_axis << "axis 1,0 " << system.get_pose(system.origin_circles[1]).pos << endl;
+        data_file_axis << "axis 0,1 " << system.get_pose(system.origin_circles[2]).pos << endl;
+        data_file_axis << "axis 1,1 " << system.get_pose(system.origin_circles[3]).pos << endl;
         data_file_axis << "transform " << system.coordinates_transform << endl;
       }
     }
