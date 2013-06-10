@@ -207,17 +207,20 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
 		start = ii;
 	}
-  
+
 	while (cont) 
 	{
     // if current position needs to be thresholded
-		if (buffer[ii] == 0){
+    int pixel_class = buffer[ii];
+		if (pixel_class == 0){
 			ptr = &image.data[ii*3];
-			buffer[ii]=((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      if (pixel_class == -2) buffer[ii] = pixel_class; // only tag black pixels, to avoid dirtying the buffer outside the ellipse
+      // NOTE: the inner white area will not initially be tagged, but once the inner circle is processed, it will
 		}
 
     // if the current pixel is detected as "black"
-		if (numSegments < MAX_SEGMENTS && buffer[ii] == -2){
+		if (numSegments < MAX_SEGMENTS && pixel_class == -2){
 			queueEnd = 0;
 			queueStart = 0;
       
@@ -226,11 +229,13 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 				pos = outer.y * width + outer.x; // jump to the middle of the ring
 
         // treshold the middle of the ring and check if it is detected as "white"
-				if (buffer[pos] == 0){
+        pixel_class = buffer[pos];
+				if (pixel_class == 0){
 					ptr = &image.data[pos*3];
-					buffer[pos]=((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+					pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+          buffer[pos] = pixel_class;
 				}
-				if (numSegments < MAX_SEGMENTS && buffer[pos] == -1){
+				if (numSegments < MAX_SEGMENTS && pixel_class == -1){
 
           // check if it looks like the inner portion
 					if (examineCircle(image, inner, pos, innerAreaRatio)){
@@ -329,9 +334,9 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
       for (int i = 0;i<len;i++){
         int j = buffer[i];
         if (j == outer_id || j == inner_id) {
-          image.data[i*3+j%3] = 0;
-          image.data[i*3+(j+1)%3] = 0;
-          image.data[i*3+(j+2)%3] = 0;
+          image.data[i*3+j%3] = 255;
+          image.data[i*3+(j+1)%3] = 255;
+          image.data[i*3+(j+2)%3] = 255;
         }
       }
     }
