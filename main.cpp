@@ -22,9 +22,9 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 }
 
 int main(int argc, char** argv) {
-  if (argc < 5) {
-    cout << "usage: test-localizer <number of circles> [-cam <camera-number> | -video <video file> | -img <dir/pattern>]  <output name>" << endl;
-    cout << "For -img use something like 'directory/%03d.png', for images numbered 000.png to 999.png under 'directory'" << endl;
+  if (argc < 7) {
+    cout << "usage: localization-system <number of circles> [-cam <camera-number> | -video <video file> | -img <dir/pattern>]  [-mat <matlab calibration> | -xml <XML calibrator file>] <output name>" << endl;
+    cout << "\tFor -img use something like 'directory/%03d.png', for images numbered 000.png to 999.png under 'directory'" << endl;
     return 1;
   }
   
@@ -33,15 +33,16 @@ int main(int argc, char** argv) {
   int number_of_circles = atoi(argv[1]);
   bool is_camera = (std::string(argv[2]) == "-cam");
   //bool is_img = (std::string(argv[2]) == "-img");
-  std::string output_name(argv[4]);
+  std::string calibration_file(argv[5]);
+  std::string output_name(argv[6]);
   
   /* setup camera */
   cv::VideoCapture capture;
   if (is_camera) {
     int cam_id = atoi(argv[3]);
     capture.open(cam_id);
-    capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+    /*capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);*/
   }
   else {
     std::string video_name(argv[3]);
@@ -52,8 +53,11 @@ int main(int argc, char** argv) {
   /* load calibration and setup system */
   cv::Mat frame;
   cv::Mat K, dist_coeff;
-  //cv::LocalizationSystem::load_opencv_calibration("calibration.xml.m", K, dist_coeff);
-  cv::LocalizationSystem::load_matlab_calibration("../Calib_Results.m", K, dist_coeff);
+  if (std::string(argv[4]) == "-xml")
+    cv::LocalizationSystem::load_opencv_calibration(calibration_file, K, dist_coeff);
+  else
+    cv::LocalizationSystem::load_matlab_calibration(calibration_file, K, dist_coeff);
+    
   cv::LocalizationSystem system(number_of_circles, capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT),
     K, dist_coeff);
     
