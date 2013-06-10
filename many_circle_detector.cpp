@@ -15,7 +15,7 @@ cv::ManyCircleDetector::~ManyCircleDetector(void) {
 bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
   cv::Mat marked_image, current_image;
   image.copyTo(marked_image);
-  
+
   int attempts = 100;
   for (int i = 0; i < number_of_circles; i++) {
     detectors[i].draw = true;

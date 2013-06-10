@@ -48,8 +48,6 @@ namespace cv {
       float centerDistanceToleranceRatio;
       int centerDistanceToleranceAbs;
 
-      std::vector<Circle> segmentArray;
-
       float outerAreaRatio,innerAreaRatio,areasRatio;
       int queueStart,queueEnd,queueOldStart,numSegments;
       int width,height,len,siz;
