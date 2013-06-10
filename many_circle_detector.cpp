@@ -21,9 +21,9 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
     detectors[i].draw = true;
     for (int j = 0; j < attempts; j++) {
       marked_image.copyTo(current_image);
-      
+
+      cout << "detecting circle " << i << " attempt " << j << endl;
       circles[i] = detectors[i].detect(current_image);
-      //cout << "attempt " << j << " - circle valid? " << circles[i].valid << " " << circles[i].x << "," << circles[i].y << endl;      
       if (circles[i].valid) { current_image.copyTo(marked_image); break; }
     }
     detectors[i].draw = false;

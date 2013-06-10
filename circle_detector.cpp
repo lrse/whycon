@@ -14,7 +14,6 @@ cv::CircleDetector::CircleDetector(int _width,int _height, float _diameter_ratio
   color_step = _color_step;
         
 	debug = false;
-	lastTrackOK = false;
 	draw = false; 
 	drawAll = true;
 	maxFailed = 0;
@@ -27,7 +26,6 @@ cv::CircleDetector::CircleDetector(int _width,int _height, float _diameter_ratio
 	ratioTolerance = 1.0;
 	threshold = maxThreshold/2;       
 	numFailed = maxFailed;
-	track = true;
 
 	//initialization - fixed params
 	width = _width;
@@ -42,12 +40,40 @@ cv::CircleDetector::CircleDetector(int _width,int _height, float _diameter_ratio
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
 
-	tima = timb = timc =timd = sizer = sizerAll = 0;
-  //segmentArray.resize(MAX_SEGMENTS);
+  cleanup_buffer(Circle(), false);
 }
 
 cv::CircleDetector::~CircleDetector()
 {
+}
+
+void cv::CircleDetector::cleanup_buffer(const Circle& c, bool fast_cleanup) {
+  if (c.valid && fast_cleanup)
+  {
+    // zero only parts modified when detecting 'c'
+		int ix = max(c.minx - 2,1);
+		int ax = min(c.maxx + 2, width - 2);
+		int iy = max(c.miny - 2,1);
+		int ay = min(c.maxy + 2, height - 2);
+		for (int y = iy; y < ay; y++){
+			int pos = y * width; 
+			for (int x = ix; x < ax; x++) buffer[pos + x] = 0; // TODO: user ptr and/or memset
+		}    
+  }
+  else {
+    cout << "clean whole buffer" << endl;
+		memset(&buffer[0], 0, sizeof(int)*len);
+
+    //image delimitation
+		for (int i = 0;i<width;i++){
+			buffer[i] = -1000;	
+			buffer[(height - 1) * width + i] = -1000;
+		}
+		for (int i = 0;i<height;i++){
+			buffer[width * i] = -1000;	
+			buffer[width * i + width - 1] = -1000;
+		}
+  }
 }
 
 bool cv::CircleDetector::changeThreshold()
@@ -60,7 +86,7 @@ bool cv::CircleDetector::changeThreshold()
 	}
 	int step = 256/div;
 	threshold = 3*(step*(numFailed-div)+step/2);
-	fprintf(stdout,"Threshold: %i %i %i\n",div,numFailed,threshold/3);
+  cout << "changed threshold to " << threshold << endl;
 	return step > 16;
 }
 
@@ -158,13 +184,15 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			result = true;	
 		}
 	}
+
 	return result;
 }
 
 cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, const cv::CircleDetector::Circle& previous_circle)
 {
+  cout << "detecting" << endl;
 	Circle inner, outer;
-  int inner_id = -1, outer_id = -1; // TODO: remove, only needed for current draw
+  int inner_id, outer_id;
 	numSegments = 0;
   /*cv::Mat original_image;
   image.copyTo(original_image);*/
@@ -175,20 +203,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	int start = 0;
 	bool cont = true;
 
-  if (!previous_circle.valid || !track || !lastTrackOK || true){
-		memset(&buffer[0],0,sizeof(int)*len);
-		//image delimitation
-		for (int i = 0;i<width;i++){
-			buffer[i] = -1000;	
-			buffer[pos+i] = -1000;
-		}
-		for (int i = 0;i<height;i++){
-			buffer[width*i] = -1000;	
-			buffer[width*i+width-1] = -1000;
-		}
-	}
-
-	if (previous_circle.valid && track){
+	if (previous_circle.valid){
 		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
 		start = ii;
 	}
@@ -265,9 +280,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							inner.v1 = (fm0-f0)/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
 							inner.bwRatio = (float)outer.size/inner.size;
 
-							if (track) ii = start -1;
-							sizer += outer.size + inner.size; //for debugging
-							sizerAll += len; 								    //for debugging
+							ii = start - 1; // track position 
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
 							if (circularity < 1.02 && circularity > 0.98){
@@ -307,9 +320,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		cont = (ii != start);
 	}
 
-  //if (numSegments == 2 && segmentArray[0].valid && segmentArray[1].valid) lastTrackOK = true; else lastTrackOK = false;
-
-	//Drawing results 
+	// draw
 	if (outer.valid){
 		lastThreshold = threshold;
 		drawAll = false;
@@ -324,16 +335,24 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
         }
       }
     }
-	}else if (numFailed < maxFailed){
-		if (numFailed++%2 == 0) changeThreshold(); else threshold = lastThreshold;
-		if (debug) drawAll = true;
-	}else{
-		numFailed++;
-		if (changeThreshold()==false) numFailed = 0;
-		if (debug) drawAll = true;
 	}
+  else if (numFailed < maxFailed) {
+		if (numFailed++ % 2 == 0) changeThreshold(); else threshold = lastThreshold;
+	}
+  else{
+		numFailed++;
+		if (changeThreshold() == false) numFailed = 0;
+	}
+
+  // if this is not the first call (there was a previous valid circle where search started),
+  // the current call found a valid match, and only two segments were found during the search (inner/outer)
+  // then, only the bounding box area of the outer ellipse needs to be cleaned in 'buffer'
+  bool fast_cleanup = (previous_circle.valid && numSegments == 2 && outer.valid); 
+  cleanup_buffer(outer, fast_cleanup);
   
-  //if (result.valid) improveEllipse(original_image, result); 
+  //if (result.valid) improveEllipse(original_image, result);
+
+  if (!inner.valid) cout << "detection failed" << endl;
 	return inner;
 }
 

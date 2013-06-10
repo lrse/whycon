@@ -56,6 +56,8 @@ namespace cv {
       unsigned char *ptr;
       //CTimer timer;
       int tima,timb,timc,timd,sizer,sizerAll;
+
+      void cleanup_buffer(const Circle& c, bool fast_cleanup);
       
     public:
       class Circle {
