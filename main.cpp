@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
           cv::Vec3f coord = system.get_pose(circle).pos;
           cv::Vec3f coord_trans = system.get_transformed_pose(circle).pos;
           ostringstream ostr;
-          ostr << fixed << setprecision(5) << coord_trans;
+          ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
           circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
           cout << capture.get(CV_CAP_PROP_POS_FRAMES) << endl;
           data_file << "frame " << saved_frame_idx + 1 << " circle " << i

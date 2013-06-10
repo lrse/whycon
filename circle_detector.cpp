@@ -391,7 +391,7 @@ void cv::CircleDetector::improveEllipse(const cv::Mat& image, Circle& c)
 void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color) const
 {
   cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, 2, CV_AA);
-  float scale = image.size().width / 1600.0f;
+  float scale = image.size().width / 1800.0f;
   float thickness = scale * 3.0;
   cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(255,255,0), thickness, CV_AA);
 }
