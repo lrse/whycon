@@ -136,7 +136,6 @@ int main(int argc, char** argv) {
           ostringstream ostr;
           ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
           circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
-          cout << capture.get(CV_CAP_PROP_POS_FRAMES) << endl;
           data_file << "frame " << saved_frame_idx + 1 << " circle " << i
             << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
             << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;

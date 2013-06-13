@@ -3,30 +3,34 @@
 using namespace std;
 
 cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height) : 
-  width(_width), height(_height), number_of_circles(_number_of_circles)
+  width(_width), height(_height), number_of_circles(_number_of_circles), context(_width, _height)
 {
   circles.resize(number_of_circles);
-  detectors.resize(number_of_circles, CircleDetector(width, height));
+  detectors.resize(number_of_circles, CircleDetector(width, height, &context));
 }
 
 cv::ManyCircleDetector::~ManyCircleDetector(void) {
 }
 
 bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
-  cv::Mat marked_image, current_image;
+  cv::Mat marked_image;
   image.copyTo(marked_image);
 
+  //cv::namedWindow("marked", CV_WINDOW_NORMAL);
+  //cv::namedWindow("buffer", CV_WINDOW_NORMAL);
   int attempts = 100;
   for (int i = 0; i < number_of_circles; i++) {
-    detectors[i].draw = true;
     for (int j = 0; j < attempts; j++) {
-      marked_image.copyTo(current_image);
 
       cout << "detecting circle " << i << " attempt " << j << endl;
-      circles[i] = detectors[i].detect(current_image);
-      if (circles[i].valid) { current_image.copyTo(marked_image); break; }
+      circles[i] = detectors[i].detect(marked_image);
+      //cv::imshow("marked", marked_image);
+      /*cv::Mat buffer_img;
+      context.debug_buffer(buffer_img);
+      cv::imshow("buffer", buffer_img);
+      cv::waitKey();*/
+      if (circles[i].valid) break;
     }
-    detectors[i].draw = false;
     
     if (!circles[i].valid) return false;    
   }
@@ -35,15 +39,19 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
 
 bool cv::ManyCircleDetector::detect(const cv::Mat& image) {
   bool all_detected = true;
+  cv::Mat marked_image;
+  image.copyTo(marked_image);
 
   for (int i = 0; i < number_of_circles; i++) {
-    //int64_t ticks = cv::getTickCount();
+    int64_t ticks = cv::getTickCount();
     cout << "detecting circle " << i << endl;
-    circles[i] = detectors[i].detect(image, circles[i]); // TODO: modify current
+    circles[i] = detectors[i].detect(marked_image, circles[i]); // TODO: modify current
     if (!circles[i].valid) { all_detected = false; break; }
-    //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-    //cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
+    //cv::imshow("marked", marked_image);
+    double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+    cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
   }
+  
   return all_detected;
 }
 
