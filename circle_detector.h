@@ -27,6 +27,8 @@ namespace cv {
       
       void improveEllipse(const cv::Mat& image, Circle& c);
 
+      bool draw;
+
     private:
     
       int minSize; 

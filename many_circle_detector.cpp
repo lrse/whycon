@@ -20,8 +20,8 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
   //cv::namedWindow("buffer", CV_WINDOW_NORMAL);
   int attempts = 100;
   for (int i = 0; i < number_of_circles; i++) {
+    detectors[i].draw = true;
     for (int j = 0; j < attempts; j++) {
-
       cout << "detecting circle " << i << " attempt " << j << endl;
       circles[i] = detectors[i].detect(marked_image);
       //cv::imshow("marked", marked_image);
@@ -31,6 +31,7 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
       cv::waitKey();*/
       if (circles[i].valid) break;
     }
+    detectors[i].draw = false;
     
     if (!circles[i].valid) return false;    
   }

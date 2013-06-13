@@ -14,6 +14,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, fl
 	centerDistanceToleranceAbs = 5;
 	circularTolerance = 0.3;
 	ratioTolerance = 1.0;
+  draw = false;
 	
 	//initialization - fixed params
 	width = _width;
@@ -314,12 +315,13 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	// draw
 	if (inner.valid){
 		threshold_counter = 0;
-    for (int i = 0;i<len;i++){
-      int j = buffer[i];
-      if (j == outer_id) {
-        image.data[i*3+j%3] = 255;
-        image.data[i*3+(j+1)%3] = 255;
-        image.data[i*3+(j+2)%3] = 255;
+    if (draw) {
+      for (int i = queueOldStart; i < queueEnd; i++) {
+        int pos = queue[i];
+        uchar* ptr = image.data + 3*pos;
+        *ptr = 255; ptr++;
+        *ptr = 255; ptr++;
+        *ptr = 255;
       }
     }
 	}
