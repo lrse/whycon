@@ -17,7 +17,9 @@ namespace cv {
   {
     public:
       class Circle;
-      CircleDetector(int width, int height, float diameter_ratio = (5/14.0), int color_precision = 32, int color_step = 8);
+      class Context;
+      
+      CircleDetector(int width, int height, Context* context, float diameter_ratio = (5/14.0));
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
@@ -25,22 +27,11 @@ namespace cv {
       
       void improveEllipse(const cv::Mat& image, Circle& c);
 
-      bool changeThreshold();
-      bool debug,draw,drawAll;
+      bool draw;
+
     private:
     
-      int max_circles, color_precision, color_step;
-
-      bool track, lastTrackOK;
-      int maxFailed;
-      int numFailed;
-      int threshold; 
-
       int minSize; 
-      int lastThreshold; 
-      int thresholdBias; 
-      int maxThreshold; 
-
       float diameterRatio;
       int thresholdStep;
       float circularTolerance;
@@ -49,23 +40,19 @@ namespace cv {
       int centerDistanceToleranceAbs;
 
       float outerAreaRatio,innerAreaRatio,areasRatio;
-      int queueStart,queueEnd,queueOldStart,numSegments;
       int width,height,len,siz;
-      int expand[4];
-      std::vector<int> buffer, queue;
-      unsigned char *ptr;
-      //CTimer timer;
-      int tima,timb,timc,timd,sizer,sizerAll;
 
-      void cleanup_buffer(const Circle& c, bool fast_cleanup);
+      int threshold, threshold_counter;
+      void change_threshold(void);
+
+      int queueStart,queueEnd,queueOldStart,numSegments;
+
+      Context* context;
       
     public:
       class Circle {
         public:
-          Circle(void) {
-            x = y = 0;
-            round = valid = false;
-          }
+          Circle(void);
           
           float x;
           float y;
@@ -81,6 +68,19 @@ namespace cv {
           float v0,v1;
           
           void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0)) const;
+      };
+
+      class Context {
+        public:
+          Context(int _width, int _height);
+          void debug_buffer(cv::Mat& img);
+
+          std::vector<int> buffer, queue;
+          int width, height;
+
+        private:
+          void cleanup(const Circle& c, bool fast_cleanup);
+          friend class CircleDetector;
       };
   };
 }
