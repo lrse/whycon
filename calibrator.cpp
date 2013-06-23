@@ -101,6 +101,8 @@ int main(int argc, char** argv) {
       }
       
       cv::FileStorage file("calibration.xml", cv::FileStorage::WRITE);
+      file << "K" << K1;
+      file << "dist" << dist_coeff1;
       return 0;
     }
     

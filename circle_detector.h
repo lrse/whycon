@@ -31,7 +31,7 @@ namespace cv {
 
     private:
     
-      int minSize; 
+      int minSize, maxSize; 
       float diameterRatio;
       int thresholdStep;
       float circularTolerance;

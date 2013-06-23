@@ -10,6 +10,7 @@ using namespace std;
 cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, float _diameter_ratio) : context(_context)
 {
 	minSize = 10;
+  maxSize = 100*100; // TODO: test!
 	centerDistanceToleranceRatio = 0.1;
 	centerDistanceToleranceAbs = 5;
 	circularTolerance = 0.3;
@@ -50,9 +51,150 @@ void cv::CircleDetector::change_threshold(void)
   if (step <= 16) threshold_counter = 0;
 }
 
-
+#if 0
 bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio)
 {
+  int64_t ticks = cv::getTickCount();  
+  // get shorter names for elements in Context
+	vector<int>& buffer = context->buffer;
+  vector<int>& queue = context->queue;
+
+  int vx,vy;
+	queueOldStart = queueStart;
+	int position = 0;
+	int pos;	
+	bool result = false;
+	int type = buffer[ii];
+	int maxx,maxy,minx,miny;
+  int pixel_class;
+  uint sum;
+
+  //cout << "examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << numSegments << ")" << endl;
+  
+	buffer[ii] = ++numSegments;
+	circle.x = ii%width; 
+	circle.y = ii/width;
+	minx = maxx = circle.x;
+	miny = maxy = circle.y;
+	circle.valid = false;
+	circle.round = false;
+  circle.size = 0;
+  circle.mean = 0;
+	//push segment coords to the queue
+	queue[queueEnd++] = ii;
+	//and until queue is empty
+	while (queueEnd > queueStart){
+		//pull the coord from the queue
+		position = queue[queueStart++];
+		//search neighbours
+
+    pos = position;
+    int direction = 1; // go east first
+    do {
+      pos += direction; // go in the current direction (east/west)
+      pixel_class = buffer[pos];
+      // check if current pixel is thresholded. if not, do it
+      if (pixel_class == 0) {
+        uchar* ptr = &image.data[pos*3];
+        sum = (ptr[0]+ptr[1]+ptr[2]);
+        pixel_class = (sum > threshold)-2;
+        if (pixel_class != type) buffer[pos] = pixel_class;
+      }
+
+      // if current pixel is of desired type, label it as belonging to current segment.
+      if (pixel_class == type) {
+        //queue[queueEnd++] = pos;
+        circle.size++;
+        if (direction == 1)
+          maxx = max(maxx,pos%width);
+        else
+          minx = min(minx,pos%width);
+        buffer[pos] = numSegments;
+        circle.mean += sum;
+      }
+      else {
+        // else, go to west now if was going east. otherwise stop
+        if (direction == 1) { pos = position; direction = -1; continue; }
+        else break;
+      }
+
+      // check north of this pixel
+      {
+        int north_pos = pos-width;
+        pixel_class = buffer[north_pos];
+        if (pixel_class == 0) {
+          uchar* ptr = &image.data[north_pos*3];
+          sum = (ptr[0]+ptr[1]+ptr[2]);
+          pixel_class = (sum > threshold)-2;
+          if (pixel_class != type) buffer[north_pos] = pixel_class;
+        }
+        // north pixel is of desired type, add to queue and label it. otherwise remember the type
+        if (pixel_class == type) {
+          circle.size++;
+          queue[queueEnd++] = north_pos;
+          miny = min(miny,north_pos/width);
+          buffer[north_pos] = numSegments;
+        }
+      }
+
+      // same thing for south pixel
+      {
+        int south_pos = pos+width;
+        pixel_class = buffer[south_pos];
+        if (pixel_class == 0) {
+          uchar* ptr = &image.data[south_pos*3];
+          pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+          if (pixel_class != type) buffer[south_pos] = pixel_class;
+        }
+        if (pixel_class == type) {
+          circle.size++;
+          queue[queueEnd++] = south_pos;
+          maxy = max(maxy,south_pos/width);
+          buffer[south_pos] = numSegments;
+        }
+      }
+    } while (true);
+  }
+
+	//once the queue is empty, i.e. segment is complete, we compute its size 
+	//circle.size = queueEnd-queueOldStart;
+	if (circle.size > minSize){
+		//and if its large enough, we compute its other properties 
+		circle.maxx = maxx;
+		circle.maxy = maxy;
+		circle.minx = minx;
+		circle.miny = miny;
+		circle.type = -type;
+		vx = (circle.maxx-circle.minx+1);
+		vy = (circle.maxy-circle.miny+1);
+		circle.x = (circle.maxx+circle.minx)/2;
+		circle.y = (circle.maxy+circle.miny)/2;
+		circle.roundness = vx*vy*areaRatio/circle.size;
+		//we check if the segment is likely to be a ring 
+		if (circle.roundness - circularTolerance < 1.0 && circle.roundness + circularTolerance > 1.0)
+		{
+			//if its round, we compute yet another properties 
+			circle.round = true;
+			/*circle.mean = 0;
+			for (int p = queueOldStart;p<queueEnd;p++){
+				pos = queue[p];
+				circle.mean += image.data[pos*3]+image.data[pos*3+1]+image.data[pos*3+2];
+			}*/
+			circle.mean = circle.mean/circle.size;
+			result = true;
+      //cout << "segment size " << circle.size << " " << vx << " " << vy << endl;
+		}
+	}
+
+  double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+    //cout << "examineCircle2: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
+
+	return result;
+}
+#else
+bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio)
+{
+  int64_t ticks = cv::getTickCount();  
   // get shorter names for elements in Context
 	vector<int>& buffer = context->buffer;
   vector<int>& queue = context->queue;
@@ -88,52 +230,54 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
     if (pixel_class == 0) {
       uchar* ptr = &image.data[pos*3];
       pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      if (pixel_class != type) buffer[pos] = pixel_class;
     }
     if (pixel_class == type) {
       queue[queueEnd++] = pos;
       maxx = max(maxx,pos%width);
       buffer[pos] = numSegments;
     }
-    else buffer[pos] = pixel_class;
     
 		pos = position-1;
 		pixel_class = buffer[pos];
     if (pixel_class == 0) {
       uchar* ptr = &image.data[pos*3];
       pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      if (pixel_class != type) buffer[pos] = pixel_class;
     }
     if (pixel_class == type) {
       queue[queueEnd++] = pos;
       minx = min(minx,pos%width);
       buffer[pos] = numSegments;
     }
-    else buffer[pos] = pixel_class;
     
     pos = position-width;
 		pixel_class = buffer[pos];
     if (pixel_class == 0) {
       uchar* ptr = &image.data[pos*3];
       pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      if (pixel_class != type) buffer[pos] = pixel_class;
     }
     if (pixel_class == type) {
       queue[queueEnd++] = pos;
       miny = min(miny,pos/width);
       buffer[pos] = numSegments;
     }
-    else buffer[pos] = pixel_class;
 
 		pos = position+width;
 		pixel_class = buffer[pos];
     if (pixel_class == 0) {
       uchar* ptr = &image.data[pos*3];
       pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+      if (pixel_class != type) buffer[pos] = pixel_class;
     }
     if (pixel_class == type) {
       queue[queueEnd++] = pos;
       maxy = max(maxy,pos/width);
       buffer[pos] = numSegments;
     }
-    else buffer[pos] = pixel_class;
+
+    //if (queueEnd-queueOldStart > maxSize) return false;
   }
 
 	//once the queue is empty, i.e. segment is complete, we compute its size 
@@ -155,6 +299,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		{
 			//if its round, we compute yet another properties 
 			circle.round = true;
+
+      // TODO: mean computation could be delayed until the inner ring also satisfies above condition, right?
 			circle.mean = 0;
 			for (int p = queueOldStart;p<queueEnd;p++){
 				pos = queue[p];
@@ -166,8 +312,12 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		}
 	}
 
+  double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+    //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
+
 	return result;
 }
+#endif
 
 cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, const cv::CircleDetector::Circle& previous_circle)
 {
@@ -177,7 +327,6 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	int pos = (height-1)*width;
   int ii = 0;
 	int start = 0;
-	bool cont = true;
   Circle inner, outer;
   int outer_id;
 
@@ -189,7 +338,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   //cout << "detecting (thres " << threshold << ") at " << ii << endl;
 
   numSegments = 0;
-	while (cont) 
+	do
 	{
     if (numSegments > MAX_SEGMENTS) break;
     //if (start != 0) cout << "it " << ii << endl;
@@ -272,6 +421,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							inner.v1 = (fm0-f0)/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
 							inner.bwRatio = (float)outer.size/inner.size;
 
+              // TODO: purpose? should be removed? if next if fails, it will go over and over to the same place until number of segments
+              // reaches max, right?
 							ii = start - 1; // track position 
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
@@ -309,8 +460,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		}
 		ii++;
 		if (ii >= len) ii = 0;
-		cont = (ii != start);
-	}
+	} while (ii != start);
 
 	// draw
 	if (inner.valid){
@@ -400,7 +550,7 @@ void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, c
   cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, 2, CV_AA);
   float scale = image.size().width / 1800.0f;
   float thickness = scale * 3.0;
-  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(255,255,0), thickness, CV_AA);
+  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, color, thickness, CV_AA);
 }
 
 cv::CircleDetector::Context::Context(int _width, int _height)

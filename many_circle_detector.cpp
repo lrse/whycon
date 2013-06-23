@@ -22,13 +22,16 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
   for (int i = 0; i < number_of_circles; i++) {
     detectors[i].draw = true;
     for (int j = 0; j < attempts; j++) {
+      int64_t ticks = cv::getTickCount();
       cout << "detecting circle " << i << " attempt " << j << endl;
-      circles[i] = detectors[i].detect(marked_image);
+      circles[i] = detectors[i].detect(marked_image, (i != 0 ? circles[i - 1] : CircleDetector::Circle()));
       //cv::imshow("marked", marked_image);
       /*cv::Mat buffer_img;
       context.debug_buffer(buffer_img);
       cv::imshow("buffer", buffer_img);
       cv::waitKey();*/
+      double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+      cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
       if (circles[i].valid) break;
     }
     detectors[i].draw = false;
