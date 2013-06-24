@@ -16,7 +16,8 @@ namespace cv {
       bool localize(const cv::Mat& image, int attempts = 1);
       
       float xscale, yscale;
-      
+
+      // TODO: use double?
       struct Pose {
         cv::Vec3f pos;
         cv::Vec3f rot; // pitch, roll, yaw

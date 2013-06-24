@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
           //ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
           ostr << i;
           circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
-          data_file << "frame " << saved_frame_idx + 1 << " circle " << i
+          data_file << setprecision(15) << "frame " << saved_frame_idx + 1 << " circle " << i
             << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
             << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
         }

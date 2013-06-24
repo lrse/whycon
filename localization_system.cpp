@@ -7,10 +7,12 @@
 #include <gsl/gsl_eigen.h>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 #include "localization_system.h"
 #include "circle_detector.h"
 using std::cout;
 using std::endl;
+using std::numeric_limits;
 
 cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
   float _circle_diameter) :
@@ -77,7 +79,8 @@ cv::Vec3f cv::LocalizationSystem::eigen(double data[])
 		 z1 = -z1;
 		 z0 = -z0;
 	}
-  cv::Vec3f result(-z0*z, -z1*z, z2*z); // NOTE: ZXY ordering XYZ
+  //cv::Vec3f result(-z0*z, -z1*z, z2*z); // NOTE: ZXY ordering XYZ
+  cv::Vec3f result(z0*z, z1*z, z2*z); // NOTE: ZXY ordering XYZ
 	gsl_vector_free (eval);
 	gsl_matrix_free (evec);
 
@@ -172,13 +175,54 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   if (!axis_detector.initialize(image)) return false;
 
   // get poses of each calibration circle
+  /*float minx, miny;
+  minx = miny = numeric_limits<float>::max();
+  int zero_i;*/
+  
   if (!axis_detector.detect(image)) return false;
   Pose circle_poses[4];
   for (int i = 0; i < 4; i++) {
     origin_circles[i] = axis_detector.circles[i];
-    circle_poses[i] = get_pose(axis_detector.circles[i]); 
+    circle_poses[i] = get_pose(axis_detector.circles[i]);
+    /*float x = circle_poses[i].pos(0);
+    float y = circle_poses[i].pos(1);
+    if (x < minx) { zero_i = i; x = minx; }
+    if (y < miny) { zero_i = i; y = miny; }*/
   }
-  
+
+  // set (0,0) of circle at top, left
+  /*std::swap(origin_circles[zero_i], origin_circles[0]);
+  std::swap(circle_poses[zero_i], circle_poses[0]);*/
+  cv::Vec3f vecs[3];  
+  for (int i = 0; i < 3; i++) {
+    vecs[i] = circle_poses[i + 1].pos - circle_poses[0].pos;
+    cout << "vec " << i+1 << "->0 " << vecs[i] << endl;
+  }
+  int min_prod_i;
+  float min_prod = numeric_limits<float>::max();
+  for (int i = 0; i < 3; i++) {
+    float prod = fabsf(vecs[(i + 2) % 3].dot(vecs[i]));
+    cout << "prod: " << ((i + 2) % 3 + 1) << " " << i + 1 << " " << vecs[(i + 2) % 3] << " " << vecs[i] << " " << prod << endl;
+    if (prod < min_prod) { min_prod = prod; min_prod_i = i; }
+  }
+  int axis1_i = (((min_prod_i + 2) % 3) + 1);
+  int axis2_i = (min_prod_i + 1);
+  if (fabsf(circle_poses[axis1_i].pos(0)) < fabsf(circle_poses[axis2_i].pos(0))) std::swap(axis1_i, axis2_i);
+  int xy_i;
+  for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
+  cout << "axis ids: " << axis1_i << " " << axis2_i << " " << xy_i << endl;
+
+  CircleDetector::Circle origin_circles_reordered[4];
+  origin_circles_reordered[0] = origin_circles[0];
+  origin_circles_reordered[1] = origin_circles[axis1_i];
+  origin_circles_reordered[2] = origin_circles[axis2_i];
+  origin_circles_reordered[3] = origin_circles[xy_i];
+  for (int i = 0; i < 4; i++) {
+    origin_circles[i] = origin_circles_reordered[i];
+    circle_poses[i] = get_pose(origin_circles[i]);
+    cout << "original poses: " << circle_poses[i].pos << endl;
+  }
+    
   float dim_x = 1.0;
   float dim_y = 1.0;
   cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
