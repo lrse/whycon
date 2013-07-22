@@ -14,9 +14,11 @@ find_package(GSL REQUIRED)
 
 set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES} ${GSL_LIBRARIES})
 
-SET(system_sources main.cpp circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
-add_executable(localization-system ${system_sources})
-target_link_libraries(localization-system ${LIBS})
+set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
+add_library(whycon SHARED ${whycon_srcs})
+
+add_executable(localization-system main.cpp)
+target_link_libraries(localization-system ${LIBS} whycon)
 
 SET(calibrator_sources calibrator.cpp)
 add_executable(calibrator ${calibrator_sources})
