@@ -27,6 +27,7 @@ cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, fl
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
+  // << "outerRatio/innerRatio " << outerAreaRatio << " " << innerAreaRatio << " " << diameterRatio << endl;
 
   threshold = (3 * 256) / 2;
   threshold_counter = 0;
@@ -308,8 +309,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			}
 			circle.mean = circle.mean/circle.size;
 			result = true;
-      //cout << "segment size " << circle.size << " " << vx << " " << vy << endl;
-		}
+      // << "segment size " << circle.size << " " << vx << " " << vy << endl;
+		}// else cout << "not round enough (" << circle.roundness << ") vx/vy " << vx << " " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio << endl;
 	}
 
   double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
@@ -359,6 +360,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 		if (pixel_class == -2){
 			queueEnd = 0;
 			queueStart = 0;
+      // << "black pixel " << ii << endl;
       
 			// check if looks like the outer portion of the ring
 			if (examineCircle(image, outer, ii, outerAreaRatio)){
@@ -479,6 +481,10 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
     change_threshold(); // update threshold for next run. inner is what user receives
 	}
 
+  /*cv::Mat buffer_img;
+  context->debug_buffer(buffer_img);
+  cv::imshow("buffer", buffer_img);*/
+
   // if this is not the first call (there was a previous valid circle where search started),
   // the current call found a valid match, and only two segments were found during the search (inner/outer)
   // then, only the bounding box area of the outer ellipse needs to be cleaned in 'buffer'
@@ -545,11 +551,12 @@ cv::CircleDetector::Circle::Circle(void)
   round = valid = false;
 }
 
-void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color) const
+void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color, float thickness) const
 {
-  cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, 2, CV_AA);
+  cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, thickness, CV_AA);
   float scale = image.size().width / 1800.0f;
-  float thickness = scale * 3.0;
+  //float thickness = scale * 3.0;
+  //if (thickness < 1) thickness = 1;
   cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, color, thickness, CV_AA);
 }
 
@@ -596,9 +603,11 @@ void cv::CircleDetector::Context::debug_buffer(cv::Mat& img)
 {
   img.create(height, width, CV_8UC3);
   cv::Vec3b* ptr = img.ptr<cv::Vec3b>(0);
+  img = cv::Scalar(128,128,128);
   for (uint i = 0; i < img.total(); i++, ++ptr) {
-    if (buffer[i] == -1) *ptr = cv::Vec3b(128,255,128);
-    else if (buffer[i] == -2) *ptr = cv::Vec3b(255,128,255);
-    else if (buffer[i] != 0) *ptr = cv::Vec3b(0, 255, 0);
+    if (buffer[i] == -1) *ptr = cv::Vec3b(0,0,0);
+    else if (buffer[i] == -2) *ptr = cv::Vec3b(255,255,255);
+    //else if (buffer[i] < 0) *ptr = cv::Vec3b(0, 255, 0);
+    else if (buffer[i] > 0) *ptr = cv::Vec3b(255, 0, 255);
   }
 }

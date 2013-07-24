@@ -2,14 +2,14 @@
 #define __CIRCLE_LOCALIZER_H__
 
 #include <vector>
-#include <tbb/parallel_for.h>
-#include <tbb/blocked_range.h>
+/*#include <tbb/parallel_for.h>
+#include <tbb/blocked_range.h>*/
 #include "circle_detector.h"
 
 namespace cv {
   class ManyCircleDetector {
     public:
-      ManyCircleDetector(int number_of_circles, int width, int height);
+      ManyCircleDetector(int number_of_circles, int width, int height, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       ~ManyCircleDetector(void);
       
       bool initialize(const cv::Mat& image);
@@ -18,7 +18,7 @@ namespace cv {
       std::vector<CircleDetector::Circle> circles;
 
       // for parallel computation
-      class Functor {
+      /*class Functor {
         public:
           Functor(ManyCircleDetector& localizer, const cv::Mat& image);
           void operator()(tbb::blocked_range<int>& r) const;
@@ -27,12 +27,13 @@ namespace cv {
           ManyCircleDetector& detector;
           std::vector<CircleDetector::Circle>& circles;
           std::vector<CircleDetector>& detectors;          
-      };
+      };*/
+
+      CircleDetector::Context context;
       
     private:
       int width, height, number_of_circles;
       std::vector<CircleDetector> detectors;
-      CircleDetector::Context context;
   };
 }
 

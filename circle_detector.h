@@ -12,6 +12,8 @@
 #include <math.h>
 #include <vector>
 
+#define WHYCON_DEFAULT_DIAMETER_RATIO (5/14.0)
+
 namespace cv {
   class CircleDetector
   {
@@ -19,7 +21,7 @@ namespace cv {
       class Circle;
       class Context;
       
-      CircleDetector(int width, int height, Context* context, float diameter_ratio = (5/14.0));
+      CircleDetector(int width, int height, Context* context, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
@@ -67,7 +69,7 @@ namespace cv {
           float m0,m1;
           float v0,v1;
           
-          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0)) const;
+          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0), float thickness = 1) const;
       };
 
       class Context {
