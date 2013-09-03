@@ -411,18 +411,30 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 								cm1+=tx*ty;
 								//buffer[pos] = 0; 
 							}
+              
 							float fm0,fm1,fm2;
 							fm0 = ((float)cm0)/queueEnd;
 							fm1 = ((float)cm1)/queueEnd;
 							fm2 = ((float)cm2)/queueEnd;
-							float f0 = ((fm0+fm2)+sqrtf((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
-							float f1 = ((fm0+fm2)-sqrtf((fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1)))/2;
-							inner.m0 = sqrtf(f0);
-							inner.m1 = sqrtf(f1);
-							inner.v0 = -fm1/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
-							inner.v1 = (fm0-f0)/sqrtf(fm1*fm1+(fm0-f0)*(fm0-f0));
-							inner.bwRatio = (float)outer.size/inner.size;
 
+
+              float det = (fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1);
+              if (det > 0) det = sqrt(det); else det = 0;                    //yes, that can happen as well:(
+              float f0 = ((fm0+fm2)+det)/2;
+              float f1 = ((fm0+fm2)-det)/2;
+              inner.m0 = sqrt(f0);
+              inner.m1 = sqrt(f1);
+              if (fm1 != 0){                                                            //aligned ?
+                inner.v0 = -fm1/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0)); // no-> standard calculatiion
+                inner.v1 = (fm0-f0)/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
+              }
+              else{
+                inner.v0 = inner.v1 = 0;
+                if (fm0 > fm2) inner.v0 = 1.0; else inner.v1 = 1.0;   // aligned, hm, is is aligned with x or y ?
+              }
+              
+							inner.bwRatio = (float)outer.size/inner.size;
+	
               // TODO: purpose? should be removed? if next if fails, it will go over and over to the same place until number of segments
               // reaches max, right?
 							ii = start - 1; // track position 
