@@ -18,7 +18,7 @@ set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system
 add_library(whycon SHARED ${whycon_srcs})
 
 add_executable(localization-system main.cpp)
-target_link_libraries(localization-system ${LIBS} whycon)
+target_link_libraries(localization-system whycon ${LIBS})
 
 SET(calibrator_sources calibrator.cpp)
 add_executable(calibrator ${calibrator_sources})
