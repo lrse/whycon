@@ -9,15 +9,16 @@ Ease of use and setup are also important features of this software. Furthermore,
 The localization system works by detecting planar ring-shaped targets printed on a B/W paper. With a single camera, the 3D position plus two rotation angles (5DoF) of a single target can be obtained. However, the reference of this target pose is the camera itself. Since in most conditions the user will likely want to define its own coordinate system, there is simple initial configuration/calibration step that needs to be performed. After this step, many targets/robots can be tracked.
 
 Status and Planned Improvements
-===========================
+===============================
 
 The system is currently defined for targets/robots moving on a plane (generally, the ground plane). Full 3D pose and working area are work in progress.
 
 Publication and citation
-=====================
+========================
 
 _WhyCon_ was first presented on ICRA2013 conference and will be published as a full article soon, where the details of the algorithm will be presented.
-In the meantime, if you use this software for your publication please use the following URL for citations: [http://purl.org/robotics/whycon].
+
+If you use this software for your publication it is mandatory to cite using the references in the provided [cite.bib] file.
 
 Installation
 ===========
