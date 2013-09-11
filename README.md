@@ -18,7 +18,7 @@ Publication and citation
 
 _WhyCon_ was first presented on ICRA2013 conference and will be published as a full article soon, where the details of the algorithm will be presented.
 
-If you use this software for your publication it is mandatory to cite using the references in the provided [cite.bib] file.
+If you use this software for your publication it is mandatory to cite using the references in the provided `cite.bib` file. Full URL to this file is: https://raw.github.com/v01d/whycon/master/cite.bib
 
 Installation
 ===========
