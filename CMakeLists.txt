@@ -10,9 +10,9 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}")
 #find_package(TBB)
 find_package(OpenCV REQUIRED)
 find_package(GSL REQUIRED)
-#find_package(Boost COMPONENTS thread filesystem system REQUIRED)
+find_package(Boost COMPONENTS program_options REQUIRED)
 
-set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES} ${GSL_LIBRARIES})
+set(LIBS ${OpenCV_LIBS} ${TBB_LIBRARIES} ${GSL_LIBRARIES} ${Boost_LIBRARIES})
 
 set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
 add_library(whycon SHARED ${whycon_srcs})

@@ -8,8 +8,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <errno.h>
+#include <boost/program_options.hpp>
 #include "localization_system.h"
 using namespace std;
+namespace po = boost::program_options;
 
 bool stop = false;
 void interrupt(int s) {
@@ -21,31 +23,69 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
   if (event == CV_EVENT_LBUTTONDOWN) clicked = true;
 }
 
-int main(int argc, char** argv) {
-  if (argc < 7) {
-    cout << "usage: localization-system <number of circles> [-cam <camera-number> | -video <video file> | -img <dir/pattern>]  [-mat <matlab calibration> | -xml <XML calibrator file>] <output name>" << endl;
-    cout << "\tFor -img use something like 'directory/%03d.png', for images numbered 000.png to 999.png under 'directory'" << endl;
-    return 1;
+po::variables_map process_commandline(int argc, char** argv)
+{
+  po::options_description options_description("WhyCon options");
+  options_description.add_options()
+    ("help", "display this help")
+    ("output,o", po::value<string>()->required(), "name to be used for all output files")
+    ("circles,c", po::value<int>()->required(), "number of circles to be tracked (AFTER the calibration is performed)")
+    ("cam", po::value<int>(), "use camera as input (expects id of camera)")
+    ("video", po::value<string>(), "use video as input (expects path to video file)")
+    ("img", po::value<string>(), "use sequence of images as input (expects pattern describing sequence)"
+                                      "Use a pattern such as 'directory/%03d.png' for files named 000.png to "
+                                      "999.png inside said directory")
+    ("mat", po::value<string>(), "use matlab (.mat) calibration toolbox file for camera calibration parameters"
+                                  " (expects path to file)")
+    ("xml", po::value<string>(), "use 'calibrator' output file (.xml) for camera calibration parameters (expects path to file)")
+  ;
+
+  po::variables_map config_vars;
+  po::store(po::parse_command_line(argc, argv, options_description), config_vars);
+  if (config_vars.count("help")) { cerr << options_description << endl; exit(1); }
+
+  try { po::notify(config_vars); }
+  catch(po::error& e) { 
+    cerr << endl << "ERROR: " << e.what() << endl << endl; 
+    cerr << options_description << endl; 
+    exit(1);
+  } 
+
+  try {
+  if (!config_vars.count("mat") && !config_vars.count("xml"))
+    throw std::runtime_error("Please specify one source for calibration parameters");
+  if (!config_vars.count("cam") && !config_vars.count("video") && !config_vars.count("img"))
+    throw std::runtime_error("Please specify one input source");
+  if (config_vars["circles"].as<int>() < 0)
+    throw std::runtime_error("Number of circles to track should be greater than 0");
+  } catch(const std::runtime_error& e) {
+    cerr << "ERROR: " << e.what() << endl;
+    exit(1);
   }
-  
+  return config_vars;
+}
+
+int main(int argc, char** argv)
+{
   signal(SIGINT, interrupt);
+
+  /* process command line */
+  po::variables_map config_vars = process_commandline(argc, argv);
   
-  int number_of_circles = atoi(argv[1]);
-  bool is_camera = (std::string(argv[2]) == "-cam");
-  //bool is_img = (std::string(argv[2]) == "-img");
-  std::string calibration_file(argv[5]);
-  std::string output_name(argv[6]);
+  int number_of_circles = config_vars["circles"].as<int>();
+  bool is_camera = config_vars.count("cam");
+  std::string output_name(config_vars["output"].as<string>());
   
   /* setup camera */
   cv::VideoCapture capture;
   if (is_camera) {
-    int cam_id = atoi(argv[3]);
+    int cam_id = config_vars["cam"].as<int>();
     capture.open(cam_id);
     /*capture.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
     capture.set(CV_CAP_PROP_FRAME_HEIGHT, 720);*/
   }
   else {
-    std::string video_name(argv[3]);
+    std::string video_name(config_vars.count("img") ? config_vars["img"].as<string>() : config_vars["video"].as<string>());
     capture.open(video_name);    
   }
   if (!capture.isOpened()) { cout << "error opening camera/video" << endl; return 1; }
@@ -53,10 +93,10 @@ int main(int argc, char** argv) {
   /* load calibration and setup system */
   cv::Mat frame;
   cv::Mat K, dist_coeff;
-  if (std::string(argv[4]) == "-xml")
-    cv::LocalizationSystem::load_opencv_calibration(calibration_file, K, dist_coeff);
+  if (config_vars.count("xml"))
+    cv::LocalizationSystem::load_opencv_calibration(config_vars["xml"].as<string>(), K, dist_coeff);
   else
-    cv::LocalizationSystem::load_matlab_calibration(calibration_file, K, dist_coeff);
+    cv::LocalizationSystem::load_matlab_calibration(config_vars["mat"].as<string>(), K, dist_coeff);
     
   cv::LocalizationSystem system(number_of_circles, capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT),
     K, dist_coeff);
