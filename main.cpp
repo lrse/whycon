@@ -35,7 +35,7 @@ po::variables_map process_commandline(int argc, char** argv)
     ("img", po::value<string>(), "use sequence of images as input (expects pattern describing sequence)"
                                       "Use a pattern such as 'directory/%03d.png' for files named 000.png to "
                                       "999.png inside said directory")
-    ("mat", po::value<string>(), "use matlab (.mat) calibration toolbox file for camera calibration parameters"
+    ("mat", po::value<string>(), "use matlab (.m) calibration toolbox file for camera calibration parameters"
                                   " (expects path to file)")
     ("xml", po::value<string>(), "use 'calibrator' output file (.xml) for camera calibration parameters (expects path to file)")
   ;
