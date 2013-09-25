@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <boost/program_options.hpp>
 #include "localization_system.h"
+#include "localization_viewer.h"
 using namespace std;
 namespace po = boost::program_options;
 
@@ -100,6 +101,10 @@ int main(int argc, char** argv)
     
   cv::LocalizationSystem system(number_of_circles, capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT),
     K, dist_coeff);
+
+  #ifdef ENABLE_VIEWER
+  cv::LocalizationViewer viewer(system);
+  #endif
     
   /* create output directory */
   cv::Size frame_size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT));
@@ -181,13 +186,20 @@ int main(int argc, char** argv)
             << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
             << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
         }
+        #ifdef ENABLE_VIEWER
+        viewer.update();
+        #endif      
       }
-      
+
       writer << frame;
       saved_frame_idx++;
     }
     cv::imshow("output", frame);
   }
+
+  #ifdef ENABLE_VIEWER
+  viewer.wait();
+  #endif
   return 0;
 }
 

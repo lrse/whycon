@@ -53,7 +53,7 @@ bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts) {
 
      
 /* TODO: use cv::eigen */
-cv::Vec3f cv::LocalizationSystem::eigen(double data[])
+cv::Vec3f cv::LocalizationSystem::eigen(double data[]) const
 {
 	gsl_matrix_view m = gsl_matrix_view_array (data, 3, 3);
 	gsl_vector *eval = gsl_vector_alloc (3);
@@ -88,7 +88,7 @@ cv::Vec3f cv::LocalizationSystem::eigen(double data[])
 }
 
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) {
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const {
   Pose result;
 	float x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
   
@@ -149,16 +149,16 @@ const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)
   return detector.circles[id];
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id)
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id) const
 {
   return get_pose(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) {
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) const {
   return get_transformed_pose(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle)
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle) const
 {
   Pose pose;  
   pose.pos = coordinates_transform * get_pose(circle).pos;
@@ -270,7 +270,7 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   }
 }
 
-float cv::LocalizationSystem::unbarrel_x(float x, float y)
+float cv::LocalizationSystem::unbarrel_x(float x, float y) const
 {
   x = (x-cc[0])/fc[0];
   y = (y-cc[1])/fc[1];
@@ -281,7 +281,7 @@ float cv::LocalizationSystem::unbarrel_x(float x, float y)
   return cx;
 }
 
-float cv::LocalizationSystem::unbarrel_y(float x, float y)
+float cv::LocalizationSystem::unbarrel_y(float x, float y) const
 {
   x = (x-cc[0])/fc[0];
   y = (y-cc[1])/fc[1];
@@ -292,12 +292,12 @@ float cv::LocalizationSystem::unbarrel_y(float x, float y)
   return cy;
 }
 
-float cv::LocalizationSystem::transform_x(float xc,float yc)
+float cv::LocalizationSystem::transform_x(float xc,float yc) const
 {
 	return (unbarrel_x(xc,yc)-cc[0])/fc[0];
 }
 
-float cv::LocalizationSystem::transform_y(float xc,float yc)
+float cv::LocalizationSystem::transform_y(float xc,float yc) const
 {
 	return (unbarrel_y(xc,yc)-cc[1])/fc[1];
 }

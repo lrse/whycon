@@ -1,5 +1,4 @@
 /*
- * File name: CCircleDetect.h
  * Date:      2010
  * Author:   Tom Krajnik, Matias Nitsche
  */
@@ -7,7 +6,6 @@
 #ifndef __CCIRCLEDETECTOR_H__
 #define __CCIRCLEDETECTOR_H__
 
-//#include "CTimer.h"
 #include <opencv2/opencv.hpp>
 #include <math.h>
 #include <vector>
