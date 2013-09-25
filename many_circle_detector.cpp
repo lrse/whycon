@@ -3,7 +3,7 @@
 using namespace std;
 
 cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) : 
-  width(_width), height(_height), number_of_circles(_number_of_circles), context(_width, _height)
+  width(_width), height(_height), context(_width, _height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
   detectors.resize(number_of_circles, CircleDetector(width, height, &context, _diameter_ratio));

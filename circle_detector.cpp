@@ -313,8 +313,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		}// else cout << "not round enough (" << circle.roundness << ") vx/vy " << vx << " " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio << endl;
 	}
 
-  double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-    //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
+  //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+  //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
 
 	return result;
 }
@@ -329,7 +329,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   int ii = 0;
 	int start = 0;
   Circle inner, outer;
-  int outer_id;
+  //int outer_id;
 
 	if (previous_circle.valid){
 		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
@@ -443,7 +443,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							if (circularity < 1.02 && circularity > 0.98){
                 // at this point, the target is considered valid
 								outer.valid = inner.valid = true;
-                /*inner_id = numSegments; */outer_id = numSegments - 1;
+                /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean+inner.mean)/2; // use a new threshold estimate based on current detection
 								
                 //pixel leakage correction
