@@ -132,20 +132,24 @@ int main(int argc, char** argv)
   if (use_gui) viewer.start();
   #endif
 
+  /* setup gui */
   if (use_gui) {
     cvStartWindowThread();
     cv::namedWindow("output", CV_WINDOW_NORMAL);
     cv::setMouseCallback("output", mouse_callback);
   }
 
-  //std::string output_name(config_vars["output"].as<string>());
-    
-  /* create output directory */
-  
-  /*cv::VideoWriter writer(output_name + ".avi", CV_FOURCC('M','J','P','G'), 15, frame_size);
-  if (!writer.isOpened()) { cout << "error opening output video" << endl; return 1; }
-  ofstream data_file((output_name + ".log").c_str(), ios_base::out | ios_base::trunc);
-  if (!data_file) { cout << "error opening output data file" << endl; return 1; }*/
+  /* set tracking output */
+  std::string output_name;
+  cv::VideoWriter video_writer;
+  ofstream data_file;
+  if (do_tracking) {
+    output_name = config_vars["output"].as<string>();
+    video_writer.open(output_name + ".avi", CV_FOURCC('M','J','P','G'), 15, frame_size);
+    if (!video_writer.isOpened()) throw std::runtime_error("error opening output video");
+    data_file.open((output_name + ".log").c_str(), ios_base::out | ios_base::trunc);
+    if (!data_file) throw std::runtime_error(string("error opening '") + output_name + ".log' output data file");
+  }
   
   /* setup gui and start capturing / processing */
   //int current_frame = 0, last_frame = 0;
@@ -154,23 +158,13 @@ int main(int argc, char** argv)
   if (!is_camera) clicked = true; // when not using camera, emulate user click so that tracking starts immediately
   cv::Mat original_frame, frame;
   int saved_frame_idx = 0;
-  
-  /*int total_frames;
-  if (!is_camera) total_frames = capture.get(CV_CAP_PROP_FRAME_COUNT);*/
 
-  if (do_tracking) {
+  /* read axis from file when in tracking mode */
+  if (do_tracking)
     system.read_axis(config_vars["axis"].as<string>());
-  }
 
-  while (!stop) {
-    /*if (!is_camera && use_gui) {
-      if (!axis_was_set || !is_tracking) {
-        capture.set(CV_CAP_PROP_POS_FRAMES, current_frame);
-        saved_frame_idx = current_frame;
-      }
-      else if (total_frames > 1) cv::setTrackbarPos("frame", "output", saved_frame_idx);        
-    }*/
-
+  while (!stop)
+  {
     if (!capture.read(original_frame)) { cout << "no more frames left to read" << endl; break; }
     original_frame.copyTo(frame);
 
@@ -179,14 +173,7 @@ int main(int argc, char** argv)
         bool axis_was_set = system.set_axis(original_frame, config_vars["set-axis"].as<string>());
         if (!axis_was_set) throw std::runtime_error("Error setting axis!");      
         system.draw_axis(frame);
-        cv::imwrite("axis_detected.png", frame);
-        /*writer << output_frame;
-        ofstream data_file_axis((output_name + "_axis.log").c_str(), ios_base::out | ios_base::trunc);
-        data_file_axis << "axis 0,0 " << system.get_pose(system.origin_circles[0]).pos << endl;
-        data_file_axis << "axis 1,0 " << system.get_pose(system.origin_circles[1]).pos << endl;
-        data_file_axis << "axis 0,1 " << system.get_pose(system.origin_circles[2]).pos << endl;
-        data_file_axis << "axis 1,1 " << system.get_pose(system.origin_circles[3]).pos << endl;
-        data_file_axis << "transform " << system.coordinates_transform << endl;*/
+        cv::imwrite(output_name + "_axis_detected.png", frame);
         stop = true;
       }
       if (use_gui) cv::imshow("output", frame);
@@ -210,19 +197,20 @@ int main(int argc, char** argv)
             cv::Vec3f coord = system.get_pose(circle).pos;
             cv::Vec3f coord_trans = system.get_transformed_pose(circle).pos;
             ostringstream ostr;
-            //ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
+            ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
             ostr << i;
             if (use_gui) circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
-            /*data_file << setprecision(15) << "frame " << saved_frame_idx + 1 << " circle " << i
+            data_file << setprecision(15) << "frame " << saved_frame_idx << " circle " << i
               << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
-              << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;*/
+              << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
+            saved_frame_idx++;
           }
           #ifdef ENABLE_VIEWER
           if (use_gui) viewer.update();
           #endif      
         }
 
-        //writer << frame;
+        video_writer << frame;
       }
       if (use_gui) cv::imshow("output", frame);
     }
