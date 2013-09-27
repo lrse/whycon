@@ -10,7 +10,8 @@ namespace cv {
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff,
         float diameter = 0.122, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       
-      bool set_axis(const cv::Mat& image);
+      bool set_axis(const cv::Mat& image, const std::string& output = std::string());
+      void read_axis(const std::string& input);
       void draw_axis(cv::Mat& image);
       
       bool initialize(const cv::Mat& image);

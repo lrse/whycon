@@ -6,6 +6,7 @@ using namespace std;
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
 #define MAX_SEGMENTS 10000 // TODO: necessary?
+#define CIRCULARITY_TOLERANCE 0.02
 
 cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, float _diameter_ratio) : context(_context)
 {
@@ -195,7 +196,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 #else
 bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio)
 {
-  int64_t ticks = cv::getTickCount();  
+  //int64_t ticks = cv::getTickCount();  
   // get shorter names for elements in Context
 	vector<int>& buffer = context->buffer;
   vector<int>& queue = context->queue;
@@ -377,54 +378,57 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 
           // check if it looks like the inner portion
 					if (examineCircle(image, inner, pos, innerAreaRatio)){
-            // it does, not actually check specific properties to see if it is a valid target
+            // it does, now actually check specific properties to see if it is a valid target
 						if (
-								((float)outer.size/areasRatio/(float)inner.size - ratioTolerance < 1.0 && (float)outer.size/areasRatio/(float)inner.size + ratioTolerance > 1.0) && 
-								(fabsf(inner.x-outer.x) <= centerDistanceToleranceAbs+centerDistanceToleranceRatio*((float)(outer.maxx-outer.minx))) &&
-								(fabsf(inner.y-outer.y) <= centerDistanceToleranceAbs+centerDistanceToleranceRatio*((float)(outer.maxy-outer.miny)))
-
-						   ){
+								((float)outer.size/areasRatio/(float)inner.size - ratioTolerance < 1.0 &&
+                 (float)outer.size/areasRatio/(float)inner.size + ratioTolerance > 1.0) && 
+								 (fabsf(inner.x - outer.x) <= centerDistanceToleranceAbs + centerDistanceToleranceRatio * ((float)(outer.maxx - outer.minx))) &&
+								 (fabsf(inner.y - outer.y) <= centerDistanceToleranceAbs + centerDistanceToleranceRatio * ((float)(outer.maxy - outer.miny)))
+						   )
+            {
 							float cm0,cm1,cm2;
 							cm0 = cm1 = cm2 = 0;
 							inner.x = outer.x;
 							inner.y = outer.y;
 
+              // computer centroid
 							float sx = 0;
               float sy = 0;
 							queueOldStart = 0;
 							for (int p = 0;p<queueEnd;p++){
 								pos = queue[p];
-								sx += pos%width;
-                sy += pos/width;
+								sx += pos % width;
+                sy += pos / width;
 							}
-							inner.x = sx/queueEnd;
-							inner.y = sy/queueEnd;
-							outer.x = sx/queueEnd;
-							outer.y = sy/queueEnd;
+              // update pixel-based position oreviously computed
+							inner.x = sx / queueEnd;
+							inner.y = sy / queueEnd;
+							outer.x = sx / queueEnd;
+							outer.y = sy / queueEnd;
 
+              // compute covariance
 							for (int p = 0;p<queueEnd;p++){
 								pos = queue[p];
-								float tx = pos%width-outer.x;
-								float ty = pos/width-outer.y;
-								cm0+=tx*tx; 
-								cm2+=ty*ty; 
-								cm1+=tx*ty;
-								//buffer[pos] = 0; 
+								float tx = pos % width - outer.x;
+								float ty = pos / width - outer.y;
+								cm0 += tx * tx; 
+								cm2 += ty * ty; 
+								cm1 += tx * ty;
 							}
-              
+
 							float fm0,fm1,fm2;
-							fm0 = ((float)cm0)/queueEnd;
-							fm1 = ((float)cm1)/queueEnd;
-							fm2 = ((float)cm2)/queueEnd;
+							fm0 = ((float)cm0)/queueEnd; // cov(x,x)
+							fm1 = ((float)cm1)/queueEnd; // cov(x,y)
+							fm2 = ((float)cm2)/queueEnd; // cov(y,y)
 
-
-              float det = (fm0+fm2)*(fm0+fm2)-4*(fm0*fm2-fm1*fm1);
+              float trace = fm0 + fm2; // sum of elements in diag.
+              float det = trace * trace - 4*(fm0 * fm2 - fm1 * fm1);
               if (det > 0) det = sqrt(det); else det = 0;                    //yes, that can happen as well:(
-              float f0 = ((fm0+fm2)+det)/2;
-              float f1 = ((fm0+fm2)-det)/2;
+              float f0 = (trace + det)/2;
+              float f1 = (trace - det)/2;
               inner.m0 = sqrt(f0);
               inner.m1 = sqrt(f1);
-              if (fm1 != 0){                                                            //aligned ?
+              if (fm1 != 0) {                               //aligned ?
                 inner.v0 = -fm1/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0)); // no-> standard calculatiion
                 inner.v1 = (fm0-f0)/sqrt(fm1*fm1+(fm0-f0)*(fm0-f0));
               }
@@ -440,11 +444,10 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 							ii = start - 1; // track position 
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
-							if (circularity < 1.02 && circularity > 0.98){
-                // at this point, the target is considered valid
-								outer.valid = inner.valid = true;
+							if (fabsf(circularity - 1) < CIRCULARITY_TOLERANCE){
+								outer.valid = inner.valid = true; // at this point, the target is considered valid
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
-                threshold = (outer.mean+inner.mean)/2; // use a new threshold estimate based on current detection
+                threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection
 								
                 //pixel leakage correction
 								float r = diameterRatio*diameterRatio;
@@ -570,6 +573,34 @@ void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, c
   //float thickness = scale * 3.0;
   //if (thickness < 1) thickness = 1;
   cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, color, thickness, CV_AA);
+}
+
+void cv::CircleDetector::Circle::write(cv::FileStorage& fs) const {
+  fs << "{" << "x" << x << "y" << y << "size" << size <<
+    "maxy" << maxy << "maxx" << maxx << "miny" << miny << "minx" << minx <<
+    "mean" << mean << "type" << type << "roundness" << roundness << "bwRatio" << bwRatio <<
+    "round" << round << "valid" << valid << "m0" << m0 << "m1" << m1 << "v0" << v0 << "v1" << v1 << "}";
+}
+
+void cv::CircleDetector::Circle::read(const cv::FileNode& node)
+{
+  x = (float)node["x"];
+  y = (float)node["y"];
+  size = (int)node["size"];
+  maxy = (int)node["maxy"];
+  maxx = (int)node["maxx"];
+  miny = (int)node["miny"];
+  minx = (int)node["minx"];
+  mean = (int)node["mean"];
+  type = (int)node["type"];
+  roundness = (float)node["roundness"];
+  bwRatio = (float)node["bwRatio"];
+  round = (int)node["round"];
+  valid = (int)node["valid"];
+  m0 = (float)node["m0"];
+  m1 = (float)node["m1"];
+  v0 = (float)node["v0"];
+  v1 = (float)node["v1"];
 }
 
 cv::CircleDetector::Context::Context(int _width, int _height)

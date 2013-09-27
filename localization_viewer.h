@@ -19,10 +19,13 @@ namespace cv {
       void start(void);
       void update(void);
       void wait(void);
+      void stop(void);
       
 
     private:
       //void init_visualization(pcl::visualization::PCLVisualizer& viewer);
+
+      bool should_stop;
 
       pcl::visualization::PCLVisualizer* visualizer;
       pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud;

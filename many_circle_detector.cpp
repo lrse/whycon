@@ -3,7 +3,7 @@
 using namespace std;
 
 cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) : 
-  width(_width), height(_height), context(_width, _height), number_of_circles(_number_of_circles)
+  context(_width, _height), width(_width), height(_height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
   detectors.resize(number_of_circles, CircleDetector(width, height, &context, _diameter_ratio));
@@ -29,7 +29,7 @@ bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
       cv::Mat buffer_img;
       cv::waitKey();*/
       double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-      cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
+      cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
       if (circles[i].valid) break;
     }
     detectors[i].draw = false;
@@ -50,7 +50,7 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image) {
     circles[i] = detectors[i].detect(marked_image, circles[i]); // TODO: modify current
     if (!circles[i].valid) { all_detected = false; break; }
     double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-    cout << "tinner: " << delta << " " << " fps: " << 1/delta << endl;
+    cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
   }
   
   return all_detected;

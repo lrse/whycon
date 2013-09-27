@@ -3,8 +3,8 @@
  * Author:   Tom Krajnik, Matias Nitsche
  */
 
-#ifndef __CCIRCLEDETECTOR_H__
-#define __CCIRCLEDETECTOR_H__
+#ifndef __CIRCLE_DETECTOR_H__
+#define __CIRCLE_DETECTOR_H__
 
 #include <opencv2/opencv.hpp>
 #include <math.h>
@@ -66,6 +66,9 @@ namespace cv {
           bool valid;
           float m0,m1;
           float v0,v1;
+
+          void write(cv::FileStorage& fs) const;
+          void read(const cv::FileNode& node);
           
           void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0), float thickness = 1) const;
       };
@@ -85,6 +88,5 @@ namespace cv {
   };
 }
 
-#endif
 
-/* end of CCircleDetect.h */
+#endif

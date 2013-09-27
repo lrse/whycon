@@ -8,8 +8,8 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
-#include "localization_system.h"
 #include "circle_detector.h"
+#include "localization_system.h"
 using std::cout;
 using std::endl;
 using std::numeric_limits;
@@ -46,7 +46,7 @@ bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts) {
   for (int i = 0; i < attempts; i++) {
     cout << "localization attempt " << i << endl;
     if (detector.detect(image)) return true;
-    else cout << "localization failed, not all circles detected" << i << endl;
+    else cout << "localization failed, not all circles detected" << endl;
   }
   return false;
 }
@@ -169,7 +169,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
 }
 
 // TODO: allow user to choose calibration circles, now the circles are read in the order of detection
-bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
+bool cv::LocalizationSystem::set_axis(const cv::Mat& image, const std::string& file)
 {
   ManyCircleDetector axis_detector(4, width, height);
   if (!axis_detector.initialize(image)) return false;
@@ -198,7 +198,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
     vecs[i] = circle_poses[i + 1].pos - circle_poses[0].pos;
     cout << "vec " << i+1 << "->0 " << vecs[i] << endl;
   }
-  int min_prod_i;
+  int min_prod_i = 0;
   float min_prod = numeric_limits<float>::max();
   for (int i = 0; i < 3; i++) {
     float prod = fabsf(vecs[(i + 2) % 3].dot(vecs[i]));
@@ -208,7 +208,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   int axis1_i = (((min_prod_i + 2) % 3) + 1);
   int axis2_i = (min_prod_i + 1);
   if (fabsf(circle_poses[axis1_i].pos(0)) < fabsf(circle_poses[axis2_i].pos(0))) std::swap(axis1_i, axis2_i);
-  int xy_i;
+  int xy_i = 0;
   for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
   cout << "axis ids: " << axis1_i << " " << axis2_i << " " << xy_i << endl;
 
@@ -245,19 +245,40 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image)
   cv::solve(A, b, x);
   x.push_back(1.0);
   coordinates_transform = x.reshape(1, 3);
+  cout << "H " << coordinates_transform << endl;
 
   // TODO: compare H obtained by OpenCV with the hand approach
-  std::vector<cv::Vec2d> src(4), dsts(4);
+  std::vector<cv::Vec2f> src(4), dsts(4);
   for (int i = 0; i < 4; i++) {
     src[i] = tmp[i];
     dsts[i] = targets[i];
     cout << tmp[i] << " -> " << targets[i] << endl;
   }
-  cv::Matx33d H = cv::findHomography(src, dsts, CV_LMEDS);
-  cout << "H " << H << endl;
+  cv::Matx33f H = cv::findHomography(src, dsts, CV_LMEDS);
+  cout << "OpenCV H " << H << endl;
 
-  
+  if (!file.empty()) {
+    cv::FileStorage fs(file, cv::FileStorage::WRITE);
+    fs << "H" << cv::Mat(cv::Matx33d(coordinates_transform)); // store as double to get more decimals
+    fs << "c0"; origin_circles[0].write(fs);
+    fs << "c1"; origin_circles[1].write(fs);
+    fs << "c2"; origin_circles[2].write(fs);
+    fs << "c3"; origin_circles[3].write(fs);
+  }
   return true;
+}
+
+void cv::LocalizationSystem::read_axis(const std::string& file) {
+  cv::FileStorage fs(file, cv::FileStorage::READ);
+  cv::Mat m;
+  fs["H"] >> m;
+  coordinates_transform = cv::Matx33f(m);
+  origin_circles[0].read(fs["c0"]);
+  origin_circles[1].read(fs["c1"]);
+  origin_circles[2].read(fs["c2"]);
+  origin_circles[3].read(fs["c3"]);
+
+  cout << "transformation: " << coordinates_transform << endl;
 }
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)

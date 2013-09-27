@@ -1,8 +1,8 @@
 #include "localization_viewer.h"
 #ifdef ENABLE_VIEWER
 
-cv::LocalizationViewer::LocalizationViewer(const cv::LocalizationSystem& _system) : visualizer(NULL), system(_system),
-  changed_point_cloud(false)
+cv::LocalizationViewer::LocalizationViewer(const cv::LocalizationSystem& _system) : should_stop(false),
+  visualizer(NULL), system(_system), changed_point_cloud(false)
 {
 }
 
@@ -40,9 +40,13 @@ cv::LocalizationViewer::~LocalizationViewer(void) {
   }
 }
 
+void cv::LocalizationViewer::stop(void) {
+  should_stop = true;
+}
+
 void cv::LocalizationViewer::loop(void)
 {
-  while (!visualizer->wasStopped()) {
+  while (!visualizer->wasStopped() && !should_stop) {
     if (changed_point_cloud) {
       boost::mutex::scoped_lock m(mutex);
       pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ> cloud_color(point_cloud, 0, 255, 0);
