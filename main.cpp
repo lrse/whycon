@@ -152,8 +152,6 @@ int main(int argc, char** argv)
   }
   
   /* setup gui and start capturing / processing */
-  //int current_frame = 0, last_frame = 0;
-  //bool axis_was_set = false;
   bool is_tracking = false;
   if (!is_camera) clicked = true; // when not using camera, emulate user click so that tracking starts immediately
   cv::Mat original_frame, frame;
