@@ -11,6 +11,7 @@
 #include <boost/program_options.hpp>
 #include "localization_system.h"
 #include "localization_viewer.h"
+#include "localization_service.h"
 using namespace std;
 namespace po = boost::program_options;
 
@@ -49,6 +50,7 @@ po::variables_map process_commandline(int argc, char** argv)
     
     ("mat", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
     ("xml", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
+    ("mavconn", po::value<string>(), "run as a mavconn service, outputting pose information through bus")
     
     ("no-gui,n", "disable opening of GUI")
   ;
@@ -87,6 +89,7 @@ po::variables_map process_commandline(int argc, char** argv)
     else {
       if (config_vars.count("video")) throw std::runtime_error("Video input is not supported for axis definition");
       if (!use_gui && config_vars.count("cam")) throw std::runtime_error("Camera input is not supported for axis setting when GUI is disabled");
+      if (config_vars.count("mavconn")) throw std::runtime_error("Running as service is only for tracking mode");
     }
   }
   catch(const std::runtime_error& e) {
@@ -95,6 +98,7 @@ po::variables_map process_commandline(int argc, char** argv)
   }
   return config_vars;
 }
+
 
 int main(int argc, char** argv)
 {
@@ -130,6 +134,12 @@ int main(int argc, char** argv)
   #ifdef ENABLE_VIEWER
   cv::LocalizationViewer viewer(system);
   if (use_gui) viewer.start();
+  #endif
+
+  #ifdef ENABLE_MAVCONN
+  bool use_mavconn = config_vars.count("mavconn");
+  cv::LocalizationService service;
+  if (use_mavconn) service.start();
   #endif
 
   /* setup gui */

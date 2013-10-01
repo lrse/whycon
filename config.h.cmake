@@ -8,4 +8,6 @@
 #define ENABLE_VIEWER
 #endif
 
+#cmakedefine ENABLE_MAVCONN
+
 #endif
