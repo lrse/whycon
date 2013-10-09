@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<mavlink>
+	<!--<include>./common.xml</include>-->
+  <messages>
+		<message id="150" name="WHYCON_TARGET_POSITION">
+			<description>This message describes the position of a target inside the WhyCon system.</description>
+			<field type="uint16_t" name="id">The target ID.</field>
+			<field type="uint64_t" name="usec">Timestamp.</field>
+			<field type="float" name="x">X position.</field>
+      <field type="float" name="y">Y position.</field>
+      <field type="float" name="z">Z position.</field>
+		</message>
+  </messages>
+</mavlink>
