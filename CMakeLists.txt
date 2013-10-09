@@ -29,6 +29,15 @@ if (ENABLE_MAVCONN)
   include_directories(${MAVCONN_INCLUDE_DIR} ${MAVLINK_INCLUDE_DIR} ${MAVLINK_INCLUDE_DIR}/..)
   set(LIBS ${LIBS} mavconn_lcm)
   set(whycon_srcs ${whycon_srcs} localization_service.cpp)
+
+  find_package(PythonInterp 2 REQUIRED)
+  ADD_CUSTOM_COMMAND(
+     OUTPUT ${CMAKE_CURRENT_LIST_DIR}/mavlink/whycon/mavlink.h
+     COMMAND ${PYTHON_EXECUTABLE} ${MAVLINK_MAVGEN} --lang=C --output=mavlink whycon.xml --wire-protocol=1.0
+     DEPENDS ${CMAKE_CURRENT_LIST_DIR}/whycon.xml
+     WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+  )
+  add_custom_target(mavlink_headers ALL DEPENDS ${CMAKE_CURRENT_LIST_DIR}/mavlink/whycon/mavlink.h)
 endif()
 
 find_package(OpenCV REQUIRED)

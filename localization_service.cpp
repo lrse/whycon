@@ -3,7 +3,7 @@
 static void mavlink_handler(const lcm_recv_buf_t* rbuf, const char* channel,
                               const mavconn_mavlink_msg_container_t* container, void* user);
 
-cv::LocalizationService::LocalizationService(void) : lcm(NULL), should_stop(false)
+cv::LocalizationService::LocalizationService(const cv::LocalizationSystem& _system) : lcm(NULL), should_stop(false), system(_system)
 {
 	
 }
@@ -28,9 +28,33 @@ void cv::LocalizationService::start(void)
   thread = boost::thread(&cv::LocalizationService::lcm_wait, this);  
 }
 
+void cv::LocalizationService::publish(void)
+{
+  for (int i = 0; i < system.targets; i++) {
+    LocalizationSystem::Pose pose = system.get_transformed_pose(i);
+    mavlink_message_t msg;
+    mavlink_msg_whycon_target_position_pack(getSystemID(), 0, &msg, i, 0, pose.pos(0), pose.pos(1), pose.pos(2));
+    sendMAVLinkMessage(lcm, &msg);
+  }
+}
+
 void cv::LocalizationService::lcm_wait(void)
 {
-	while(!should_stop) lcm_handle(lcm);
+  int fd = lcm_get_fileno(lcm);
+  fd_set set;
+  timeval t;
+  t.tv_usec = 10000;
+  t.tv_sec = 0;
+  
+	while(!should_stop) {
+    FD_ZERO(&set);
+    FD_SET(fd, &set);
+    if (select(1, &set, NULL, NULL, &t) == -1)
+      throw std::runtime_error("Localization service select() error: " + std::string(strerror(errno)));
+      
+    if (FD_ISSET(fd, &set))
+      lcm_handle(lcm);
+  }
 }
 
 static void mavlink_handler(const lcm_recv_buf_t* rbuf, const char* channel,

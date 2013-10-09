@@ -33,40 +33,40 @@ po::variables_map process_commandline(int argc, char** argv)
 {
   po::options_description options_description("WhyCon options");
   options_description.add_options()
-    ("help", "display this help")
+    ("help,h", "display this help")
     
-    ("set-axis", po::value<string>(), "perform axis detection and save results to specified XML file")
-    ("track", po::value<int>(), "perform tracking of the specified ammount of targets")
+    ("set-axis,s", po::value<string>(), "perform axis detection and save results to specified XML file")
+    ("track,t", po::value<int>(), "perform tracking of the specified ammount of targets")
     
-    ("cam", po::value<int>(), "use camera as input (expects id of camera)")
-    ("video", po::value<string>(), "use video as input (expects path to video file)")
-    ("img", po::value<string>(), "use sequence of images as input (expects pattern describing sequence)"
+    ("cam,c", po::value<int>(), "use camera as input (expects id of camera)")
+    ("video,v", po::value<string>(), "use video as input (expects path to video file)")
+    ("img,i", po::value<string>(), "use sequence of images as input (expects pattern describing sequence)"
                                       "Use a pattern such as 'directory/%03d.png' for files named 000.png to "
                                       "999.png inside said directory")
 
     ("output,o", po::value<string>(), "name to be used for all tracking output files")
     
-    ("axis", po::value<string>(), "use specified XML file for axis definition during tracking")
+    ("axis,a", po::value<string>(), "use specified XML file for axis definition during tracking")
     
-    ("mat", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
-    ("xml", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
-    ("mavconn", po::value<string>(), "run as a mavconn service, outputting pose information through bus")
+    ("mat,m", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
+    ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
+    ("service", "run as a mavconn service, outputting pose information through bus")
     
     ("no-gui,n", "disable opening of GUI")
   ;
 
+
   po::variables_map config_vars;
-  po::store(po::parse_command_line(argc, argv, options_description), config_vars);
-  if (config_vars.count("help")) { cerr << options_description << endl; exit(1); }
-
-  try { po::notify(config_vars); }
-  catch(po::error& e) { 
-    cerr << endl << "ERROR: " << e.what() << endl << endl; 
-    cerr << options_description << endl; 
-    exit(1);
-  } 
-
   try {
+    po::store(po::parse_command_line(argc, argv, options_description), config_vars);
+    if (config_vars.count("help")) { cerr << options_description << endl; exit(1); }
+
+    po::notify(config_vars);
+    
+    if (config_vars.count("track")) do_tracking = true;
+    else if (config_vars.count("set-axis")) do_tracking = false;
+    else throw std::runtime_error("Select either tracking or axis setting mode");
+    
     if (!config_vars.count("mat") && !config_vars.count("xml"))
       throw std::runtime_error("Please specify one source for calibration parameters");
       
@@ -74,10 +74,6 @@ po::variables_map process_commandline(int argc, char** argv)
       throw std::runtime_error("Please specify one input source");
 
     use_gui = !config_vars.count("no-gui");
-
-    if (config_vars.count("track")) do_tracking = true;
-    else if (config_vars.count("set-axis")) do_tracking = false;
-    else throw std::runtime_error("Select either tracking or axis setting mode");
 
     if (do_tracking) {
       if (!config_vars.count("output")) throw std::runtime_error("Specify output name of files");
@@ -89,13 +85,19 @@ po::variables_map process_commandline(int argc, char** argv)
     else {
       if (config_vars.count("video")) throw std::runtime_error("Video input is not supported for axis definition");
       if (!use_gui && config_vars.count("cam")) throw std::runtime_error("Camera input is not supported for axis setting when GUI is disabled");
-      if (config_vars.count("mavconn")) throw std::runtime_error("Running as service is only for tracking mode");
+      if (config_vars.count("service")) throw std::runtime_error("Running as service is only for tracking mode");
     }
   }
   catch(const std::runtime_error& e) {
+    cerr << options_description << endl << endl;
     cerr << "ERROR: " << e.what() << endl;
     exit(1);
   }
+  catch(po::error& e) { 
+    cerr << options_description << endl << endl;
+    cerr << endl << "ERROR: " << e.what() << endl;
+    exit(1);
+  }   
   return config_vars;
 }
 
@@ -137,9 +139,9 @@ int main(int argc, char** argv)
   #endif
 
   #ifdef ENABLE_MAVCONN
-  bool use_mavconn = config_vars.count("mavconn");
-  cv::LocalizationService service;
-  if (use_mavconn) service.start();
+  bool run_service = config_vars.count("service");
+  cv::LocalizationService service(system);
+  if (run_service) service.start();
   #endif
 
   /* setup gui */
@@ -215,7 +217,10 @@ int main(int argc, char** argv)
           }
           #ifdef ENABLE_VIEWER
           if (use_gui) viewer.update();
-          #endif      
+          #endif
+          #ifdef ENABLE_MAVCONN
+          if (run_service) service.publish();
+          #endif    
         }
 
         video_writer << frame;
