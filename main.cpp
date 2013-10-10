@@ -223,7 +223,7 @@ int main(int argc, char** argv)
       // localize and draw circles
       if (is_tracking) {
         cout << "tracking current frame" << endl;
-        bool localized_correctly = system.localize(original_frame, (is_camera ? 1 : 50)); // track detected circles and localize
+        bool localized_correctly = system.localize(original_frame, (is_camera ? 1 : 50), (is_camera ? 1 : 15)); 
         
         if (localized_correctly) {
           for (int i = 0; i < number_of_targets; i++) {

@@ -43,10 +43,10 @@ bool cv::LocalizationSystem::initialize(const cv::Mat& image) {
   return detector.initialize(image);
 }
 
-bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts) {
+bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts, int max_refine) {
   for (int i = 0; i < attempts; i++) {
     cout << "localization attempt " << i << endl;
-    if (detector.detect(image)) return true;
+    if (detector.detect(image, max_refine)) return true;
     else cout << "localization failed, not all circles detected" << endl;
   }
   return false;
