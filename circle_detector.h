@@ -28,6 +28,7 @@ namespace cv {
       bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio);
       
       void improveEllipse(const cv::Mat& image, Circle& c);
+      int get_threshold(void) const;
 
       bool draw;
 
@@ -78,7 +79,7 @@ namespace cv {
       class Context {
         public:
           Context(int _width, int _height);
-          void debug_buffer(cv::Mat& img);
+          void debug_buffer(const cv::Mat& image, cv::Mat& img);
 
           std::vector<int> buffer, queue;
           int width, height;

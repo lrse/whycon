@@ -38,6 +38,11 @@ cv::CircleDetector::~CircleDetector()
 {
 }
 
+int cv::CircleDetector::get_threshold(void) const
+{
+  return threshold;
+}
+
 void cv::CircleDetector::change_threshold(void)
 {
   threshold_counter++;
@@ -496,9 +501,11 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
     change_threshold(); // update threshold for next run. inner is what user receives
 	}
 
-  /*cv::Mat buffer_img;
-  context->debug_buffer(buffer_img);
-  cv::imshow("buffer", buffer_img);*/
+  /*cv::namedWindow("buffer", CV_WINDOW_NORMAL);
+  cv::Mat buffer_img;
+  context->debug_buffer(image, buffer_img);
+  cv::imshow("buffer", buffer_img);
+  cv::waitKey();*/
 
   // if this is not the first call (there was a previous valid circle where search started),
   // the current call found a valid match, and only two segments were found during the search (inner/outer)
@@ -642,15 +649,17 @@ void cv::CircleDetector::Context::cleanup(const Circle& c, bool fast_cleanup) {
   }
 }
 
-void cv::CircleDetector::Context::debug_buffer(cv::Mat& img)
+void cv::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat& out)
 {
-  img.create(height, width, CV_8UC3);
-  cv::Vec3b* ptr = img.ptr<cv::Vec3b>(0);
-  img = cv::Scalar(128,128,128);
-  for (uint i = 0; i < img.total(); i++, ++ptr) {
-    if (buffer[i] == -1) *ptr = cv::Vec3b(0,0,0);
-    else if (buffer[i] == -2) *ptr = cv::Vec3b(255,255,255);
+  out.create(height, width, CV_8UC3);
+  cv::Vec3b* out_ptr = out.ptr<cv::Vec3b>(0);
+  const cv::Vec3b* im_ptr = image.ptr<cv::Vec3b>(0);
+  out = cv::Scalar(128,128,128);
+  for (uint i = 0; i < out.total(); i++, ++out_ptr, ++im_ptr) {
+    /*if (buffer[i] == -1) *ptr = cv::Vec3b(0,0,0);
+    else if (buffer[i] == -2) *ptr = cv::Vec3b(255,255,255);*/
     //else if (buffer[i] < 0) *ptr = cv::Vec3b(0, 255, 0);
-    else if (buffer[i] > 0) *ptr = cv::Vec3b(255, 0, 255);
+    if (buffer[i] > 0) *out_ptr = cv::Vec3b(255, 0, 255);
+    else *out_ptr = *im_ptr;
   }
 }
