@@ -28,6 +28,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 bool do_tracking;
 bool use_gui;
 int number_of_targets;
+bool load_axis;
+bool custom_diameter = false;
 
 po::variables_map process_commandline(int argc, char** argv)
 {
@@ -46,7 +48,11 @@ po::variables_map process_commandline(int argc, char** argv)
 
     ("output,o", po::value<string>(), "name to be used for all tracking output files")
     
-    ("axis,a", po::value<string>(), "use specified XML file for axis definition during tracking")
+    ("axis,a", po::value<string>(), "use specified axis definition XML file for coordinate transformation during tracking")
+    ("no-axis,n", "do not transform 3D coordinates during tracking")
+
+    ("inner-diameter,di", po::value<float>(), "use specified inner diameter (in meters) of circles")
+    ("outer-diameter,do", po::value<float>(), "use specified outer diameter (in meters) of circles")
     
     ("mat,m", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
     ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
@@ -78,7 +84,15 @@ po::variables_map process_commandline(int argc, char** argv)
     if (do_tracking) {
       if (!config_vars.count("output")) throw std::runtime_error("Specify output name of files");
       if (config_vars["track"].as<int>() < 0) throw std::runtime_error("Number of circles to track should be greater than 0");
-      if (!config_vars.count("axis")) throw std::runtime_error("Axis definition file is required for tracking");
+      if (config_vars.count("no-axis")) load_axis = false;
+      else {
+        if (!config_vars.count("axis")) throw std::runtime_error("Axis definition file is missing, if you dont need to perform coordinate transformation use --no-axis");
+        load_axis = true;
+      }
+      if (config_vars.count("inner-diameter") && config_vars.count("outer-diameter"))
+        custom_diameter = true;
+      else if (config_vars.count("inner-diameter") || config_vars.count("outer-diameter"))
+        throw std::runtime_error("please specify both outer and inner diameters");
       
       number_of_targets = config_vars["track"].as<int>();
     }
@@ -130,8 +144,13 @@ int main(int argc, char** argv)
     cv::LocalizationSystem::load_matlab_calibration(config_vars["mat"].as<string>(), K, dist_coeff);
 
   /* init system */
+  
   cv::Size frame_size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT));
-  cv::LocalizationSystem system(number_of_targets, frame_size.width, frame_size.height, K, dist_coeff);
+  float inner_diameter = (custom_diameter ? config_vars["inner-diameter"].as<float>() : WHYCON_DEFAULT_INNER_DIAMETER);
+  float outer_diameter = (custom_diameter ? config_vars["outer-diameter"].as<float>() : WHYCON_DEFAULT_OUTER_DIAMETER);
+  cv::LocalizationSystem system(number_of_targets, frame_size.width, frame_size.height, K, dist_coeff,
+                                outer_diameter, inner_diameter);
+  cout << "using diameters (outer/inner): " << outer_diameter << " " << inner_diameter << endl;
 
   #ifdef ENABLE_VIEWER
   cv::LocalizationViewer viewer(system);
@@ -170,8 +189,13 @@ int main(int argc, char** argv)
   int saved_frame_idx = 0;
 
   /* read axis from file when in tracking mode */
-  if (do_tracking)
-    system.read_axis(config_vars["axis"].as<string>());
+  if (do_tracking) {
+    if (load_axis) {
+      cout << "loading axis definition file" << endl;
+      system.read_axis(config_vars["axis"].as<string>());
+    }
+    else cout << "coordinate transform disabled" << endl;
+  }
 
   while (!stop)
   {
@@ -205,11 +229,18 @@ int main(int argc, char** argv)
           for (int i = 0; i < number_of_targets; i++) {
             const cv::CircleDetector::Circle& circle = system.get_circle(i);
             cv::Vec3f coord = system.get_pose(circle).pos;
-            cv::Vec3f coord_trans = system.get_transformed_pose(circle).pos;
-            ostringstream ostr;
-            ostr << fixed << setprecision(2) << "[" << coord_trans(0) << "," << coord_trans(1) << "]";
-            ostr << i;
-            if (use_gui) circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+            cv::Vec3f coord_trans = coord;
+            if (load_axis) {
+              coord_trans = system.get_transformed_pose(circle).pos;
+            }
+            
+            if (use_gui) {
+              ostringstream ostr;
+              ostr << fixed << setprecision(2);
+              ostr << coord_trans << " " << i;            
+              circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+            }
+            
             data_file << setprecision(15) << "frame " << saved_frame_idx << " circle " << i
               << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
               << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;

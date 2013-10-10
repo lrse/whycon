@@ -15,8 +15,9 @@ using std::endl;
 using std::numeric_limits;
 
 cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
-  float _circle_diameter, float _diameter_ratio) :
-  xscale(1), yscale(1), detector(_targets, _width, _height, _diameter_ratio), targets(_targets), width(_width), height(_height),  circle_diameter(_circle_diameter)
+  float _outer_diameter, float _inner_diameter) :
+  xscale(1), yscale(1), detector(_targets, _width, _height, _inner_diameter / _outer_diameter),
+  targets(_targets), width(_width), height(_height),  circle_diameter(_outer_diameter)
 {
   _K.copyTo(K);
   _dist_coeff.copyTo(dist_coeff);
