@@ -568,7 +568,7 @@ cv::CircleDetector::Circle::Circle(void)
 
 void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Scalar color, float thickness) const
 {
-  cv::ellipse(image, cv::Point(x, y), cv::Size((int)m0 * 2, (int)m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, thickness, CV_AA);
+  cv::ellipse(image, cv::Point(x, y), cv::Size(m0 * 2, m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, thickness, CV_AA);
   float scale = image.size().width / 1800.0f;
   //float thickness = scale * 3.0;
   //if (thickness < 1) thickness = 1;
