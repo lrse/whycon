@@ -52,7 +52,7 @@ namespace cv {
       float unbarrel_y(float x, float y) const;
       float transform_x(float xc,float yc) const;
       float transform_y(float xc,float yc) const;
-      void transform(float x, float y) const;
+      void transform(float& x, float& y) const;
       
       cv::Vec3f eigen(double data[]) const;        
   };

@@ -292,6 +292,30 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   }
 }
 
+#if 1
+/* normalize corodinates: move from image to canonical and remove distortion */
+void cv::LocalizationSystem::transform(float& x, float& y) const
+{
+  cv::Mat src(1, 1, CV_32FC2), dst(1, 1, CV_32FC2);
+  src.at<cv::Vec2f>(0) = cv::Vec2f(x, y);
+  cv::undistortPoints(src, dst, K, dist_coeff);
+  cv::Vec2f out = dst.at<cv::Vec2f>(0);
+  x = out(0); y = out(1);
+}
+
+float cv::LocalizationSystem::transform_x(float xc,float yc) const
+{
+  transform(xc, yc);
+  return xc;
+}
+
+float cv::LocalizationSystem::transform_y(float xc,float yc) const
+{
+  transform(xc, yc);
+  return yc;
+}
+#else
+
 float cv::LocalizationSystem::unbarrel_x(float x, float y) const
 {
   x = (x-cc[0])/fc[0];
@@ -323,6 +347,7 @@ float cv::LocalizationSystem::transform_y(float xc,float yc) const
 {
 	return (unbarrel_y(xc,yc)-cc[1])/fc[1];
 }
+#endif
 
 void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
 {
