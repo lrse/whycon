@@ -238,7 +238,7 @@ int main(int argc, char** argv)
               ostringstream ostr;
               ostr << fixed << setprecision(2);
               ostr << coord_trans << " " << i;            
-              circle.draw(frame, ostr.str(), cv::Scalar(255,255,0));
+              circle.draw(frame, ostr.str(), cv::Vec3b(255,255,0));
             }
             
             data_file << setprecision(15) << "frame " << saved_frame_idx << " circle " << i

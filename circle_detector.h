@@ -67,13 +67,13 @@ namespace cv {
           float bwRatio;
           bool round;
           bool valid;
-          float m0,m1;
-          float v0,v1;
+          float m0,m1; // axis dimensions
+          float v0,v1; // axis (v0,v1) and (v1,-v0)
 
           void write(cv::FileStorage& fs) const;
           void read(const cv::FileNode& node);
           
-          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Scalar color = cv::Scalar(0,255,0), float thickness = 1) const;
+          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Vec3b color = cv::Vec3b(0,255,0), float thickness = 1) const;
       };
 
       class Context {

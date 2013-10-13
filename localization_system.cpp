@@ -288,7 +288,7 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   for (int i = 0; i < 4; i++) {
     std::ostringstream ostr;
     //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
-    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Scalar((i == 0 || i == 3 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 || i == 3 ? 255 : 0)));
+    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Vec3b((i == 0 || i == 3 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 || i == 3 ? 255 : 0)));
   }
 }
 
