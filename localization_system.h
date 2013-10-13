@@ -48,11 +48,7 @@ namespace cv {
       double fc[2]; // focal length X,Y
       double cc[2]; // principal point X,Y
       double kc[6]; // distortion coefficients
-      float unbarrel_x(float x, float y) const;
-      float unbarrel_y(float x, float y) const;
-      float transform_x(float xc,float yc) const;
-      float transform_y(float xc,float yc) const;
-      void transform(float& x, float& y) const;
+      void transform(float x_in, float y_in, float& x_out, float& y_out) const;
       
       cv::Vec3f eigen(double data[]) const;        
   };

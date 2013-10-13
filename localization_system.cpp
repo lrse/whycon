@@ -94,8 +94,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	float x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
   
   //transform the center
-	x = transform_x(circle.x,circle.y);
-	y = transform_y(circle.x,circle.y);
+	transform(circle.x,circle.y, x, y);
   
   //calculate the major axis 
 	//endpoints in image coords
@@ -103,13 +102,14 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	sx2 = circle.x - circle.v0 * circle.m0 * 2;
 	sy1 = circle.y + circle.v1 * circle.m0 * 2;
 	sy2 = circle.y - circle.v1 * circle.m0 * 2;
+
   //endpoints in camera coords 
-	x1 = transform_x(sx1,sy1);
-	x2 = transform_x(sx2,sy2);
-	y1 = transform_y(sx1,sy1);
-	y2 = transform_y(sx2,sy2);
+	transform(sx1, sy1, x1, y1);
+	transform(sx2, sy2, x2, y2);
+
   //semiaxis length 
 	major = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
+  
 	v0 = (x2-x1)/major/2.0;
 	v1 = (y2-y1)/major/2.0;
 
@@ -119,11 +119,11 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	sx2 = circle.x - circle.v1 * circle.m1 * 2;
 	sy1 = circle.y - circle.v0 * circle.m1 * 2;
 	sy2 = circle.y + circle.v0 * circle.m1 * 2;
+  
 	//endpoints in camera coords 
-	x1 = transform_x(sx1,sy1);
-	x2 = transform_x(sx2,sy2);
-	y1 = transform_y(sx1,sy1);
-	y2 = transform_y(sx2,sy2);
+	transform(sx1, sy1, x1, y1);
+	transform(sx2, sy2, x2, y2);
+
 	//semiaxis length 
 	minor = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
 
@@ -292,62 +292,16 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   }
 }
 
-#if 1
-/* normalize corodinates: move from image to canonical and remove distortion */
-void cv::LocalizationSystem::transform(float& x, float& y) const
+/* normalize coordinates: move from image to canonical and remove distortion */
+void cv::LocalizationSystem::transform(float x_in, float y_in, float& x_out, float& y_out) const
 {
-  cv::Mat src(1, 1, CV_32FC2), dst(1, 1, CV_32FC2);
-  src.at<cv::Vec2f>(0) = cv::Vec2f(x, y);
+  cv::Mat /*src(1, 1, CV_32FC2),*/ dst(1, 1, CV_32FC2);
+  //src.at<cv::Vec2f>(0) = cv::Vec2f(x_in, y_in);
+  vector<cv::Vec2f> src(1, cv::Vec2f(x_in, y_in));
   cv::undistortPoints(src, dst, K, dist_coeff);
   cv::Vec2f out = dst.at<cv::Vec2f>(0);
-  x = out(0); y = out(1);
+  x_out = out(0); y_out = out(1);
 }
-
-float cv::LocalizationSystem::transform_x(float xc,float yc) const
-{
-  transform(xc, yc);
-  return xc;
-}
-
-float cv::LocalizationSystem::transform_y(float xc,float yc) const
-{
-  transform(xc, yc);
-  return yc;
-}
-#else
-
-float cv::LocalizationSystem::unbarrel_x(float x, float y) const
-{
-  x = (x-cc[0])/fc[0];
-  y = (y-cc[1])/fc[1];
-  float r = x*x+y*y;
-  float dx = 2*kc[3]*x*y + kc[4]*(r + 2*x*x);
-  float cx = (1-kc[1]*r-kc[2]*r*r-kc[5]*r*r*r)*x-dx;
-  cx = (cx*fc[0]+cc[0]);
-  return cx;
-}
-
-float cv::LocalizationSystem::unbarrel_y(float x, float y) const
-{
-  x = (x-cc[0])/fc[0];
-  y = (y-cc[1])/fc[1];
-  float r = x*x+y*y;
-  float dy = 2*kc[4]*x*y + kc[3]*(r + 2*y*y);
-  float cy = (1-kc[1]*r-kc[2]*r*r-kc[5]*r*r*r)*y-dy;
-  cy = (cy*fc[1]+cc[1]);
-  return cy;
-}
-
-float cv::LocalizationSystem::transform_x(float xc,float yc) const
-{
-	return (unbarrel_x(xc,yc)-cc[0])/fc[0];
-}
-
-float cv::LocalizationSystem::transform_y(float xc,float yc) const
-{
-	return (unbarrel_y(xc,yc)-cc[1])/fc[1];
-}
-#endif
 
 void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
 {
