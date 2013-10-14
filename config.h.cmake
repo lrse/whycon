@@ -10,4 +10,7 @@
 
 #cmakedefine ENABLE_MAVCONN
 
+#cmakedefine ENABLE_FULL_UNDISTORT
+#cmakedefine ENABLE_RANDOMIZED_THRESHOLD
+
 #endif

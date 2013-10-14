@@ -197,14 +197,24 @@ int main(int argc, char** argv)
     else cout << "coordinate transform disabled" << endl;
   }
 
+  int max_attempts = is_camera ? 1 : 5;
+  int refine_steps = is_camera ? 1 : 15;
+
   while (!stop)
   {
     if (!capture.read(original_frame)) { cout << "no more frames left to read" << endl; break; }
+
+    #if defined(ENABLE_FULL_UNDISTORT)
+    cv::Mat undistorted;
+    cv::undistort(original_frame, undistorted, K, dist_coeff, K);
+    undistorted.copyTo(original_frame);
+    #endif
+    
     original_frame.copyTo(frame);
 
     if (!do_tracking) {
       if (!is_camera || clicked) {
-        bool axis_was_set = system.set_axis(original_frame, config_vars["set-axis"].as<string>());
+        bool axis_was_set = system.set_axis(original_frame, max_attempts, refine_steps, config_vars["set-axis"].as<string>());
         if (!axis_was_set) throw std::runtime_error("Error setting axis!");      
         system.draw_axis(frame);
         cv::imwrite(output_name + "_axis_detected.png", frame);
@@ -213,19 +223,13 @@ int main(int argc, char** argv)
       if (use_gui) cv::imshow("output", frame);
     }
     else {
-      if (!is_tracking && (!use_gui || clicked)) {
+      if (!use_gui || !is_camera || clicked) {
         clicked = false;
-        is_tracking = true;
-        cout << "initialization" << endl;
-        system.initialize(original_frame); // find circles in image      
-      }
-      
-      // localize and draw circles
-      if (is_tracking) {
-        cout << "tracking current frame" << endl;
-        bool localized_correctly = system.localize(original_frame, (is_camera ? 1 : 50), (is_camera ? 1 : 15)); 
+        if (!is_tracking) cout << "resetting targets" << endl;
+        is_tracking = system.localize(original_frame, !is_tracking, max_attempts, refine_steps); 
+        cout << "localized ok? " << is_tracking << endl;
         
-        if (localized_correctly) {
+        if (is_tracking) {
           for (int i = 0; i < number_of_targets; i++) {
             const cv::CircleDetector::Circle& circle = system.get_circle(i);
             cv::Vec3f coord = system.get_pose(circle).pos;

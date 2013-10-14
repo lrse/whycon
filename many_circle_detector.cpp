@@ -12,55 +12,49 @@ cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, i
 cv::ManyCircleDetector::~ManyCircleDetector(void) {
 }
 
-bool cv::ManyCircleDetector::initialize(const cv::Mat& image) {
-  cv::Mat marked_image;
-  image.copyTo(marked_image);
-
-  /*cv::namedWindow("marked", CV_WINDOW_NORMAL);
-  cv::namedWindow("buffer", CV_WINDOW_NORMAL);*/
-  int attempts = 100;
-  for (int i = 0; i < number_of_circles; i++) {
-    detectors[i].draw = true;
-    for (int j = 0; j < attempts; j++) {
-      int64_t ticks = cv::getTickCount();
-      cout << "detecting circle " << i << " attempt " << j << endl;
-      circles[i] = detectors[i].detect(marked_image, (i != 0 ? circles[i - 1] : CircleDetector::Circle()));
-      /*cv::imshow("marked", marked_image);
-      cv::Mat buffer_img;
-      cv::waitKey();*/
-      double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-      cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
-      if (circles[i].valid) break;
-    }
-    detectors[i].draw = false;
-    
-    if (!circles[i].valid) return false;    
-  }
-  return true;
-}
-
-bool cv::ManyCircleDetector::detect(const cv::Mat& image, int refine_max_step) {
+bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_attempts, int refine_max_step) {
   bool all_detected = true;
-  cv::Mat marked_image;
-  image.copyTo(marked_image);
 
-  for (int i = 0; i < number_of_circles && all_detected; i++) {
+  cv::Mat input;
+  if (reset) image.copyTo(input); // image will be modified on reset
+  else input = image;
+  
+  for (int i = 0; i < number_of_circles && all_detected; i++) {    
     cout << "detecting circle " << i << endl;
+    
+    for (int j = 0; j < max_attempts; j++) {
+      cout << "attempt " << j << endl;
 
-    for (int refine_counter = 0; refine_counter < refine_max_step; refine_counter++)
-    {
-      if (refine_counter > 0) cout << "refining step " << refine_counter << "/" << refine_max_step << endl;
-      
-      int prev_threshold = detectors[i].get_threshold();     
-      int64_t ticks = cv::getTickCount();    
-      circles[i] = detectors[i].detect(marked_image, circles[i]); // TODO: modify current
-      if (!circles[i].valid) { all_detected = false; break; }
-      double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-      cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
+      for (int refine_counter = 0; refine_counter < refine_max_step; refine_counter++)
+      {
+        if (refine_counter > 0) cout << "refining step " << refine_counter << "/" << refine_max_step << endl;
+        int prev_threshold = detectors[i].get_threshold();
 
-      // if the threshold changed, keep refining this circle
-      if (detectors[i].get_threshold() == prev_threshold) break;
+        int64_t ticks = cv::getTickCount();
+        
+        if (refine_counter == 0 && reset)
+          circles[i] = detectors[i].detect(input, (i == 0 ? CircleDetector::Circle() : circles[i-1]));
+        else
+          circles[i] = detectors[i].detect(input, circles[i]);
+          
+        double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+        cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
+
+        if (!circles[i].valid) break;
+
+        // if the threshold changed, keep refining this circle
+        if (detectors[i].get_threshold() == prev_threshold) break;
+      }
+
+      if (circles[i].valid) {
+        cout << "detection of circle " << i << " ok" << endl;
+        if (reset) detectors[i].cover_last_detected(input);
+        break; // detection was successful, dont keep trying
+      }
     }
+
+    // detection was not possible for this circle, abort search
+    if (!circles[i].valid) { all_detected = false; break; }
   }
   
   return all_detected;

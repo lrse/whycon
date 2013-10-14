@@ -6,6 +6,8 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O4 -march=native -Wfatal-errors")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake-configs")
 option(ENABLE_3D "Enable 3D viewer support (requires PointClound library)" OFF)
 option(ENABLE_MAVCONN "Enable MAVCONN support for running localization system as a service" OFF)
+option(ENABLE_FULL_UNDISTORT "Undistort the whole frame" OFF)
+option(ENABLE_RANDOMIZED_THRESHOLD "Use rand() instead of binary-like search for threshold" OFF)
 
 set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
 set(REQUIRED_BOOST_COMPONENTS program_options)

@@ -10,8 +10,7 @@ namespace cv {
       ManyCircleDetector(int number_of_circles, int width, int height, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       ~ManyCircleDetector(void);
       
-      bool initialize(const cv::Mat& image);
-      bool detect(const cv::Mat& image, int refine_max_step = 1);
+      bool detect(const cv::Mat& image, bool reset = false, int max_attempts = 1, int refine_max_step = 1);
       
       std::vector<CircleDetector::Circle> circles;
 

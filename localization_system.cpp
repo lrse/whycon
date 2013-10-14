@@ -41,17 +41,8 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   precompute_undistort_map();
 }
 
-bool cv::LocalizationSystem::initialize(const cv::Mat& image) {
-  return detector.initialize(image);
-}
-
-bool cv::LocalizationSystem::localize(const cv::Mat& image, int attempts, int max_refine) {
-  for (int i = 0; i < attempts; i++) {
-    cout << "localization attempt " << i << endl;
-    if (detector.detect(image, max_refine)) return true;
-    else cout << "localization failed, not all circles detected" << endl;
-  }
-  return false;
+bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int attempts, int max_refine) {
+  return detector.detect(image, reset, attempts, max_refine);
 }
 
      
@@ -172,17 +163,16 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
 }
 
 // TODO: allow user to choose calibration circles, now the circles are read in the order of detection
-bool cv::LocalizationSystem::set_axis(const cv::Mat& image, const std::string& file)
+bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, int refine_steps, const std::string& file)
 {
   ManyCircleDetector axis_detector(4, width, height);
-  if (!axis_detector.initialize(image)) return false;
+  if (!axis_detector.detect(image, true, max_attempts, refine_steps)) return false;
 
   // get poses of each calibration circle
   /*float minx, miny;
   minx = miny = numeric_limits<float>::max();
   int zero_i;*/
   
-  if (!axis_detector.detect(image)) return false;
   Pose circle_poses[4];
   for (int i = 0; i < 4; i++) {
     origin_circles[i] = axis_detector.circles[i];
@@ -297,10 +287,15 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 /* normalize coordinates: move from image to canonical and remove distortion */
 void cv::LocalizationSystem::transform(float x_in, float y_in, float& x_out, float& y_out) const
 {
+  #if defined(ENABLE_FULL_UNDISTORT)
+  x = (x-cc[0])/fc[0];
+  y = (y-cc[1])/fc[1];
+  #else
   vector<cv::Vec2f> src(1, cv::Vec2f(x_in, y_in));
   vector<cv::Vec2f> dst(1);
   cv::undistortPoints(src, dst, K, dist_coeff);
   x_out = dst[0](0); y_out = dst[0](1);
+  #endif
 }
 
 void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)

@@ -10,12 +10,11 @@ namespace cv {
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff,
         float outer_diameter = WHYCON_DEFAULT_OUTER_DIAMETER, float inner_diameter = WHYCON_DEFAULT_INNER_DIAMETER);
       
-      bool set_axis(const cv::Mat& image, const std::string& output = std::string());
+      bool set_axis(const cv::Mat& image, int attempts = 1, int max_refine = 1, const std::string& output = std::string());
       void read_axis(const std::string& input);
       void draw_axis(cv::Mat& image);
       
-      bool initialize(const cv::Mat& image);
-      bool localize(const cv::Mat& image, int attempts = 1, int max_refine = 1);
+      bool localize(const cv::Mat& image, bool reset = false, int attempts = 1, int max_refine = 1);
       
       float xscale, yscale;
 

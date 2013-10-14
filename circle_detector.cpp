@@ -1,5 +1,6 @@
 #include <cstdio>
 #include "circle_detector.h"
+#include "config.h"
 using namespace std;
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -16,7 +17,6 @@ cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, fl
 	centerDistanceToleranceAbs = 5;
 	circularTolerance = 0.3;
 	ratioTolerance = 1.0;
-  draw = false;
 	
 	//initialization - fixed params
 	width = _width;
@@ -45,6 +45,7 @@ int cv::CircleDetector::get_threshold(void) const
 
 void cv::CircleDetector::change_threshold(void)
 {
+  #if !defined(ENABLE_RANDOMIZED_THRESHOLD)
   threshold_counter++;
 	int d = threshold_counter;
   int div = 1;
@@ -54,8 +55,11 @@ void cv::CircleDetector::change_threshold(void)
 	}
 	int step = 256 / div;
 	threshold = 3 * (step * (threshold_counter - div) + step/2);
-  cout << "changed threshold to " << threshold << endl;
   if (step <= 16) threshold_counter = 0;
+  #else
+  threshold = (rand() % 48) * 16;
+  #endif
+  cout << "attempting new threshold: " << threshold << endl;
 }
 
 bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio)
@@ -311,6 +315,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 								outer.valid = inner.valid = true; // at this point, the target is considered valid
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection
+                cout << "threshold set to: " << threshold << endl;
 								
                 //pixel leakage correction
 								float r = diameterRatio*diameterRatio;
@@ -343,27 +348,16 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	} while (ii != start);
 
 	// draw
-	if (inner.valid){
+	if (inner.valid)
 		threshold_counter = 0;
-    if (draw) {
-      for (int i = queueOldStart; i < queueEnd; i++) {
-        int pos = queue[i];
-        uchar* ptr = image.data + 3*pos;
-        *ptr = 255; ptr++;
-        *ptr = 255; ptr++;
-        *ptr = 255;
-      }
-    }
-	}
-  else {
+  else
     change_threshold(); // update threshold for next run. inner is what user receives
-	}
 
   /*cv::namedWindow("buffer", CV_WINDOW_NORMAL);
   cv::Mat buffer_img;
   context->debug_buffer(image, buffer_img);
-  cv::imshow("buffer", buffer_img);
-  cv::waitKey();*/
+  cv::imshow("buffer", buffer_img);*/
+  //cv::waitKey();
 
   // if this is not the first call (there was a previous valid circle where search started),
   // the current call found a valid match, and only two segments were found during the search (inner/outer)
@@ -372,7 +366,21 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   context->cleanup(outer, fast_cleanup);
   
   if (!inner.valid) cout << "detection failed" << endl;
+  else cout << "detected at " << inner.x << " " << inner.y << endl;
 	return inner;
+}
+
+
+void cv::CircleDetector::cover_last_detected(cv::Mat& image)
+{
+  const vector<int>& queue = context->queue;
+  for (int i = queueOldStart; i < queueEnd; i++) {
+    int pos = queue[i];
+    uchar* ptr = image.data + 3*pos;
+    *ptr = 255; ptr++;
+    *ptr = 255; ptr++;
+    *ptr = 255;
+  }
 }
 
 void cv::CircleDetector::improveEllipse(const cv::Mat& image, Circle& c)
