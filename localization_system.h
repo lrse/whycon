@@ -49,6 +49,9 @@ namespace cv {
       double cc[2]; // principal point X,Y
       double kc[6]; // distortion coefficients
       void transform(float x_in, float y_in, float& x_out, float& y_out) const;
+
+      void precompute_undistort_map(void);
+      cv::Mat undistort_map;
       
       cv::Vec3f eigen(double data[]) const;        
   };

@@ -36,7 +36,9 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
     kc[i + 1] = dist_coeff.at<double>(i);
     cout << kc[i + 1] << " ";
   }
-  cout << endl;  
+  cout << endl;
+
+  precompute_undistort_map();
 }
 
 bool cv::LocalizationSystem::initialize(const cv::Mat& image) {
@@ -295,12 +297,10 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 /* normalize coordinates: move from image to canonical and remove distortion */
 void cv::LocalizationSystem::transform(float x_in, float y_in, float& x_out, float& y_out) const
 {
-  cv::Mat /*src(1, 1, CV_32FC2),*/ dst(1, 1, CV_32FC2);
-  //src.at<cv::Vec2f>(0) = cv::Vec2f(x_in, y_in);
   vector<cv::Vec2f> src(1, cv::Vec2f(x_in, y_in));
+  vector<cv::Vec2f> dst(1);
   cv::undistortPoints(src, dst, K, dist_coeff);
-  cv::Vec2f out = dst.at<cv::Vec2f>(0);
-  x_out = out(0); y_out = out(1);
+  x_out = dst[0](0); y_out = dst[0](1);
 }
 
 void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
@@ -334,7 +334,7 @@ void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_fi
         i++;
       } while (s != "];");
     }
-  }    
+  }
 }
 
 void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) {
@@ -343,4 +343,16 @@ void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_fi
   
   file["K"] >> K;
   file["dist"] >> dist_coeff;
+}
+
+void cv::LocalizationSystem::precompute_undistort_map(void)
+{
+  undistort_map.create(height, width, CV_32FC2);
+  for (int i = 0; i < height; i++) {
+    vector<cv::Vec2f> coords_in(width);
+    for (int j = 0; j < width; j++)
+      coords_in[j] = cv::Vec2f(j,i); // TODO: reverse y? add 0.5?
+
+    undistortPoints(coords_in, undistort_map.row(i), K, dist_coeff);
+  }
 }
