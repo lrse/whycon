@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <boost/program_options.hpp>
+#include <boost/timer.hpp>
 #include "localization_system.h"
 #include "localization_viewer.h"
 #include "localization_service.h"
@@ -226,8 +227,12 @@ int main(int argc, char** argv)
       if (!use_gui || !is_camera || clicked) {
         clicked = false;
         if (!is_tracking) cout << "resetting targets" << endl;
-        is_tracking = system.localize(original_frame, !is_tracking, max_attempts, refine_steps); 
-        cout << "localized ok? " << is_tracking << endl;
+
+        int64_t ticks = cv::getTickCount();
+        is_tracking = system.localize(original_frame, !is_tracking, max_attempts, refine_steps);
+        double delta_ticks = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+        
+        cout << "localized all? " << is_tracking << " t: " << delta_ticks << " " << " fps: " << 1/delta_ticks << endl;
         
         if (is_tracking) {
           for (int i = 0; i < number_of_targets; i++) {
