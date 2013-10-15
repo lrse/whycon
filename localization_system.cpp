@@ -38,6 +38,8 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   }
   cout << endl;
 
+  coordinates_transform = cv::Matx33f(1, 0, 0, 0, 1, 0, 0, 0, 1);
+
   precompute_undistort_map();
 }
 
