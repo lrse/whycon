@@ -63,7 +63,7 @@ void cv::LocalizationViewer::update(void)
 {
   boost::mutex::scoped_lock m(mutex);
   for (int i = 0; i < point_cloud->size(); i++) {
-    cv::LocalizationSystem::Pose pose = system.get_transformed_pose(i); // TODO: use stored transformed poses to reduce overhead of this calld
+    cv::LocalizationSystem::Pose pose = system.get_pose(i); // TODO: use stored transformed poses to reduce overhead of this calld
     (*point_cloud)[i] = pcl::PointXYZ(pose.pos(0), pose.pos(1), pose.pos(2));
     changed_point_cloud = true;
   }

@@ -186,7 +186,7 @@ int main(int argc, char** argv)
   bool is_tracking = false;
   if (!is_camera) clicked = true; // when not using camera, emulate user click so that tracking starts immediately
   cv::Mat original_frame, frame;
-  int saved_frame_idx = 0;
+  long frame_idx = 0;
 
   /* read axis from file when in tracking mode */
   if (do_tracking) {
@@ -245,23 +245,24 @@ int main(int argc, char** argv)
               circle.draw(frame, ostr.str(), cv::Vec3b(255,255,0));
             }
             
-            data_file << setprecision(15) << "frame " << saved_frame_idx << " circle " << i
+            data_file << setprecision(15) << "frame " << frame_idx << " circle " << i
               << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
               << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
-            saved_frame_idx++;
           }
           #ifdef ENABLE_VIEWER
           if (use_gui) viewer.update();
           #endif
           #ifdef ENABLE_MAVCONN
           if (run_service) service.publish();
-          #endif    
+          #endif
         }
 
         video_writer << frame;
       }
       if (use_gui) cv::imshow("output", frame);
     }
+
+    frame_idx++;
   }
 
   /*#ifdef ENABLE_VIEWER
