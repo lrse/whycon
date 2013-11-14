@@ -37,31 +37,41 @@ po::variables_map process_commandline(int argc, char** argv)
   po::options_description options_description("WhyCon options");
   options_description.add_options()
     ("help,h", "display this help")
-    
+  ;
+
+  po::options_description mode_options("Operating mode");
+  mode_options.add_options()    
     ("set-axis,s", po::value<string>(), "perform axis detection and save results to specified XML file")
     ("track,t", po::value<int>(), "perform tracking of the specified ammount of targets")
-    
+  ;
+
+  po::options_description input_options("Input source");
+  input_options.add_options()
     ("cam,c", po::value<int>(), "use camera as input (expects id of camera)")
     ("video,v", po::value<string>(), "use video as input (expects path to video file)")
-    ("img,i", po::value<string>(), "use sequence of images as input (expects pattern describing sequence)"
+    ("img,i", po::value<string>(), "use sequence of images as input (expects pattern describing sequence). "
                                       "Use a pattern such as 'directory/%03d.png' for files named 000.png to "
                                       "999.png inside said directory")
-
-    ("output,o", po::value<string>(), "name to be used for all tracking output files")
-    
+  ;
+  
+  po::options_description tracking_options("Tracking options");
+  tracking_options.add_options()
     ("axis,a", po::value<string>(), "use specified axis definition XML file for coordinate transformation during tracking")
     ("no-axis,n", "do not transform 3D coordinates during tracking")
+    ("output,o", po::value<string>(), "name to be used for all tracking output files")
+  ;
 
+  po::options_description parameter_options("Other options");
+  parameter_options.add_options()
     ("inner-diameter,di", po::value<float>(), "use specified inner diameter (in meters) of circles")
-    ("outer-diameter,do", po::value<float>(), "use specified outer diameter (in meters) of circles")
-    
+    ("outer-diameter,do", po::value<float>(), "use specified outer diameter (in meters) of circles")  
     ("mat,m", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
     ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
     ("service", "run as a mavconn service, outputting pose information through bus")
-    
     ("no-gui,n", "disable opening of GUI")
   ;
 
+  options_description.add(mode_options).add(input_options).add(tracking_options).add(parameter_options);
 
   po::variables_map config_vars;
   try {
