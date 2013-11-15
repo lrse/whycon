@@ -16,8 +16,8 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 8 && argc != 9) {
-    cout << "usage: calibrator <width> <height> <squares in X> <squares in Y> <square X size [mm]> <square Y size [mm]> <camera id> [<camera id>]" << endl;
+  if (argc != 8/* && argc != 9*/) {
+    cout << "usage: camera_calibrator <width> <height> <squares in X> <squares in Y> <square X size [mm]> <square Y size [mm]> <camera ID>" << endl;
     cout << "X,Y direction is width,height in image" << endl;
     return 1;
   }
