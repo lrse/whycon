@@ -11,7 +11,6 @@
 #include <boost/program_options.hpp>
 #include <boost/timer.hpp>
 #include "localization_system.h"
-#include "localization_viewer.h"
 #include "localization_service.h"
 using namespace std;
 namespace po = boost::program_options;
@@ -68,7 +67,7 @@ po::variables_map process_commandline(int argc, char** argv)
     ("mat,m", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
     ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
     ("service", "run as a mavconn service, outputting pose information through bus")
-    ("no-gui,n", "disable opening of GUI")
+    ("no-gui", "disable opening of GUI")
   ;
 
   options_description.add(mode_options).add(input_options).add(tracking_options).add(parameter_options);
@@ -162,11 +161,6 @@ int main(int argc, char** argv)
   cv::LocalizationSystem system(number_of_targets, frame_size.width, frame_size.height, K, dist_coeff,
                                 outer_diameter, inner_diameter);
   cout << "using diameters (outer/inner): " << outer_diameter << " " << inner_diameter << endl;
-
-  #ifdef ENABLE_VIEWER
-  cv::LocalizationViewer viewer(system);
-  if (use_gui) viewer.start();
-  #endif
 
   #ifdef ENABLE_MAVCONN
   bool run_service = config_vars.count("service");
@@ -264,9 +258,7 @@ int main(int argc, char** argv)
               << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
               << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
           }
-          #ifdef ENABLE_VIEWER
-          if (use_gui) viewer.update();
-          #endif
+
           #ifdef ENABLE_MAVCONN
           if (run_service) service.publish();
           #endif
