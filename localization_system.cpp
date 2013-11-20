@@ -17,7 +17,7 @@ using std::numeric_limits;
 cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
   float _outer_diameter, float _inner_diameter) :
   xscale(1), yscale(1), detector(_targets, _width, _height, _inner_diameter / _outer_diameter),
-  targets(_targets), width(_width), height(_height),  circle_diameter(_outer_diameter)
+  targets(_targets), width(_width), height(_height), axis_set(false), circle_diameter(_outer_diameter)
 {
   _K.copyTo(K);
   _dist_coeff.copyTo(dist_coeff);
@@ -260,6 +260,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
     fs << "c2"; origin_circles[2].write(fs);
     fs << "c3"; origin_circles[3].write(fs);
   }
+  axis_set = true;
   return true;
 }
 
@@ -272,7 +273,7 @@ void cv::LocalizationSystem::read_axis(const std::string& file) {
   origin_circles[1].read(fs["c1"]);
   origin_circles[2].read(fs["c2"]);
   origin_circles[3].read(fs["c3"]);
-
+  axis_set = true;
   cout << "transformation: " << coordinates_transform << endl;
 }
 

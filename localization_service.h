@@ -21,12 +21,13 @@ namespace cv {
 
       lcm_t* lcm;
       mavconn_mavlink_msg_container_t_subscription_t* comm_sub;
+      const cv::LocalizationSystem& system;
 
     private:
       void lcm_wait(void);
       bool should_stop;
       boost::thread thread;
-      const cv::LocalizationSystem& system;
+      
   };
 }
 

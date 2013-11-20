@@ -1,9 +1,11 @@
+#include <iostream>
 #include "localization_service.h"
+using namespace std;
 
 static void mavlink_handler(const lcm_recv_buf_t* rbuf, const char* channel,
                               const mavconn_mavlink_msg_container_t* container, void* user);
 
-cv::LocalizationService::LocalizationService(const cv::LocalizationSystem& _system) : lcm(NULL), should_stop(false), system(_system)
+cv::LocalizationService::LocalizationService(const cv::LocalizationSystem& _system) :  lcm(NULL), system(_system), should_stop(false)
 {
 	
 }
@@ -24,14 +26,17 @@ void cv::LocalizationService::start(void)
   lcm = lcm_create("udpm://");
 	if (!lcm) throw std::runtime_error("Could not initialize LCM bus");
 
-	comm_sub = mavconn_mavlink_msg_container_t_subscribe(lcm, MAVLINK_MAIN, &mavlink_handler, lcm);
-  thread = boost::thread(&cv::LocalizationService::lcm_wait, this);  
+	comm_sub = mavconn_mavlink_msg_container_t_subscribe(lcm, MAVLINK_MAIN, &mavlink_handler, this);
+  thread = boost::thread(&cv::LocalizationService::lcm_wait, this);
+
+  cout << "started service" << endl;
 }
 
 void cv::LocalizationService::publish(void)
 {
+  cout << "publishing" << endl;
   for (int i = 0; i < system.targets; i++) {
-    LocalizationSystem::Pose pose = system.get_transformed_pose(i);
+    LocalizationSystem::Pose pose = (system.axis_set ? system.get_transformed_pose(i) : system.get_pose(i));
     mavlink_message_t msg;
     mavlink_msg_whycon_target_position_pack(getSystemID(), 0, &msg, i, 0, pose.pos(0), pose.pos(1), pose.pos(2));
     sendMAVLinkMessage(lcm, &msg);
@@ -49,11 +54,12 @@ void cv::LocalizationService::lcm_wait(void)
 	while(!should_stop) {
     FD_ZERO(&set);
     FD_SET(fd, &set);
-    if (select(1, &set, NULL, NULL, &t) == -1)
+    if (select(fd + 1, &set, NULL, NULL, &t) == -1)
       throw std::runtime_error("Localization service select() error: " + std::string(strerror(errno)));
       
-    if (FD_ISSET(fd, &set))
+    if (FD_ISSET(fd, &set)) {
       lcm_handle(lcm);
+    }
   }
 }
 
@@ -62,58 +68,20 @@ static void mavlink_handler(const lcm_recv_buf_t* rbuf, const char* channel,
 {
   const mavlink_message_t* msg = getMAVLinkMsgPtr(container);
 	mavlink_message_t response;
-	lcm_t* lcm = static_cast<cv::LocalizationService*>(user)->lcm;
-	//printf("Received message #%d on channel \"%s\" (sys:%d|comp:%d):\n", msg->msgid, channel, msg->sysid, msg->compid);
+  cv::LocalizationService* service = static_cast<cv::LocalizationService*>(user);
+	lcm_t* lcm = service->lcm;
 
-#if 0
 	switch(msg->msgid)
 	{
-	uint32_t receiveTime;
-	uint32_t sendTime;
-	case MAVLINK_MSG_ID_COMMAND_LONG:
-	{
-		mavlink_command_long_t cmd;
-		mavlink_msg_command_long_decode(msg, &cmd);
-		printf("Message ID: %d\n", msg->msgid);
-		printf("Command ID: %d\n", cmd.command);
-		printf("Target System ID: %d\n", cmd.target_system);
-		printf("Target Component ID: %d\n", cmd.target_component);
-		printf("\n");
-
-		if (cmd.confirmation)
-		{
-			printf("Confirmation requested, sending confirmation:\n");
-			mavlink_command_ack_t ack;
-			ack.command = cmd.command;
-			ack.result = 3;
-			mavlink_msg_command_ack_encode(getSystemID(), compid, &response, &ack);
-			sendMAVLinkMessage(lcm, &response);
-		}
-	}
-		break;
-	case MAVLINK_MSG_ID_ATTITUDE:
-		gettimeofday(&tv, NULL);
-		receiveTime = tv.tv_usec;
-		sendTime = mavlink_msg_attitude_get_time_boot_ms(msg);
-		printf("Received attitude message, transport took %f ms\n", (receiveTime - sendTime)/1000.0f);
-		break;
-	case MAVLINK_MSG_ID_GPS_RAW_INT:
-	{
-		mavlink_gps_raw_int_t gps;
-		mavlink_msg_gps_raw_int_decode(msg, &gps);
-		printf("GPS: lat: %f, lon: %f, alt: %f\n", gps.lat/(double)1E7, gps.lon/(double)1E7, gps.alt/(double)1E6);
+    case MAVLINK_MSG_ID_WHYCON_GET_PARAMETERS:
+    {
+      cout << "sent parameters" << endl;
+      mavlink_msg_whycon_parameters_pack(getSystemID(), 0, &response, service->system.targets);
+      sendMAVLinkMessage(lcm, &response);
+    }
+    break;
+    default:
+      cerr << "Unhandled message " << (int)msg->msgid << " received from client" << endl;
 		break;
 	}
-	case MAVLINK_MSG_ID_RAW_PRESSURE:
-	{
-		mavlink_raw_pressure_t p;
-		mavlink_msg_raw_pressure_decode(msg, &p);
-		printf("PRES: %f\n", p.press_abs/(double)1000);
-	}
-	break;
-	default:
-		printf("ERROR: could not decode message with ID: %d\n", msg->msgid);
-		break;
-	}
-  #endif  
 }

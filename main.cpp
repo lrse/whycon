@@ -229,7 +229,6 @@ int main(int argc, char** argv)
     }
     else {
       if (!use_gui || !is_camera || clicked) {
-        clicked = false;
         if (!is_tracking) cout << "resetting targets" << endl;
 
         int64_t ticks = cv::getTickCount();

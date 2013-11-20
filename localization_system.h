@@ -40,6 +40,7 @@ namespace cv {
       ManyCircleDetector detector;
       
       int targets, width, height;
+      bool axis_set;
       
     private:
       cv::Mat K, dist_coeff;
@@ -51,6 +52,7 @@ namespace cv {
 
       void precompute_undistort_map(void);
       cv::Mat undistort_map;
+      
       
       cv::Vec3f eigen(double data[]) const;        
   };
