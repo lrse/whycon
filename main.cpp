@@ -68,6 +68,8 @@ po::variables_map process_commandline(int argc, char** argv)
     ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
     ("service", "run as a mavconn service, outputting pose information through bus")
     ("no-gui", "disable opening of GUI")
+    ("width", po::value<int>(), "input camera resolution width")
+    ("height", po::value<int>(), "input camera resolution height")
   ;
 
   options_description.add(mode_options).add(input_options).add(tracking_options).add(parameter_options);
@@ -88,6 +90,9 @@ po::variables_map process_commandline(int argc, char** argv)
       
     if (!config_vars.count("cam") && !config_vars.count("video") && !config_vars.count("img"))
       throw std::runtime_error("Please specify one input source");
+
+    if (config_vars.count("width") != config_vars.count("height"))
+      throw std::runtime_error("Please specify both width and height for camera resolution");
 
     use_gui = !config_vars.count("no-gui");
 
@@ -139,6 +144,10 @@ int main(int argc, char** argv)
   if (is_camera) {
     int cam_id = config_vars["cam"].as<int>();
     capture.open(cam_id);
+    if (config_vars.count("width")) {
+      capture.set(CV_CAP_PROP_FRAME_WIDTH, config_vars["width"].as<int>());
+      capture.set(CV_CAP_PROP_FRAME_HEIGHT, config_vars["height"].as<int>());
+    }
   }
   else {
     std::string video_name(config_vars.count("img") ? config_vars["img"].as<string>() : config_vars["video"].as<string>());
@@ -156,6 +165,7 @@ int main(int argc, char** argv)
   /* init system */
   
   cv::Size frame_size(capture.get(CV_CAP_PROP_FRAME_WIDTH), capture.get(CV_CAP_PROP_FRAME_HEIGHT));
+  cout << "frame size: " << frame_size << endl;
   float inner_diameter = (custom_diameter ? config_vars["inner-diameter"].as<float>() : WHYCON_DEFAULT_INNER_DIAMETER);
   float outer_diameter = (custom_diameter ? config_vars["outer-diameter"].as<float>() : WHYCON_DEFAULT_OUTER_DIAMETER);
   cv::LocalizationSystem system(number_of_targets, frame_size.width, frame_size.height, K, dist_coeff,
