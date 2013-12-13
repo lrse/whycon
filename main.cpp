@@ -62,8 +62,8 @@ po::variables_map process_commandline(int argc, char** argv)
 
   po::options_description parameter_options("Other options");
   parameter_options.add_options()
-    ("inner-diameter,di", po::value<float>(), "use specified inner diameter (in meters) of circles")
-    ("outer-diameter,do", po::value<float>(), "use specified outer diameter (in meters) of circles")  
+    ("inner-diameter", po::value<float>(), "use specified inner diameter (in meters) of circles")
+    ("outer-diameter", po::value<float>(), "use specified outer diameter (in meters) of circles")  
     ("mat,m", po::value<string>(), "use specified matlab (.m) calibration toolbox file for camera calibration parameters")
     ("xml,x", po::value<string>(), "use specified 'camera_calibrator' file (.xml) for camera calibration parameters")
     ("service", "run as a mavconn service, outputting pose information through bus")
