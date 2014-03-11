@@ -51,3 +51,8 @@ SET(camera_calibrator_sources camera_calibrator.cpp)
 add_executable(camera_calibrator ${camera_calibrator_sources})
 target_link_libraries(camera_calibrator ${OpenCV_LIBS})
 
+# install targets
+install(TARGETS whycon DESTINATION lib)
+install(TARGETS localization-system camera_calibrator DESTINATION bin)
+install(FILES circle_detector.h config.h localization_system.h many_circle_detector.h DESTINATION include/whycon)
+install(FILES cmake-configs/FindWhyCon.cmake cmake-configs/FindGSL.cmake DESTINATION share/cmake/Modules)
