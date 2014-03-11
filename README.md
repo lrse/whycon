@@ -25,6 +25,6 @@ Once you downloaded the sources, enter the source directory and perform:
 Usage Manual
 ============
 
-Please refer to the Wiki, [https://github.com/v01d/whycon/wiki].
+Please refer to the Wiki, [https://github.com/lrse/whycon/wiki].
 
 
