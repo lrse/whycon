@@ -3,12 +3,11 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
 #include <sstream>
 #include <iomanip>
 #include <limits>
 #include "circle_detector.h"
+#include "sysmat.h"
 #include "localization_system.h"
 using std::cout;
 using std::endl;
@@ -51,34 +50,47 @@ bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int atte
 /* TODO: use cv::eigen */
 cv::Vec3f cv::LocalizationSystem::eigen(double data[]) const
 {
-	gsl_matrix_view m = gsl_matrix_view_array (data, 3, 3);
-	gsl_vector *eval = gsl_vector_alloc (3);
-	gsl_matrix *evec = gsl_matrix_alloc (3, 3);
+	double d[3];
+	double V[3][3];
+	double dat[3][3];
+	for (int i = 0;i<9;i++)dat[i/3][i%3] = data[i];
+	eigen_decomposition(dat,V,d);
 
-	gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (3);
-	gsl_eigen_symmv (&m.matrix, eval, evec, w);
-	gsl_eigen_symmv_free (w);
-	gsl_eigen_symmv_sort (eval, evec,GSL_EIGEN_SORT_ABS_ASC);
-
-	float L1 =gsl_vector_get(eval,1);
-	float L2 =gsl_vector_get(eval,2);
-	float L3 =gsl_vector_get(eval,0);
+	//eigenvalues
+	float L1 = d[1]; 
+	float L2 = d[2];
+	float L3 = d[0];
+	//eigenvectors
 	int V2=2;
 	int V3=0;
 
+	//detected pattern position
 	float z = circle_diameter/sqrt(-L2*L3)/2.0;
-	float z0 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,0,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,0,V3);
-	float z1 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,1,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,1,V3);
-	float z2 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,2,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,2,V3);
+	float c0 =  sqrt((L2-L1)/(L2-L3));
+	float c0x = c0*V[2][V2];
+	float c0y = c0*V[1][V2];
+	float c0z = c0*V[2][V2];
+	float c1 =  sqrt((L1-L3)/(L2-L3));
+	float c1x = c1*V[0][V3];
+	float c1y = c1*V[1][V3];
+	float c1z = c1*V[2][V3];
+
+	float z0 = -L3*c0x+L2*c1x;
+	float z1 = -L3*c0y+L2*c1y;
+	float z2 = -L3*c0z+L2*c1z;
+	float s1,s2;
+	s1=s2=1;
+	float n0 = +s1*c0x+s2*c1x;
+	float n1 = +s1*c0y+s2*c1y;
+	float n2 = +s1*c0z+s2*c1z;
+
 	if (z2*z < 0){
-		 z2 = -z2;
-		 z1 = -z1;
-		 z0 = -z0;
+		z2 = -z2;
+		z1 = -z1;
+		z0 = -z0;
 	}
   //cv::Vec3f result(-z0*z, -z1*z, z2*z); // NOTE: ZXY ordering XYZ
-  cv::Vec3f result(z0*z, z1*z, z2*z); // NOTE: ZXY ordering XYZ
-	gsl_vector_free (eval);
-	gsl_matrix_free (evec);
+	cv::Vec3f result(z0*z, z1*z, z2*z); // NOTE: ZXY ordering XYZ
 
 	return result;
 }

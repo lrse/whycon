@@ -9,11 +9,10 @@ option(ENABLE_VIEWER "Enable 3D viewer support (requires PointClound library and
 option(ENABLE_FULL_UNDISTORT "Undistort the whole frame" OFF)
 option(ENABLE_RANDOMIZED_THRESHOLD "Use rand() instead of binary-like search for threshold" OFF)
 
-set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
+set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp sysmat.cpp)
 
 ## Check dependencies
 find_package(OpenCV REQUIRED)
-find_package(GSL REQUIRED)
 find_package(Boost COMPONENTS program_options thread system REQUIRED)
 
 if (ENABLE_MAVCONN)
@@ -45,7 +44,7 @@ add_library(whycon SHARED ${whycon_srcs})
 
 # generate extra executables
 add_executable(localization-system main.cpp)
-target_link_libraries(localization-system whycon ${OpenCV_LIBS} ${GSL_LIBRARIES} ${Boost_LIBRARIES} ${MAVCONN_LIBS})
+target_link_libraries(localization-system whycon ${OpenCV_LIBS} ${Boost_LIBRARIES} ${MAVCONN_LIBS})
 
 SET(camera_calibrator_sources camera_calibrator.cpp)
 add_executable(camera_calibrator ${camera_calibrator_sources})
@@ -55,4 +54,4 @@ target_link_libraries(camera_calibrator ${OpenCV_LIBS})
 install(TARGETS whycon DESTINATION lib)
 install(TARGETS localization-system camera_calibrator DESTINATION bin)
 install(FILES circle_detector.h config.h localization_system.h many_circle_detector.h DESTINATION include/whycon)
-install(FILES cmake-configs/FindWhyCon.cmake cmake-configs/FindGSL.cmake DESTINATION share/cmake/Modules)
+install(FILES cmake-configs/FindWhyCon.cmake DESTINATION share/cmake/Modules)
