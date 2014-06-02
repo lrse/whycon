@@ -266,6 +266,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
 
 void cv::LocalizationSystem::read_axis(const std::string& file) {
   cv::FileStorage fs(file, cv::FileStorage::READ);
+  if (!fs.isOpened()) throw std::runtime_error("could not axis open file");
   cv::Mat m;
   fs["H"] >> m;
   coordinates_transform = cv::Matx33f(m);
