@@ -11,7 +11,6 @@
 #include <boost/program_options.hpp>
 #include <boost/timer.hpp>
 #include "localization_system.h"
-#include "localization_service.h"
 using namespace std;
 namespace po = boost::program_options;
 
