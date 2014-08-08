@@ -12,7 +12,7 @@ namespace cv {
       
       bool detect(const cv::Mat& image, bool reset = false, int max_attempts = 1, int refine_max_step = 1);
       
-      std::vector<CircleDetector::Circle> circles;
+      std::vector<CircleDetector::Circle> circles, last_valid_circles;
 
       CircleDetector::Context context;
       

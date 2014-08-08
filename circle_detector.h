@@ -25,7 +25,7 @@ namespace cv {
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
-      bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio);
+      bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio, bool search_in_window);
       void cover_last_detected(cv::Mat& image);
       
       void improveEllipse(const cv::Mat& image, Circle& c);
@@ -48,6 +48,10 @@ namespace cv {
       void change_threshold(void);
 
       int queueStart,queueEnd,queueOldStart,numSegments;
+
+      bool use_local_window;
+      float local_window_multiplier;
+      int local_window_width, local_window_height, local_window_x, local_window_y;
 
       Context* context;
       

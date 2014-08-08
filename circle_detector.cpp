@@ -32,6 +32,9 @@ cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, fl
 
   threshold = (3 * 256) / 2;
   threshold_counter = 0;
+
+  use_local_window = true;
+  local_window_multiplier = 5;
 }
 
 cv::CircleDetector::~CircleDetector()
@@ -45,6 +48,7 @@ int cv::CircleDetector::get_threshold(void) const
 
 void cv::CircleDetector::change_threshold(void)
 {
+  //int old_threshold = threshold;
   #if !defined(ENABLE_RANDOMIZED_THRESHOLD)
   threshold_counter++;
 	int d = threshold_counter;
@@ -59,10 +63,10 @@ void cv::CircleDetector::change_threshold(void)
   #else
   threshold = (rand() % 48) * 16;
   #endif
-  cout << "attempting new threshold: " << threshold << endl;
+  //cout << "threshold was " << old_threshold << " attempting new threshold: " << threshold << endl;
 }
 
-bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio)
+bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio, bool search_in_window)
 {
   //int64_t ticks = cv::getTickCount();  
   // get shorter names for elements in Context
@@ -81,8 +85,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
   //cout << "examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << numSegments << ")" << endl;
   
 	buffer[ii] = ++numSegments;
-	circle.x = ii%width; 
-	circle.y = ii/width;
+	circle.x = ii % width;
+	circle.y = ii / width;
 	minx = maxx = circle.x;
 	miny = maxy = circle.y;
 	circle.valid = false;
@@ -95,57 +99,68 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		position = queue[queueStart++];
 		//search neighbours
 
-    pos = position+1;
-    pixel_class = buffer[pos];
-    if (pixel_class == 0) {
-      uchar* ptr = &image.data[pos*3];
-      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
-      if (pixel_class != type) buffer[pos] = pixel_class;
-    }
-    if (pixel_class == type) {
-      queue[queueEnd++] = pos;
-      maxx = max(maxx,pos%width);
-      buffer[pos] = numSegments;
-    }
-    
-		pos = position-1;
-		pixel_class = buffer[pos];
-    if (pixel_class == 0) {
-      uchar* ptr = &image.data[pos*3];
-      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
-      if (pixel_class != type) buffer[pos] = pixel_class;
-    }
-    if (pixel_class == type) {
-      queue[queueEnd++] = pos;
-      minx = min(minx,pos%width);
-      buffer[pos] = numSegments;
+    int position_x = position % width;
+    int position_y = position / width;
+
+    if (!search_in_window || position_x + 1 < local_window_x + local_window_width) {
+      pos = position + 1;
+      pixel_class = buffer[pos];
+      if (pixel_class == 0) {
+        uchar* ptr = &image.data[pos*3];
+        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        if (pixel_class != type) buffer[pos] = pixel_class;
+      }
+      if (pixel_class == type) {
+        queue[queueEnd++] = pos;
+        maxx = max(maxx,pos%width);
+        buffer[pos] = numSegments;
+      }
     }
     
-    pos = position-width;
-		pixel_class = buffer[pos];
-    if (pixel_class == 0) {
-      uchar* ptr = &image.data[pos*3];
-      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
-      if (pixel_class != type) buffer[pos] = pixel_class;
-    }
-    if (pixel_class == type) {
-      queue[queueEnd++] = pos;
-      miny = min(miny,pos/width);
-      buffer[pos] = numSegments;
+    if (!search_in_window || position_x - 1 >= local_window_x) {
+      pos = position-1;
+      pixel_class = buffer[pos];
+      if (pixel_class == 0) {
+        uchar* ptr = &image.data[pos*3];
+        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        if (pixel_class != type) buffer[pos] = pixel_class;
+      }
+      if (pixel_class == type) {
+        queue[queueEnd++] = pos;
+        minx = min(minx,pos%width);
+        buffer[pos] = numSegments;
+      }
     }
 
-		pos = position+width;
-		pixel_class = buffer[pos];
-    if (pixel_class == 0) {
-      uchar* ptr = &image.data[pos*3];
-      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
-      if (pixel_class != type) buffer[pos] = pixel_class;
+    if (!search_in_window || position_y - 1 >= local_window_y) {
+      pos = position-width;
+      pixel_class = buffer[pos];
+      if (pixel_class == 0) {
+        uchar* ptr = &image.data[pos*3];
+        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        if (pixel_class != type) buffer[pos] = pixel_class;
+      }
+      if (pixel_class == type) {
+        queue[queueEnd++] = pos;
+        miny = min(miny,pos/width);
+        buffer[pos] = numSegments;
+      }
     }
-    if (pixel_class == type) {
-      queue[queueEnd++] = pos;
-      maxy = max(maxy,pos/width);
-      buffer[pos] = numSegments;
-    }
+
+		if (!search_in_window || position_y + 1 <= local_window_y + local_window_height) {
+			pos = position+width;
+			pixel_class = buffer[pos];
+			if (pixel_class == 0) {
+				uchar* ptr = &image.data[pos*3];
+				pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+				if (pixel_class != type) buffer[pos] = pixel_class;
+			}
+			if (pixel_class == type) {
+				queue[queueEnd++] = pos;
+				maxy = max(maxy,pos/width);
+				buffer[pos] = numSegments;
+			}
+		}
 
     //if (queueEnd-queueOldStart > maxSize) return false;
   }
@@ -165,7 +180,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		circle.y = (circle.maxy+circle.miny)/2;
 		circle.roundness = vx*vy*areaRatio/circle.size;
 		//we check if the segment is likely to be a ring 
-		if (circle.roundness - circularTolerance < 1.0 && circle.roundness + circularTolerance > 1.0)
+		if (fabsf(circle.roundness - 1) < circularTolerance)
 		{
 			//if its round, we compute yet another properties 
 			circle.round = true;
@@ -179,7 +194,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			circle.mean = circle.mean/circle.size;
 			result = true;
       // << "segment size " << circle.size << " " << vx << " " << vy << endl;
-		}// else cout << "not round enough (" << circle.roundness << ") vx/vy " << vx << " " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio << endl;
+    } //else cout << "not round enough (" << circle.roundness << ") vx/vy " << vx << " " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio << endl;
 	}
 
   //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
@@ -199,9 +214,24 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   Circle inner, outer;
   //int outer_id;
 
+	bool search_in_window = false;
+	int local_x, local_y;
 	if (previous_circle.valid){
 		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
 		start = ii;
+
+		if (use_local_window) {
+			local_window_width = local_window_multiplier * (previous_circle.maxx - previous_circle.minx);
+			local_window_height = local_window_multiplier * (previous_circle.maxy - previous_circle.miny);
+			/* top-left corner of window */
+			local_window_x = (int)(previous_circle.x - local_window_width * 0.5);
+			local_window_y = (int)(previous_circle.y - local_window_height * 0.5);
+			/* initial x,y position of search */
+			local_x = (int)previous_circle.x;
+			local_y = (int)previous_circle.y;
+			search_in_window = true;
+			//cout << "window " << local_window_width << " x " << local_window_height << " : " << local_window_x << " , " << local_window_y << endl;
+		}
 	}
 
   //cout << "detecting (thres " << threshold << ") at " << ii << endl;
@@ -231,7 +261,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
       // << "black pixel " << ii << endl;
       
 			// check if looks like the outer portion of the ring
-			if (examineCircle(image, outer, ii, outerAreaRatio)){
+			if (examineCircle(image, outer, ii, outerAreaRatio, search_in_window)){
 				pos = outer.y * width + outer.x; // jump to the middle of the ring
 
         // treshold the middle of the ring and check if it is detected as "white"
@@ -244,7 +274,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 				if (pixel_class == -1){
 
           // check if it looks like the inner portion
-					if (examineCircle(image, inner, pos, innerAreaRatio)){
+          if (examineCircle(image, inner, pos, innerAreaRatio, search_in_window)){
             // it does, now actually check specific properties to see if it is a valid target
 						if (
 								((float)outer.size/areasRatio/(float)inner.size - ratioTolerance < 1.0 &&
@@ -308,14 +338,14 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 	
               // TODO: purpose? should be removed? if next if fails, it will go over and over to the same place until number of segments
               // reaches max, right?
-							ii = start - 1; // track position 
+              //ii = start - 1; // track position
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
 							if (fabsf(circularity - 1) < CIRCULARITY_TOLERANCE){
 								outer.valid = inner.valid = true; // at this point, the target is considered valid
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection
-                cout << "threshold set to: " << threshold << endl;
+                //cout << "threshold set to average: " << threshold << endl;
 								
                 //pixel leakage correction
 								float r = diameterRatio*diameterRatio;
@@ -343,8 +373,17 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 				}
 			}
 		}
-		ii++;
-		if (ii >= len) ii = 0;
+
+		if (search_in_window) {
+			local_x++;
+			if (local_x >= local_window_x + local_window_width) { local_x = local_window_x; local_y++; }
+			if (local_y >= local_window_y + local_window_height) { local_y = local_window_y; local_x = local_window_x; }
+			ii = local_y * width + local_x;
+		}
+		else {
+			ii++;
+			if (ii >= len) ii = 0;
+		}
 	} while (ii != start);
 
 	// draw
@@ -362,7 +401,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   // if this is not the first call (there was a previous valid circle where search started),
   // the current call found a valid match, and only two segments were found during the search (inner/outer)
   // then, only the bounding box area of the outer ellipse needs to be cleaned in 'buffer'
-  bool fast_cleanup = (previous_circle.valid && numSegments == 2 && inner.valid); 
+  bool fast_cleanup = (previous_circle.valid && numSegments == 2 && inner.valid);
   context->cleanup(outer, fast_cleanup);
   
   if (!inner.valid) cout << "detection failed" << endl;

@@ -6,6 +6,7 @@ cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, i
   context(_width, _height), width(_width), height(_height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
+  last_valid_circles.resize(number_of_circles);
   detectors.resize(number_of_circles, CircleDetector(width, height, &context, _diameter_ratio));
 }
 
@@ -32,10 +33,7 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_at
 
         int64_t ticks = cv::getTickCount();
         
-        if (refine_counter == 0 && reset)
-          circles[i] = detectors[i].detect(input, (i == 0 ? CircleDetector::Circle() : circles[i-1]));
-        else
-          circles[i] = detectors[i].detect(input, circles[i]);
+        circles[i] = detectors[i].detect(input, last_valid_circles[i]);
           
         double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
         cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
@@ -48,6 +46,8 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_at
 
       if (circles[i].valid) {
         cout << "detection of circle " << i << " ok" << endl;
+        last_valid_circles[i] = circles[i];
+
         if (reset) detectors[i].cover_last_detected(input);
         break; // detection was successful, dont keep trying
       }

@@ -93,10 +93,12 @@ po::variables_map process_commandline(int argc, char** argv)
     if (config_vars.count("width") != config_vars.count("height"))
       throw std::runtime_error("Please specify both width and height for camera resolution");
 
+    if (!config_vars.count("output"))
+      throw std::runtime_error("Specify prefix name for output files");
+
     use_gui = !config_vars.count("no-gui");
 
     if (do_tracking) {
-      if (!config_vars.count("output")) throw std::runtime_error("Specify output name of files");
       if (config_vars["track"].as<int>() < 0) throw std::runtime_error("Number of circles to track should be greater than 0");
       if (config_vars.count("no-axis")) load_axis = false;
       else {
@@ -185,11 +187,10 @@ int main(int argc, char** argv)
   }
 
   /* set tracking output */
-  std::string output_name;
+  std::string output_name = config_vars["output"].as<string>();
   cv::VideoWriter video_writer;
   ofstream data_file;
   if (do_tracking) {
-    output_name = config_vars["output"].as<string>();
     video_writer.open(output_name + ".avi", CV_FOURCC('M','J','P','G'), 15, frame_size);
     if (!video_writer.isOpened()) throw std::runtime_error("error opening output video");
     data_file.open((output_name + ".log").c_str(), ios_base::out | ios_base::trunc);
@@ -246,31 +247,30 @@ int main(int argc, char** argv)
         
         cout << "localized all? " << is_tracking << " t: " << delta_ticks << " " << " fps: " << 1/delta_ticks << endl;
         
-        if (is_tracking) {
-          for (int i = 0; i < number_of_targets; i++) {
-            const cv::CircleDetector::Circle& circle = system.get_circle(i);
-            cv::Vec3f coord = system.get_pose(circle).pos;
-            cv::Vec3f coord_trans = coord;
-            if (load_axis) {
-              coord_trans = system.get_transformed_pose(circle).pos;
-            }
-            
-            if (use_gui) {
-              ostringstream ostr;
-              ostr << fixed << setprecision(2);
-              ostr << coord_trans << " " << i;            
-              circle.draw(frame, ostr.str(), cv::Vec3b(255,255,0));
-            }
-            
-            data_file << setprecision(15) << "frame " << frame_idx << " circle " << i
-              << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
-              << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
+        for (int i = 0; i < number_of_targets; i++) {
+          const cv::CircleDetector::Circle& circle = system.get_circle(i);
+          if (!circle.valid) continue;
+          cv::Vec3f coord = system.get_pose(circle).pos;
+          cv::Vec3f coord_trans = coord;
+          if (load_axis) {
+            coord_trans = system.get_transformed_pose(circle).pos;
           }
+
+          if (use_gui) {
+            ostringstream ostr;
+            ostr << fixed << setprecision(2);
+            ostr << coord_trans << " " << i;
+            circle.draw(frame, ostr.str(), cv::Vec3b(255,255,0));
+          }
+
+          data_file << setprecision(15) << "frame " << frame_idx << " circle " << i
+            << " transformed: " << coord_trans(0) << " " << coord_trans(1) << " " << coord_trans(2)
+            << " original: " << coord(0) << " " << coord(1) << " " << coord(2) << endl;
 
           #ifdef ENABLE_MAVCONN
           if (run_service) service.publish();
           #endif
-        }
+        //}
 
         video_writer << frame;
       }
