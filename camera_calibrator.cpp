@@ -16,9 +16,9 @@ void mouse_callback(int event, int x, int y, int flags, void* param) {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 8/* && argc != 9*/) {
-    cout << "usage: camera_calibrator <width> <height> <squares in X> <squares in Y> <square X size [mm]> <square Y size [mm]> <camera ID>" << endl;
-    cout << "X,Y direction is width,height in image" << endl;
+  if (argc != 9) {
+    cout << "usage: camera_calibrator <width> <height> <squares in X> <squares in Y> <square X size [mm]> <square Y size [mm]> [-cam <camera ID> | -img <img pattern>]" << endl;
+    cout << "X,Y corresponds to width,height in image" << endl;
     return 1;
   }
   
@@ -26,33 +26,27 @@ int main(int argc, char** argv) {
   int width = atoi(argv[1]);
   int height = atoi(argv[2]);
 
-  cv::VideoCapture capture1, capture2;
-  capture1.open(atoi(argv[7]));
-  capture1.set(CV_CAP_PROP_FRAME_WIDTH, width);
-  capture1.set(CV_CAP_PROP_FRAME_HEIGHT, height);
-  capture1.set(CV_CAP_PROP_FPS, 20);
-  if (!capture1.isOpened()) { cout << "error opening first camera" << endl; return 1; }
-  
-    
-  bool do_stereo = false;
-  if (argc == 9) {
-    capture2.open(atoi(argv[8]));
-    capture2.set(CV_CAP_PROP_FRAME_WIDTH, width);
-    capture2.set(CV_CAP_PROP_FRAME_HEIGHT, height);
-    capture2.set(CV_CAP_PROP_FPS, 20);
-    if (!capture2.isOpened()) { cout << "error opening second camera" << endl; return 1; }
-    do_stereo = true;
+  bool is_camera = (string(argv[7]) == "-cam");
+  cv::VideoCapture capture;
+  if (is_camera) {
+    capture.open(atoi(argv[7]));
+    capture.set(CV_CAP_PROP_FRAME_WIDTH, width);
+    capture.set(CV_CAP_PROP_FRAME_HEIGHT, height);
+    capture.set(CV_CAP_PROP_FPS, 20);
   }
-  
+  else {
+    capture.open(argv[8]);
+  }
+  if (!capture.isOpened()) { cout << "error opening input source" << endl; return 1; }
+    
   /* load calibration and setup system */
-  cv::Mat frame1, frame2;
-  cv::Mat K1, K2, dist_coeff1, dist_coeff2;
+  cv::Mat frame;
+  cv::Mat K, dist_coeff;
   
   /* setup gui and start capturing / processing */
   cvStartWindowThread();
-  cv::namedWindow("first");
-  if (do_stereo) cv::namedWindow("second");
-  cv::setMouseCallback("first", mouse_callback);
+  cv::namedWindow("input");
+  cv::setMouseCallback("input", mouse_callback);
   
   int x_squares = atoi(argv[3]);
   int y_squares = atoi(argv[4]);
@@ -66,52 +60,48 @@ int main(int argc, char** argv) {
     grid3d.push_back(cv::Point3f((i / (x_squares - 1)) * x_size, (i % (x_squares - 1)) * y_size, 0.0f)); // TODO: set units here
   
   while (true) {    
-    capture1.grab();
-    capture1.retrieve(frame1);
-    if (do_stereo) capture2.grab();
-    
-    if (do_stereo) capture2.retrieve(frame2);
+    bool last_frame = capture.grab();
+    capture.retrieve(frame);
 
     vector<cv::Point2f> corners;
-    int result = cv::findChessboardCorners(frame1, pattern_size, corners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
+    int result = cv::findChessboardCorners(frame, pattern_size, corners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_NORMALIZE_IMAGE);
     if (result) {
       cv::Mat gray;
-      cv::cvtColor(frame1, gray, CV_BGR2GRAY);
+      cv::cvtColor(frame, gray, CV_BGR2GRAY);
       cv::cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 100, 0.05));
-      cv::drawChessboardCorners(frame1, pattern_size, cv::Mat(corners), result);
+      cv::drawChessboardCorners(frame, pattern_size, cv::Mat(corners), result);
       
-      if (clicked) {
+      if (!is_camera || clicked) {
         clicked = false;
         all_corners.push_back(corners);
       }
     }
     
-    if (!all_corners.empty() && rclicked) {
+    if (!all_corners.empty() && ((is_camera && rclicked) || (!is_camera && last_frame))) {
       rclicked = false;
       vector< vector<cv::Point3f> > grid3d_all(all_corners.size(), grid3d);
       vector<cv::Mat> rotations, translations;
       int flags = 0;
       for (int i = 0; i < 5; i++) {
         cout << "iteration " << i << endl;
-        double error = cv::calibrateCamera(grid3d_all, all_corners, frame1.size(), K1, dist_coeff1, rotations, translations, flags);
-        cout << "K: " << K1 << endl;
-        cout << "dist: " << dist_coeff1 << endl;
+        double error = cv::calibrateCamera(grid3d_all, all_corners, frame.size(), K, dist_coeff, rotations, translations, flags);
+        cout << "K: " << K << endl;
+        cout << "dist: " << dist_coeff << endl;
         cout << "reprojection error: " << error << endl;
         flags = CV_CALIB_USE_INTRINSIC_GUESS;
       }
       
       cv::FileStorage file("calibration.xml", cv::FileStorage::WRITE);
-      file << "K" << K1;
-      file << "dist" << dist_coeff1;
+      file << "K" << K;
+      file << "dist" << dist_coeff;
       return 0;
     }
     
     ostringstream ostr;
     ostr << "frames: " << all_corners.size();
-    cv::putText(frame1, ostr.str(), cv::Point(5, 15), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255,0,255), 1.5, CV_AA);
+    cv::putText(frame, ostr.str(), cv::Point(5, 15), CV_FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255,0,255), 1.5, CV_AA);
     
-    if (!frame1.empty()) cv::imshow("first", frame1);
-    if (do_stereo && !frame2.empty()) cv::imshow("second", frame2);
+    if (!frame.empty()) cv::imshow("input", frame);
   }
   return 0;
 }
