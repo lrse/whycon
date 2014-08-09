@@ -270,7 +270,7 @@ int main(int argc, char** argv)
           #ifdef ENABLE_MAVCONN
           if (run_service) service.publish();
           #endif
-        //}
+        }
 
         video_writer << frame;
       }
