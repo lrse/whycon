@@ -25,6 +25,7 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_at
     
     for (int j = 0; j < max_attempts; j++) {
       cout << "attempt " << j << endl;
+      circles[i] = last_valid_circles[i];
 
       for (int refine_counter = 0; refine_counter < refine_max_step; refine_counter++)
       {
@@ -33,7 +34,7 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_at
 
         int64_t ticks = cv::getTickCount();
         
-        circles[i] = detectors[i].detect(input, last_valid_circles[i]);
+        circles[i] = detectors[i].detect(input, circles[i]);
           
         double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
         cout << "t: " << delta << " " << " fps: " << 1/delta << endl;
