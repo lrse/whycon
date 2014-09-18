@@ -1,6 +1,6 @@
 #include <cstdio>
-#include "circle_detector.h"
-#include "config.h"
+#include <whycon/circle_detector.h>
+#include <whycon/config.h>
 using namespace std;
 
 #define min(a,b) ((a) < (b) ? (a) : (b))

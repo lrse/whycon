@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>libwhycon</name>
+  <name>whycon</name>
   <version>1.2.0</version>
   <description>
     WhyCon localization system
@@ -11,16 +11,19 @@
   <url type="bugtracker">https://github.com/lrse/whycon</url>
   <license>LGPLv3</license>
 
-  <buildtool_depend>cmake</buildtool_depend>
+  <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>boost</build_depend>
-  <build_depend>libopencv-dev</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>libwhycon</build_depend>
 
-  <run_depend>catkin</run_depend>
-  <run_depend>boost</run_depend>
-  <run_depend>libopencv-dev</run_depend>
-
-  <export>
-    <build_type>cmake</build_type>
-  </export>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>libwhycon</run_depend>
 </package>

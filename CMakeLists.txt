@@ -1,36 +1,100 @@
 cmake_minimum_required(VERSION 2.8)
 project(whycon)
 
-#SET(CMAKE_BUILD_TYPE debug)
+# set some flags
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O4 -march=native -Wfatal-errors")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake-configs")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-configs")
+
+# set some options
+option(DISABLE_ROS "Do not build for ROS, but as standalone code" OFF)
 option(ENABLE_FULL_UNDISTORT "Undistort the whole frame" OFF)
 option(ENABLE_RANDOMIZED_THRESHOLD "Use rand() instead of binary-like search for threshold" OFF)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/include/whycon/config.h)
 
-set(whycon_srcs circle_detector.cpp many_circle_detector.cpp localization_system.cpp)
+#### ROS CONFIGURATION ####
+if(NOT DISABLE_ROS)
+  find_package(catkin REQUIRED COMPONENTS
+    cv_bridge
+    roscpp
+    sensor_msgs
+    std_msgs
+    camera_info_manager
+    message_generation
+    geometry_msgs
+    message_filters
+    image_geometry
+    image_transport
+  )
 
-## Check dependencies
+  add_message_files(
+    FILES
+    PointArray.msg
+  )
+
+  generate_messages(
+    DEPENDENCIES geometry_msgs
+  )
+
+  catkin_package(
+    INCLUDE_DIRS include
+    LIBRARIES whycon
+    CATKIN_DEPENDS cv_bridge roscpp sensor_msgs std_msgs message_runtime
+    DEPENDS whycon
+  )
+endif()
+
+### SYSTEM DEPENDENCIES ###
 find_package(OpenCV REQUIRED)
 find_package(GSL REQUIRED)
 find_package(Boost COMPONENTS program_options thread system REQUIRED)
 
-# create config file
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/config.h.cmake ${CMAKE_SOURCE_DIR}/config.h)
+### TARGETS ###
+include_directories(
+  ${catkin_INCLUDE_DIRS} include
+)
 
-# generate whycon shared library
-add_library(whycon SHARED ${whycon_srcs})
+add_library(whycon SHARED src/lib/circle_detector.cpp src/lib/many_circle_detector.cpp src/lib/localization_system.cpp)
+target_link_libraries(whycon ${GSL_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
-# generate extra executables
-add_executable(localization-system main.cpp)
-target_link_libraries(localization-system whycon ${OpenCV_LIBS} ${GSL_LIBRARIES} ${Boost_LIBRARIES} ${MAVCONN_LIBS})
+if(NOT DISABLE_ROS)
+  add_executable(whycon-node src/ros/whycon_node.cpp src/ros/whycon_ros.cpp)
+  set_target_properties(whycon-node PROPERTIES OUTPUT_NAME whycon)
 
-SET(camera_calibrator_sources camera_calibrator.cpp)
-add_executable(camera_calibrator ${camera_calibrator_sources})
-target_link_libraries(camera_calibrator ${OpenCV_LIBS})
+  add_executable(set_axis src/ros/set_axis_node.cpp src/ros/set_axis.cpp)
+  add_executable(triangulator src/ros/triangulator_node.cpp src/ros/triangulator.cpp)
 
-# install targets
-install(TARGETS whycon DESTINATION lib)
-install(TARGETS localization-system camera_calibrator DESTINATION bin)
-install(FILES circle_detector.h config.h localization_system.h many_circle_detector.h DESTINATION include/whycon)
-install(FILES cmake-configs/FindWhyCon.cmake cmake-configs/FindGSL.cmake DESTINATION share/cmake/Modules)
-install(FILES package.xml DESTINATION share/whycon)
+  add_dependencies(whycon-node whycon_generate_messages_cpp)
+  add_dependencies(set_axis whycon_generate_messages_cpp)
+  add_dependencies(triangulator whycon_generate_messages_cpp)
+
+  target_link_libraries(whycon-node ${catkin_LIBRARIES} whycon)
+  target_link_libraries(set_axis ${catkin_LIBRARIES} whycon)
+  target_link_libraries(triangulator ${catkin_LIBRARIES} whycon)
+else()
+  add_executable(whycon-main src/main.cpp)
+  set_target_properties(whycon-main PROPERTIES OUTPUT_NAME whycon)
+  target_link_libraries(whycon-main whycon)
+
+  add_executable(camera-calibrator src/camera_calibrator.cpp)
+  target_link_libraries(camera-calibrator ${OpenCV_LIBS})
+endif()
+
+### INSTALL ###
+
+### Mark cpp header files for installation
+if(NOT DISABLE_ROS)
+  install(DIRECTORY include/${PACKAGE_NAME}
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  )
+  ## Mark executables and/or libraries for installation
+  install(TARGETS whycon
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+else()
+  install(TARGETS whycon DESTINATION lib)
+  install(TARGETS whycon-main camera-calibrator DESTINATION bin)
+  install(DIRECTORY include/whycon DESTINATION include)
+  install(FILES cmake-configs/FindWhyCon.cmake DESTINATION share/cmake/Modules)
+endif()

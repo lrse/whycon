@@ -2,7 +2,7 @@
 #define __LOCALIZATION_SYSYEM__
 
 #include <opencv2/opencv.hpp>
-#include "many_circle_detector.h"
+#include <whycon/many_circle_detector.h>
 
 namespace cv {
   class LocalizationSystem {

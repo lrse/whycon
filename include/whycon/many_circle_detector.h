@@ -2,7 +2,7 @@
 #define __CIRCLE_LOCALIZER_H__
 
 #include <vector>
-#include "circle_detector.h"
+#include <whycon/circle_detector.h>
 
 namespace cv {
   class ManyCircleDetector {

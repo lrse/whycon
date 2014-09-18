@@ -1,5 +1,5 @@
 #include <iostream>
-#include "many_circle_detector.h"
+#include <whycon/many_circle_detector.h>
 using namespace std;
 
 cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) : 
