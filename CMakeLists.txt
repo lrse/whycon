@@ -45,7 +45,6 @@ endif()
 
 ### SYSTEM DEPENDENCIES ###
 find_package(OpenCV REQUIRED)
-find_package(GSL REQUIRED)
 find_package(Boost COMPONENTS program_options thread system REQUIRED)
 
 ### TARGETS ###
@@ -54,7 +53,7 @@ include_directories(
 )
 
 add_library(whycon SHARED src/lib/circle_detector.cpp src/lib/many_circle_detector.cpp src/lib/localization_system.cpp)
-target_link_libraries(whycon ${GSL_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(whycon ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 if(NOT DISABLE_ROS)
   add_executable(whycon-node src/ros/whycon_node.cpp src/ros/whycon_ros.cpp)

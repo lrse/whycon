@@ -3,8 +3,6 @@
 #include <sstream>
 #include <iostream>
 #include <stdexcept>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_eigen.h>
 #include <sstream>
 #include <iomanip>
 #include <limits>
@@ -47,42 +45,25 @@ bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int atte
   return detector.detect(image, reset, attempts, max_refine);
 }
 
-     
-/* TODO: use cv::eigen */
-cv::Vec3f cv::LocalizationSystem::eigen(double data[]) const
+cv::Vec3f cv::LocalizationSystem::eigen(const cv::Matx33d& data) const
 {
-	gsl_matrix_view m = gsl_matrix_view_array (data, 3, 3);
-	gsl_vector *eval = gsl_vector_alloc (3);
-	gsl_matrix *evec = gsl_matrix_alloc (3, 3);
+	cv::Vec3d eigenvalues;
+	cv::Matx33d eigenvectors;
+	cv::eigen(data, eigenvalues, eigenvectors);
 
-	gsl_eigen_symmv_workspace * w = gsl_eigen_symmv_alloc (3);
-	gsl_eigen_symmv (&m.matrix, eval, evec, w);
-	gsl_eigen_symmv_free (w);
-	gsl_eigen_symmv_sort (eval, evec,GSL_EIGEN_SORT_ABS_ASC);
+	double L1 = eigenvalues(1);
+	double L2 = eigenvalues(0);
+	double L3 = eigenvalues(2);
+	int V2 = 0;
+	int V3 = 2;
 
-	float L1 =gsl_vector_get(eval,1);
-	float L2 =gsl_vector_get(eval,2);
-	float L3 =gsl_vector_get(eval,0);
-	int V2=2;
-	int V3=0;
-
-	float z = circle_diameter/sqrt(-L2*L3)/2.0;
-	float z0 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,0,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,0,V3);
-	float z1 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,1,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,1,V3);
-	float z2 = +L3*sqrt((L2-L1)/(L2-L3))*gsl_matrix_get(evec,2,V2)+L2*sqrt((L1-L3)/(L2-L3))*gsl_matrix_get(evec,2,V3);
-	if (z2*z < 0){
-		 z2 = -z2;
-		 z1 = -z1;
-		 z0 = -z0;
-	}
-  //cv::Vec3f result(-z0*z, -z1*z, z2*z); // NOTE: ZXY ordering XYZ
-  cv::Vec3f result(z0*z, z1*z, z2*z); // NOTE: ZXY ordering XYZ
-	gsl_vector_free (eval);
-	gsl_matrix_free (evec);
+	double z = circle_diameter/sqrt(-L2*L3)/2.0;
+	cv::Matx13d result_mat = L3 * sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + L2 * sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
+	cv::Vec3f result(result_mat(0), result_mat(1), result_mat(2));
+	result *= (result(2) * z < 0 ? -z : z);
 
 	return result;
 }
-
 
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const {
   Pose result;
@@ -130,7 +111,9 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	d = (-x*a-b*y);
 	e = (-y*c-b*x);
 	f = (a*x*x+c*y*y+2*b*x*y-1);
-	double data[] ={a,b,d,b,c,e,d,e,f}; 
+	cv::Matx33d data(a,b,d,
+									 b,c,e,
+									 d,e,f);
 
   result.pos = eigen(data);
   result.rot(0) = acos(circle.m1/circle.m0)/M_PI*180.0;

@@ -54,7 +54,7 @@ namespace cv {
       cv::Mat undistort_map;
       
       
-      cv::Vec3f eigen(double data[]) const;        
+      cv::Vec3f eigen(const cv::Matx33d& data) const;
   };
 }
 
