@@ -7,7 +7,7 @@
 #include "whycon_ros.h"
 #include "whycon/PointArray.h"
 
-whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : it(n), is_tracking(false)
+whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), it(n)
 {
   if (!n.getParam("targets", targets)) throw std::runtime_error("Private parameter \"targets\" is missing");
 
@@ -55,6 +55,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
 bool whycon::WhyConROS::reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
   is_tracking = false;
+  return true;
 }
 
 void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv_bridge::CvImageConstPtr& cv_ptr)
