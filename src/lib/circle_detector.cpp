@@ -224,8 +224,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 			local_window_width = local_window_multiplier * (previous_circle.maxx - previous_circle.minx);
 			local_window_height = local_window_multiplier * (previous_circle.maxy - previous_circle.miny);
 			/* top-left corner of window */
-			local_window_x = (int)(previous_circle.x - local_window_width * 0.5);
-			local_window_y = (int)(previous_circle.y - local_window_height * 0.5);
+			local_window_x = MAX((int)(previous_circle.x - local_window_width * 0.5), 0);
+			local_window_y = MAX((int)(previous_circle.y - local_window_height * 0.5), 0);
 			/* initial x,y position of search */
 			local_x = (int)previous_circle.x;
 			local_y = (int)previous_circle.y;
@@ -376,8 +376,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 
 		if (search_in_window) {
 			local_x++;
-			if (local_x >= local_window_x + local_window_width) { local_x = local_window_x; local_y++; }
-			if (local_y >= local_window_y + local_window_height) { local_y = local_window_y; local_x = local_window_x; }
+			if (local_x >= local_window_x + local_window_width || local_x >= width) { local_x = local_window_x; local_y++; }
+			if (local_y >= local_window_y + local_window_height || local_y >= height) { local_y = local_window_y; local_x = local_window_x; }
 			ii = local_y * width + local_x;
 		}
 		else {
