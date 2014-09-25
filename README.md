@@ -42,6 +42,10 @@ For detailed documentation of the provided ROS nodes, please see the correspondi
 
 ## Standalone
 
+The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on ubuntu, simply perform the following:
+
+    sudo apt-get install libopencv-dev libboost-all-dev
+
 The installation process is really straightforward, as with any CMake based project.
 Inside the main directory do:
 
@@ -49,12 +53,6 @@ Inside the main directory do:
     cd build
     cmake ..
     make
-
-If this fails, you may not have installed the required dependencies: OpenCV and Boost. If you are on ubuntu, simply perform the following:
-
-    sudo apt-get install libopencv-dev libboost-all-dev
-
-and then repeat the `cmake` and `make` steps.
 
 The code can be installed to the system by doing:
 
