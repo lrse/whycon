@@ -40,7 +40,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   const cv::Mat& image = cv_ptr->image;
 
   if (!system) {
-    system = boost::make_shared<cv::LocalizationSystem>(targets, image.size().width, image.size().height, camera_model.fullIntrinsicMatrix(), camera_model.distortionCoeffs(), outer_diameter, inner_diameter);
+    system = boost::make_shared<cv::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
     if (!axis_file.empty()) system->read_axis(axis_file + ".yml");
   }
 

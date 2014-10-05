@@ -29,7 +29,7 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
   cv::Mat& image = cv_ptr->image;
 
   if (!system)
-    system = boost::make_shared<cv::LocalizationSystem>(4, image.size().width, image.size().height, camera_model.fullIntrinsicMatrix(), camera_model.distortionCoeffs(), outer_diameter, inner_diameter);
+    system = boost::make_shared<cv::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
 
   if (set_axis_now) {
     set_axis_now = false;
