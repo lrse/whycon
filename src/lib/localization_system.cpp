@@ -115,10 +115,33 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 									 b,c,e,
 									 d,e,f);
 
-  result.pos = eigen(data);
-  result.rot(0) = acos(circle.m1/circle.m0)/M_PI*180.0;
-	result.rot(1) = atan2(circle.v1,circle.v0)/M_PI*180.0;
-	result.rot(2) = circle.v1/circle.v0;
+  /*result.pos = eigen(data);
+  result.rot(0) = acos(circle.m1/circle.m0);
+  result.rot(1) = atan2(circle.v1,circle.v0);
+  result.rot(2) = circle.v1/circle.v0;*/
+
+	// compute conic eigenvalues and eigenvectors
+	cv::Vec3d eigenvalues;
+	cv::Matx33d eigenvectors;
+	cv::eigen(data, eigenvalues, eigenvectors);
+
+	// compute ellipse parameters in real-world
+	double L1 = eigenvalues(1);
+	double L2 = eigenvalues(0);
+	double L3 = eigenvalues(2);
+	int V2 = 0;
+	int V3 = 2;
+
+	// position
+	double z = circle_diameter/sqrt(-L2*L3)/2.0;
+	cv::Matx13d position_mat = L3 * sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + L2 * sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
+	result.pos = cv::Vec3f(position_mat(0), position_mat(1), position_mat(2));
+	int S3 = (result.pos(2) * z < 0 ? -1 : 1);
+	result.pos *= S3 * z;
+
+	// rotation
+	cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
+	result.rot = cv::Vec3f(0, 0, 0); // TODO: get angles from normal_mat
   
   return result;
 }
