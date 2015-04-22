@@ -1,0 +1,6 @@
+<launch>
+   <node name="whycon" type="set_axis" pkg="whycon" output="screen">
+     <param name="axis" value="test"/>
+   </node>
+</launch>
+  

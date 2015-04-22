@@ -1,0 +1,6 @@
+<launch>
+   <node name="whycon" type="whycon" pkg="whycon" _launch-prefix="konsole --new-tab -e bash /home/v01d/misc/scripts/ros-debug" output="screen">
+    <param name="targets" value="1"/>
+  </node>
+</launch>
+  
