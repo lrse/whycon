@@ -2,7 +2,7 @@ Description
 ==========
 
 _WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
-These characteristics enable it to be used as an alternative to more expensive systems available for research communities.
+These characteristics enable it to be used as an alternative to more expensive systems available for research communities. 
 
 Publication and citation
 ========================
