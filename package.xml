@@ -5,8 +5,8 @@
   <description>
     WhyCon localization system
   </description>
-  <author email="v01d@todo.todo">Matias Nitsche</author>
-  <maintainer email="v01d@todo.todo">Matias Nitsche</maintainer>
+  <author email="mnitsche@dc.uba.ar">Matias Nitsche</author>
+  <maintainer email="mnitsche@dc.uba.ar">Matias Nitsche</maintainer>
   <url type="repository">https://github.com/lrse/whycon</url>
   <url type="bugtracker">https://github.com/lrse/whycon</url>
   <license>LGPLv3</license>
