@@ -34,7 +34,10 @@ bool cv::ManyCircleDetector::detect(const cv::Mat& image, bool reset, int max_at
 
         int64_t ticks = cv::getTickCount();
         
-        circles[i] = detectors[i].detect(input, circles[i]);
+        if (reset)
+          circles[i] = detectors[i].detect(input);
+        else
+          circles[i] = detectors[i].detect(input, circles[i]);
           
         double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
         cout << "t: " << delta << " " << " fps: " << 1/delta << endl;

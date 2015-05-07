@@ -7,7 +7,7 @@
 #include "whycon_ros.h"
 #include "whycon/PointArray.h"
 
-whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), it(n)
+whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_reset(true), it(n)
 {
   if (!n.getParam("targets", targets)) throw std::runtime_error("Private parameter \"targets\" is missing");
 
@@ -27,6 +27,7 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), it(n)
   points_pub = n.advertise<whycon::PointArray>("points", 1);
   poses_pub = n.advertise<geometry_msgs::PoseArray>("poses", 1);
   trans_poses_pub = n.advertise<geometry_msgs::PoseArray>("trans_poses", 1);
+  context_pub = n.advertise<sensor_msgs::Image>("context", 1);
 
   reset_service = n.advertiseService("reset", &WhyConROS::reset, this);
 }
@@ -41,20 +42,33 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
 
   if (!system) {
     system = boost::make_shared<cv::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
-    if (!axis_file.empty()) system->read_axis(axis_file + ".yml");
+    if (!axis_file.empty()) {
+      ROS_INFO_STREAM("opening axis file: " << axis_file + ".yml");
+      system->read_axis(axis_file + ".yml");
+    }
   }
 
-  is_tracking = system->localize(image, !is_tracking, max_attempts, max_refine);
+  is_tracking = system->localize(image, should_reset/*!is_tracking*/, max_attempts, max_refine);
 
-  if (is_tracking)
+  if (is_tracking) {
     publish_results(image_msg->header, cv_ptr);
+    should_reset = false;
+  }
   else if (image_pub.getNumSubscribers() != 0)
     image_pub.publish(cv_ptr);
+
+  if (context_pub.getNumSubscribers() != 0) {
+    cv_bridge::CvImage cv_img_context;
+    cv_img_context.encoding = cv_ptr->encoding;
+    cv_img_context.header.stamp = cv_ptr->header.stamp;
+    system->detector.context.debug_buffer(cv_ptr->image, cv_img_context.image);
+    context_pub.publish(cv_img_context.toImageMsg());
+  }
 }
 
 bool whycon::WhyConROS::reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-  is_tracking = false;
+  should_reset = true;
   return true;
 }
 

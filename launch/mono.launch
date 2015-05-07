@@ -1,6 +1,11 @@
 <launch>
+  <group ns="camera">
+    <node pkg="image_proc" type="image_proc" name="image_proc"/>
+  </group>
    <node name="whycon" type="whycon" pkg="whycon" _launch-prefix="konsole --new-tab -e bash /home/v01d/misc/scripts/ros-debug" output="screen">
-    <param name="targets" value="1"/>
+    <remap from="/camera/image_raw" to="/camera/image_rect_color"/>
+    <param name="targets" value="2"/>
+    <!--<param name="axis" value="$(find whycon)/axis"/>-->
   </node>
 </launch>
   

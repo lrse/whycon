@@ -24,6 +24,7 @@ if(NOT DISABLE_ROS)
     message_filters
     image_geometry
     image_transport
+    tf
   )
 
   add_message_files(
@@ -61,14 +62,17 @@ if(NOT DISABLE_ROS)
 
   add_executable(set_axis src/ros/set_axis_node.cpp src/ros/set_axis.cpp)
   add_executable(triangulator src/ros/triangulator_node.cpp src/ros/triangulator.cpp)
+  add_executable(robot_pose_publisher src/ros/robot_pose_publisher.cpp src/ros/robot_pose_publisher_node.cpp)
 
   add_dependencies(whycon-node whycon_generate_messages_cpp)
   add_dependencies(set_axis whycon_generate_messages_cpp)
   add_dependencies(triangulator whycon_generate_messages_cpp)
+  add_dependencies(robot_pose_publisher whycon_generate_messages_cpp)
 
   target_link_libraries(whycon-node ${catkin_LIBRARIES} whycon)
   target_link_libraries(set_axis ${catkin_LIBRARIES} whycon)
   target_link_libraries(triangulator ${catkin_LIBRARIES} whycon)
+  target_link_libraries(robot_pose_publisher ${catkin_LIBRARIES} whycon)
 else()
   add_executable(whycon-main src/main.cpp)
   set_target_properties(whycon-main PROPERTIES OUTPUT_NAME whycon)

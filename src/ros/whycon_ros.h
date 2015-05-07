@@ -22,7 +22,7 @@ namespace whycon {
       double outer_diameter, inner_diameter;
       
       boost::shared_ptr<cv::LocalizationSystem> system;
-      bool is_tracking;
+      bool is_tracking, should_reset;
       int max_attempts, max_refine;
       std::string axis_file;
 
@@ -30,7 +30,7 @@ namespace whycon {
       image_transport::CameraSubscriber cam_sub;
       ros::ServiceServer reset_service;
 
-      ros::Publisher image_pub, viz_pub, poses_pub, trans_poses_pub, points_pub;
+      ros::Publisher image_pub, viz_pub, poses_pub, trans_poses_pub, points_pub, context_pub;
 
       image_geometry::PinholeCameraModel camera_model;
   };
