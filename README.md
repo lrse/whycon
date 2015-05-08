@@ -1,11 +1,15 @@
 # Description
 
 _WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
+
 These characteristics enable it to be used as an alternative to more expensive systems available for research communities. 
 
-# Publication and citation
+The system is capable of detecting several targets very efficiently which are detected by a video camera. This can be used as a source for ground-truth data
+for experiments or for on-line pose information.
 
-_WhyCon_ was first presented on ICRA2013 conference and accepted for an extended version in the JINT journal.
+WhyCon is proposed as an alternative to widely used and expensive localization systems. It is fully open-source.
+
+# Publication and citation
 
 If you use this software for your publication it is mandatory to cite using the references in the provided `cite.bib`
 file (you can download it [here](https://raw.github.com/lrse/whycon/master/cite.bib)).
@@ -16,29 +20,18 @@ the word "zenodo").
 
 # Installation
 
-The code can be compiled either as a ROS package or in a standalone version.
+The code can be compiled either as a ROS package (shared library) or in a standalone version.
 
-## ROS (precompiled)
+**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference
+application is provided as a series of ROS nodes, which utilize the whycon shared library. For an example of how to implement your own standalone application, the ROS
+node should be used as a reference.
 
-If you are reading this, you probably want to compile the code from source. If you actually want to simply install a precompiled
-version of the code, use your standard installation tool for your distribution.
-
-In Ubuntu you should do:
-
-    sudo apt-get install ros-hydro-whycon
-
-In ArchLinux you should do:
-
-    yaourt -S --noconfirm ros-hydro-whycon
-
-## ROS (from source)
+## ROS
 
 The main directory should be placed inside a catkin workspace source-space (eg: ~catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
-
-For detailed documentation of the provided ROS nodes, please see the corresponding documentation at the [ROS wiki](http://wiki.ros.org/whycon)
 
 ## Standalone
 
