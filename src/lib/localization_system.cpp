@@ -25,20 +25,13 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   cc[0] = K.at<double>(0,2);
   cc[1] = K.at<double>(1,2);
   
-  cout.precision(30);
-  cout << "fc " << fc[0] << " " << fc[1] << endl;
-  cout << "cc " << cc[0] << " " << cc[1] << endl;
   kc[0] = 1;
-  cout << "kc " << kc[0] << " ";
-  for (int i = 0; i < 5; i++) {
-    kc[i + 1] = dist_coeff.at<double>(i);
-    cout << kc[i + 1] << " ";
-  }
-  cout << endl;
+  for (int i = 0; i < 5; i++) kc[i + 1] = dist_coeff.at<double>(i);
 
   coordinates_transform = cv::Matx33f(1, 0, 0, 0, 1, 0, 0, 0, 1);
-
   precompute_undistort_map();
+
+  cout.precision(30);
 }
 
 bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int attempts, int max_refine) {
@@ -140,7 +133,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	result.pos *= S3 * z;
 
 	// rotation
-	cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
+	//cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
 	result.rot = cv::Vec3f(0, 0, 0); // TODO: get angles from normal_mat
   
   return result;
@@ -255,8 +248,9 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
     dsts[i] = targets[i];
     cout << tmp[i] << " -> " << targets[i] << endl;
   }
-  cv::Matx33f H = cv::findHomography(src, dsts, CV_LMEDS);
-  cout << "OpenCV H " << H << endl;
+
+  /*cv::Matx33f H = cv::findHomography(src, dsts, CV_LMEDS);
+  cout << "OpenCV H " << H << endl;*/
 
   if (!file.empty()) {
     cv::FileStorage fs(file, cv::FileStorage::WRITE);
@@ -281,7 +275,7 @@ void cv::LocalizationSystem::read_axis(const std::string& file) {
   origin_circles[2].read(fs["c2"]);
   origin_circles[3].read(fs["c3"]);
   axis_set = true;
-  cout << "transformation: " << coordinates_transform << endl;
+  WHYCON_DEBUG("transformation: " << coordinates_transform);
 }
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)

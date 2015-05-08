@@ -1,15 +1,16 @@
 #include <cstdio>
 #include <whycon/circle_detector.h>
-#include <whycon/config.h>
 using namespace std;
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #define max(a,b) ((a) > (b) ? (a) : (b))
 
+#define ENABLE_RANDOMIZED_THRESHOLD
 #define MAX_SEGMENTS 10000 // TODO: necessary?
-#define CIRCULARITY_TOLERANCE 0.02
+#define CIRCULARITY_TOLERANCE 0.01
 
-cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, float _diameter_ratio) : context(_context)
+cv::CircleDetector::CircleDetector(int _width, int _height, Context* _context, float _diameter_ratio) :
+	context(_context)
 {
 	minSize = 10;
   maxSize = 100*100; // TODO: test!
@@ -28,7 +29,6 @@ cv::CircleDetector::CircleDetector(int _width,int _height, Context* _context, fl
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
-  // << "outerRatio/innerRatio " << outerAreaRatio << " " << innerAreaRatio << " " << diameterRatio << endl;
 
   threshold = (3 * 256) / 2;
   threshold_counter = 0;
@@ -63,7 +63,13 @@ void cv::CircleDetector::change_threshold(void)
   #else
   threshold = (rand() % 48) * 16;
   #endif
-  //cout << "threshold was " << old_threshold << " attempting new threshold: " << threshold << endl;
+  WHYCON_DEBUG("threshold changed to " << threshold);
+}
+
+/* This thresholds the given pixel (RGB) returning BLACK or WHITE codes */
+inline int cv::CircleDetector::threshold_pixel(uchar* ptr)
+{
+  return ((ptr[0]+ptr[1]+ptr[2]) > threshold) + BLACK;
 }
 
 bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio, bool search_in_window)
@@ -82,9 +88,10 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 	int maxx,maxy,minx,miny;
   int pixel_class;
 
-  //cout << "examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << numSegments << ")" << endl;
-  
-	buffer[ii] = ++numSegments;
+  WHYCON_DEBUG("examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << context->total_segments << ")");
+
+	int segment_id = context->total_segments++;
+	buffer[ii] = segment_id;
 	circle.x = ii % width;
 	circle.y = ii / width;
 	minx = maxx = circle.x;
@@ -102,63 +109,71 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
     int position_x = position % width;
     int position_y = position / width;
 
-    if (!search_in_window || position_x + 1 < local_window_x + local_window_width) {
+    if ((search_in_window && position_x + 1 < min(local_window_x + local_window_width, width)) ||
+        (!search_in_window && position_x + 1 < width))
+    {
       pos = position + 1;
       pixel_class = buffer[pos];
-      if (pixel_class == 0) {
+      if (is_unclassified(pixel_class)) {
         uchar* ptr = &image.data[pos*3];
-        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        pixel_class = threshold_pixel(ptr);
         if (pixel_class != type) buffer[pos] = pixel_class;
       }
       if (pixel_class == type) {
         queue[queueEnd++] = pos;
         maxx = max(maxx,pos%width);
-        buffer[pos] = numSegments;
+        buffer[pos] = segment_id;
       }
     }
     
-    if (!search_in_window || position_x - 1 >= local_window_x) {
+    if ((search_in_window && position_x - 1 >= local_window_x) ||
+        (!search_in_window && position_x - 1 >= 0))
+    {
       pos = position-1;
       pixel_class = buffer[pos];
-      if (pixel_class == 0) {
+      if (is_unclassified(pixel_class)) {
         uchar* ptr = &image.data[pos*3];
-        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        pixel_class = threshold_pixel(ptr);
         if (pixel_class != type) buffer[pos] = pixel_class;
       }
       if (pixel_class == type) {
         queue[queueEnd++] = pos;
         minx = min(minx,pos%width);
-        buffer[pos] = numSegments;
+        buffer[pos] = segment_id;
       }
     }
 
-    if (!search_in_window || position_y - 1 >= local_window_y) {
+    if ((search_in_window && position_y - 1 >= local_window_y) ||
+        (!search_in_window && position_y - 1 >= 0))
+    {
       pos = position-width;
       pixel_class = buffer[pos];
-      if (pixel_class == 0) {
+      if (is_unclassified(pixel_class)) {
         uchar* ptr = &image.data[pos*3];
-        pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+        pixel_class = threshold_pixel(ptr);
         if (pixel_class != type) buffer[pos] = pixel_class;
       }
       if (pixel_class == type) {
         queue[queueEnd++] = pos;
         miny = min(miny,pos/width);
-        buffer[pos] = numSegments;
+        buffer[pos] = segment_id;
       }
     }
 
-		if (!search_in_window || position_y + 1 <= local_window_y + local_window_height) {
+		if ((search_in_window && position_y + 1 < min(local_window_y + local_window_height, height)) ||
+				(!search_in_window && position_y + 1 < height))
+		{
 			pos = position+width;
 			pixel_class = buffer[pos];
-			if (pixel_class == 0) {
+			if (is_unclassified(pixel_class)) {
 				uchar* ptr = &image.data[pos*3];
-				pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+				pixel_class = threshold_pixel(ptr);
 				if (pixel_class != type) buffer[pos] = pixel_class;
 			}
 			if (pixel_class == type) {
 				queue[queueEnd++] = pos;
 				maxy = max(maxy,pos/width);
-				buffer[pos] = numSegments;
+				buffer[pos] = segment_id;
 			}
 		}
 
@@ -193,9 +208,10 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			}
 			circle.mean = circle.mean/circle.size;
 			result = true;
-      // << "segment size " << circle.size << " " << vx << " " << vy << endl;
-    } //else cout << "not round enough (" << circle.roundness << ") vx/vy " << vx << " " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio << endl;
+			WHYCON_DEBUG("valid segment of " << circle.size << " pixels, with size " << vx << " x " << vy << " with mean " << circle.mean);
+		} else WHYCON_DEBUG("not round enough (" << circle.roundness << ") vx/vy " << vx << " x " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio);
 	}
+	else WHYCON_DEBUG("not large enough (" << circle.size << "/" << minSize << ")");
 
   //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
   //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
@@ -203,8 +219,35 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 	return result;
 }
 
-cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, const cv::CircleDetector::Circle& previous_circle)
+/* Returns if the corresponding pixel needs to be classified by the current detector or not */
+inline bool cv::CircleDetector::is_unclassified(int pixel_class)
 {
+	if (pixel_class < 0) {
+		return (pixel_class != BLACK && pixel_class != WHITE);
+	}
+	else {
+		/* this pixel belongs to a segment (connected component which was already examined) with a corresponding segment id, classify it
+		 * if the segment was found by another detector but only if it does not belong to a valid circle */
+		return (pixel_class < initial_segment_id && context->valid_segment_ids.find(pixel_class) == context->valid_segment_ids.end());
+	}
+
+}
+
+cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, bool& fast_cleanup_possible, const cv::CircleDetector::Circle& previous_circle)
+{
+  /* this allows to differentiate segments found by this detector from others, and know how many segments where found in this call */
+  initial_segment_id = context->total_segments;
+
+  /* obtain unique id, used to generate BLACK/WHITE/UNKNOWN identifiers for this detector */
+  detector_id = context->next_detector_id++;
+  BLACK = -3 * detector_id   - 3;
+  WHITE = -3 * detector_id   - 2;
+  UNKNOWN = -3 * detector_id - 1;
+
+  WHYCON_DEBUG("detector id " << detector_id << " B/W/U " << BLACK << "/" << WHITE << "/" << UNKNOWN);
+  WHYCON_DEBUG("threshold " << threshold);
+  WHYCON_DEBUG("initial segment id " << initial_segment_id);
+
   vector<int>& buffer = context->buffer;
   vector<int>& queue = context->queue;
 
@@ -212,11 +255,11 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   int ii = 0;
 	int start = 0;
   Circle inner, outer;
-  //int outer_id;
 
 	bool search_in_window = false;
 	int local_x, local_y;
 	if (previous_circle.valid){
+		WHYCON_DEBUG("starting with previously valid circle at " << previous_circle.x << "," << previous_circle.y);
 		ii = ((int)previous_circle.y)*width+(int)previous_circle.x;
 		start = ii;
 
@@ -230,48 +273,49 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
 			local_x = (int)previous_circle.x;
 			local_y = (int)previous_circle.y;
 			search_in_window = true;
-			//cout << "window " << local_window_width << " x " << local_window_height << " : " << local_window_x << " , " << local_window_y << endl;
+			WHYCON_DEBUG("window " << local_window_width << " x " << local_window_height << " : " << local_window_x << " , " << local_window_y);
 		}
 	}
 
   //cout << "detecting (thres " << threshold << ") at " << ii << endl;
 
-  numSegments = 0;
 	do
 	{
-    if (numSegments > MAX_SEGMENTS) break;
-    //if (start != 0) cout << "it " << ii << endl;
+		if ((context->total_segments - initial_segment_id) > MAX_SEGMENTS) { WHYCON_DEBUG("reached maximum number of segments"); break; }
     
-    // if current position needs to be thresholded
+    /* if current position needs to be thresholded */
     int pixel_class = buffer[ii];
-		if (pixel_class == 0){
+    if (is_unclassified(pixel_class)){
+      //cout << "unclassified pixel at ii" << endl;
 			uchar* ptr = &image.data[ii*3];
-      //cout << "value: " << (ptr[0]+ptr[1]+ptr[2]) << endl;
-      pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
-      if (pixel_class == -2) buffer[ii] = pixel_class; // only tag black pixels, to avoid dirtying the buffer outside the ellipse
+      pixel_class = threshold_pixel(ptr);
+      if (pixel_class == BLACK) buffer[ii] = pixel_class; // only tag black pixels, to avoid dirtying the buffer outside the ellipse
       // NOTE: the inner white area will not initially be tagged, but once the inner circle is processed, it will
 		}
+		//cout << "pixel " << ii << " class " << pixel_class << endl;
 
-    //cout << pixel_class << endl;
+		//cout << pixel_class << " " << ii << endl;
 
     // if the current pixel is detected as "black"
-		if (pixel_class == -2){
+    if (pixel_class == BLACK) {
 			queueEnd = 0;
 			queueStart = 0;
-      // << "black pixel " << ii << endl;
+			//cout << "black pixel at " << ii << endl;
       
 			// check if looks like the outer portion of the ring
 			if (examineCircle(image, outer, ii, outerAreaRatio, search_in_window)){
 				pos = outer.y * width + outer.x; // jump to the middle of the ring
 
+				WHYCON_DEBUG("found valid outer, looking for white at " << pos << " id: " << context->total_segments - 1);
+
         // treshold the middle of the ring and check if it is detected as "white"
         pixel_class = buffer[pos];
-				if (pixel_class == 0){
+        if (is_unclassified(pixel_class)){
 					uchar* ptr = &image.data[pos*3];
-					pixel_class = ((ptr[0]+ptr[1]+ptr[2]) > threshold)-2;
+					pixel_class = threshold_pixel(ptr);
           buffer[pos] = pixel_class;
 				}
-				if (pixel_class == -1){
+				if (pixel_class == WHITE) {
 
           // check if it looks like the inner portion
           if (examineCircle(image, inner, pos, innerAreaRatio, search_in_window)){
@@ -366,6 +410,8 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
                 inner.maxx = outer.maxx;
                 inner.maxy = outer.maxy;
                 inner.miny = outer.miny;
+
+                WHYCON_DEBUG("found inner segment " << context->total_segments - 1);
                 break;
 							}
             }
@@ -398,14 +444,14 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, cons
   cv::imshow("buffer", buffer_img);*/
   //cv::waitKey();
 
-  // if this is not the first call (there was a previous valid circle where search started),
-  // the current call found a valid match, and only two segments were found during the search (inner/outer)
-  // then, only the bounding box area of the outer ellipse needs to be cleaned in 'buffer'
-  bool fast_cleanup = (previous_circle.valid && numSegments == 2 && inner.valid);
-  context->cleanup(outer, fast_cleanup);
+  /* if the current call found a valid match, and only two segments were found during the search (inner/outer)
+    then, only the bounding box area of the outer ellipse needs to be cleaned in 'buffer' */
+  fast_cleanup_possible = (inner.valid && (context->total_segments - initial_segment_id) == 2);
+
+  WHYCON_DEBUG("processed segments " << (context->total_segments - initial_segment_id));
   
-  if (!inner.valid) cout << "detection failed" << endl;
-  else cout << "detected at " << inner.x << " " << inner.y << endl;
+  if (!inner.valid) WHYCON_DEBUG("detection failed");
+  else WHYCON_DEBUG("detected at " << inner.x << " " << inner.y);
 	return inner;
 }
 
@@ -422,56 +468,6 @@ void cv::CircleDetector::cover_last_detected(cv::Mat& image)
   }
 }
 
-void cv::CircleDetector::improveEllipse(const cv::Mat& image, Circle& c)
-{
-  cv::Mat subimg;
-  int delta = 10;
-  cout << image.rows << " x " << image.cols << endl;
-  cv::Range row_range(max(0, c.miny - delta), min(c.maxy + delta, image.rows));
-  cv::Range col_range(max(0, c.minx - delta), min(c.maxx + delta, image.cols));
-  cout << row_range.start << " " << row_range.end << " " << col_range.start << " " << col_range.end << endl;
-  image(row_range, col_range).copyTo(subimg);
-  cv::Mat cannified;
-  cv::Canny(subimg, cannified, 4000, 8000, 5, true);
-  
-  /*cv::namedWindow("bleh");
-  cv::imshow("bleh", subimg);
-  cv::waitKey();*/
-  
-  std::vector< std::vector<cv::Point> > contours;
-  cv::findContours(cannified, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
-  if (contours.empty() || contours[0].size() < 5) return;
-  
-  cv::Mat contour_img;
-  subimg.copyTo(contour_img);
-  cv::drawContours(contour_img, contours, 0, cv::Scalar(255,0,255), 1);
-  
-  /*cv::namedWindow("bleh2");
-  cv::imshow("bleh2", contour_img);
-  cv::waitKey();*/
-  
-  
-  cv::RotatedRect rect = cv::fitEllipse(contours[0]);
-  cout << "old: " << c.x << " " << c.y << " " << c.m0 << " " << c.m1 << " " << c.v0 << " " << c.v1 << endl;
-  c.x = rect.center.x + col_range.start;
-  c.y = rect.center.y + row_range.start;
-  /*float max_size = max(rect.size.width, rect.size.height);
-  float min_size = min(rect.size.width, rect.size.height);*/
-  c.m0 = rect.size.width * 0.25;      
-  c.m1 = rect.size.height * 0.25;
-  c.v0 = cos(rect.angle / 180.0 * M_PI);
-  c.v1 = sin(rect.angle / 180.0 * M_PI);
-  cout << "new: " << c.x << " " << c.y << " " << c.m0 << " " << c.m1 << " " << c.v0 << " " << c.v1 << endl;
-  
-  /*cv::Mat ellipse_img;
-  image(row_range, col_range).copyTo(subimg);
-  subimg.copyTo(ellipse_img);
-  cv::ellipse(ellipse_img, rect, cv::Scalar(255,0,255));
-  cv::namedWindow("bleh3");
-  cv::imshow("bleh3", ellipse_img);
-  cv::waitKey();*/
-}
-
 cv::CircleDetector::Circle::Circle(void)
 {
   x = y = 0;
@@ -480,9 +476,6 @@ cv::CircleDetector::Circle::Circle(void)
 
 void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Vec3b color, float thickness) const
 {
-  //cv::circle(image, cv::Point(x, y), 1, color, 1, 4);
-  //cv::ellipse(image, cv::Point(x, y), cv::Size2f(m0 * 2, m1 * 2), atan2(v1, v0)  * 180.0 / M_PI, 0, 360, color, thickness, 8);
-
   for (float e = 0; e < 2 * M_PI; e += 0.05) {
     float fx = x + cos(e) * v0 * m0 * 2 + v1 * m1 * 2 * sin(e);
     float fy = y + cos(e) * v1 * m0 * 2 - v0 * m1 * 2 * sin(e);
@@ -535,11 +528,26 @@ cv::CircleDetector::Context::Context(int _width, int _height)
   int len = width * height;
   buffer.resize(len);
   queue.resize(len);
-  cleanup(Circle(), false);
+
+  cleanup_buffer();
+  reset();
 }
 
-void cv::CircleDetector::Context::cleanup(const Circle& c, bool fast_cleanup) {
-  if (c.valid && fast_cleanup)
+void cv::CircleDetector::Context::reset(void)
+{
+	next_detector_id = 0;
+	valid_segment_ids.clear();
+	total_segments = 0;
+}
+
+void cv::CircleDetector::Context::cleanup_buffer(void)
+{
+	WHYCON_DEBUG("clean whole buffer");
+	memset(&buffer[0], -1, sizeof(int)*buffer.size());
+}
+
+void cv::CircleDetector::Context::cleanup_buffer(const Circle& c) {
+  if (c.valid) // TODO: necessary?
   {
     // zero only parts modified when detecting 'c'
 		int ix = max(c.minx - 2,1);
@@ -551,24 +559,13 @@ void cv::CircleDetector::Context::cleanup(const Circle& c, bool fast_cleanup) {
 			for (int x = ix; x < ax; x++) buffer[pos + x] = 0; // TODO: user ptr and/or memset
 		}    
   }
-  else {
-    cout << "clean whole buffer" << endl;
-		memset(&buffer[0], 0, sizeof(int)*buffer.size());
-
-    //image delimitation
-		for (int i = 0;i<width;i++){
-			buffer[i] = -1000;	
-			buffer[(height - 1) * width + i] = -1000;
-		}
-		for (int i = 0;i<height;i++){
-			buffer[width * i] = -1000;	
-			buffer[width * i + width - 1] = -1000;
-		}
-  }
 }
 
 void cv::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat& out)
 {
+  std::map<int, cv::Vec3b> colors;
+  for (int i = 0; i < total_segments; i++) colors[i] = cv::Vec3b(rand() / (float)RAND_MAX * 255.0, rand() / (float)RAND_MAX * 255.0, rand() / (float)RAND_MAX * 255.0);
+
   out.create(height, width, CV_8UC3);
   cv::Vec3b* out_ptr = out.ptr<cv::Vec3b>(0);
   const cv::Vec3b* im_ptr = image.ptr<cv::Vec3b>(0);
@@ -577,7 +574,12 @@ void cv::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat& ou
     /*if (buffer[i] == -1) *ptr = cv::Vec3b(0,0,0);
     else if (buffer[i] == -2) *ptr = cv::Vec3b(255,255,255);*/
     //else if (buffer[i] < 0) *ptr = cv::Vec3b(0, 255, 0);
-    if (buffer[i] > 0) *out_ptr = cv::Vec3b(255, 0, 255);
-    else *out_ptr = *im_ptr;
+    if (buffer[i] >= 0) *out_ptr = colors[buffer[i]];
+    else {
+      int pixel_class = (-(buffer[i] + 1) % 3);
+      if (pixel_class == 0) *out_ptr = cv::Vec3b(0, 255, 0); // UNKNOWN
+      else if (pixel_class == 1) *out_ptr = cv::Vec3b(255, 0, 0); // WHITE
+      else *out_ptr = cv::Vec3b(0, 0, 255); // BLACK
+    }
   }
 }

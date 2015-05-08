@@ -132,7 +132,7 @@ cv::Mat_<double> IterativeLinearLSTriangulation(cv::Point3d u,    //homogenous i
 
 void triangulatePoints2(const cv::Mat& P1, const cv::Mat& P2, const std::vector<cv::Point2d>& points1, const std::vector<cv::Point2d>& points2, cv::Mat& out)
 {
-  for (int i = 0; i < points1.size(); i++) {
+  for (size_t i = 0; i < points1.size(); i++) {
     cv::Vec3d point1(points1[i].x, points1[i].y, 1);
     cv::Vec3d point2(points2[i].x, points2[i].y, 1);
     out.row(i) = IterativeLinearLSTriangulation(point1, P1, point2, P2).t();
@@ -152,7 +152,7 @@ void whycon::Triangulator::on_points(const whycon::PointArray::ConstPtr& points_
   points_left_vec.reserve(points_n);
   points_right_vec.reserve(points_n);
 
-  for (int i = 0; i < points_n; i++) {
+  for (size_t i = 0; i < points_n; i++) {
     points_left_vec.push_back(cv::Point2f(points_left->points[i].x, points_left->points[i].y));
     points_right_vec.push_back(cv::Point2f(points_right->points[i].x, points_right->points[i].y));
   }
@@ -177,7 +177,7 @@ void whycon::Triangulator::on_points(const whycon::PointArray::ConstPtr& points_
   cv::undistortPoints(points_left_vec, points_left_vec_u, K_left, dist_coeffs_left, R_left/*, P1*/);
   cv::undistortPoints(points_right_vec, points_right_vec_u, K_right, dist_coeffs_right, R_right/*, P2*/);
 
-  for (int i = 0; i < points_n; i++) {
+  for (size_t i = 0; i < points_n; i++) {
     ROS_INFO_STREAM("pixl " << points_left_vec[i].x << " " << points_left_vec[i].y);
     ROS_INFO_STREAM("pixr " << points_right_vec[i].x << " " << points_right_vec[i].y);
     ROS_INFO_STREAM("l " << points_left_vec_u[i].x << " " << points_left_vec_u[i].y);
@@ -215,7 +215,7 @@ void whycon::Triangulator::on_points(const whycon::PointArray::ConstPtr& points_
 
   //points4d = ((realR * cv::Mat::eye(3, 4, CV_32FC1)) * points4d.t()).t();
   
-  for (int i = 0; i < points_n; i++) {
+  for (size_t i = 0; i < points_n; i++) {
     cv::Vec4d hom_point(points4d.at<double>(i, 0), points4d.at<double>(i, 1), points4d.at<double>(i, 2), points4d.at<double>(i, 3));
     cv::Vec3d inhom_point(hom_point(0) / hom_point(3), hom_point(1) / hom_point(3), hom_point(2) / hom_point(3));
     

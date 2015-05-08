@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 2.8)
 project(whycon)
 
 # set some flags
-SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O4 -march=native -Wfatal-errors")
+add_definitions(-std=c++11)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O4 -march=native -Wfatal-errors")
+#SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O0 -g -Wfatal-errors")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-configs")
 
 # set some options
 option(DISABLE_ROS "Do not build for ROS, but as standalone code" OFF)
 option(ENABLE_FULL_UNDISTORT "Undistort the whole frame" OFF)
 option(ENABLE_RANDOMIZED_THRESHOLD "Use rand() instead of binary-like search for threshold" OFF)
+option(ENABLE_VERBOSE "Enable verbose console messages during detection" OFF)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_SOURCE_DIR}/include/whycon/config.h)
 
 #### ROS CONFIGURATION ####

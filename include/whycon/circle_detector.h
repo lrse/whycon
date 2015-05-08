@@ -9,6 +9,8 @@
 #include <opencv2/opencv.hpp>
 #include <math.h>
 #include <vector>
+#include <whycon/config.h>
+#include <unordered_set>
 
 #define WHYCON_DEFAULT_OUTER_DIAMETER 0.122
 #define WHYCON_DEFAULT_INNER_DIAMETER 0.050
@@ -24,7 +26,7 @@ namespace cv {
       CircleDetector(int width, int height, Context* context, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       ~CircleDetector();
       
-      Circle detect(const cv::Mat& image, const Circle& previous_circle = cv::CircleDetector::Circle());
+      Circle detect(const cv::Mat& image, bool& fast_cleanup_possible, const Circle& previous_circle = cv::CircleDetector::Circle());
       bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio, bool search_in_window);
       void cover_last_detected(cv::Mat& image);
       
@@ -46,6 +48,7 @@ namespace cv {
 
       int threshold, threshold_counter;
       void change_threshold(void);
+      inline int threshold_pixel(uchar* ptr);
 
       int queueStart,queueEnd,queueOldStart,numSegments;
 
@@ -54,22 +57,23 @@ namespace cv {
       int local_window_width, local_window_height, local_window_x, local_window_y;
 
       Context* context;
-      
+      int detector_id, BLACK, WHITE, UNKNOWN;
+      int initial_segment_id;
+
+      inline bool is_unclassified(int pixel_class);
+
     public:
       class Circle {
         public:
           Circle(void);
           
-          float x;
-          float y;
+          float x, y;
           int size;
           int maxy,maxx,miny,minx;
           int mean;
           int type;
-          float roundness;
-          float bwRatio;
-          bool round;
-          bool valid;
+          float roundness, bwRatio;
+          bool round, valid;
           float m0,m1; // axis dimensions
           float v0,v1; // axis (v0,v1) and (v1,-v0)
 
@@ -84,12 +88,17 @@ namespace cv {
           Context(int _width, int _height);
           void debug_buffer(const cv::Mat& image, cv::Mat& img);
 
+          void cleanup_buffer(void);
+          void cleanup_buffer(const Circle& c);
+          void reset(void);
+
           std::vector<int> buffer, queue;
           int width, height;
 
-        private:
-          void cleanup(const Circle& c, bool fast_cleanup);
-          friend class CircleDetector;
+          int next_detector_id;
+          std::unordered_set<int> valid_segment_ids;
+          int total_segments;
+
       };
   };
 }

@@ -45,9 +45,9 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
       const cv::CircleDetector::Circle& circle = system->get_circle(i);
       if (!circle.valid) continue;
 
-      cv::LocalizationSystem::Pose pose = system->get_pose(circle);
+      //cv::LocalizationSystem::Pose pose = system->get_pose(circle);
       cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
-      cv::Vec3f coord = pose.pos;
+      //cv::Vec3f coord = pose.pos;
       cv::Vec3f coord_trans = trans_pose.pos;
 
       // draw each target
