@@ -20,7 +20,7 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   /* initialize ros */
   int input_queue_size = 1;
   n.param("input_queue_size", input_queue_size, input_queue_size);
-  cam_sub = it.subscribeCamera("/camera/image_raw", input_queue_size, boost::bind(&WhyConROS::on_image, this, _1, _2));
+  cam_sub = it.subscribeCamera("/camera/image_rect_color", input_queue_size, boost::bind(&WhyConROS::on_image, this, _1, _2));
   
   image_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
   viz_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);

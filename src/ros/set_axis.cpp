@@ -3,7 +3,7 @@
 whycon::AxisSetter::AxisSetter(ros::NodeHandle &n) : it(n)
 {
   set_axis_now = is_tracking = false;
-  cam_sub = it.subscribeCamera("/camera/image_raw", 1, boost::bind(&AxisSetter::on_image, this, _1, _2));
+  cam_sub = it.subscribeCamera("/camera/image_rect_color", 1, boost::bind(&AxisSetter::on_image, this, _1, _2));
   img_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
 
   if (!n.getParam("axis", axis_name)) throw std::runtime_error("Please specify the name of the axis to be saved");
