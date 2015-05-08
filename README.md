@@ -26,6 +26,10 @@ The code can be compiled either as a ROS package (shared library) or in a standa
 application is provided as a series of ROS nodes, which utilize the whycon shared library. For an example of how to implement your own standalone application, the ROS
 node should be used as a reference.
 
+Stable [releases](https://github.com/lrse/whycon/releases) are available periodically. Latest stable release can be downloaded by clicking [here](https://github.com/lrse/whycon/releases/latest). 
+
+For the latest development version (which should also work and may contain new experimental features) you can clone the repository directly.
+
 ## ROS
 
 The main directory should be placed inside a catkin workspace source-space (eg: ~catkin_ws/src).
