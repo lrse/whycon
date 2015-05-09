@@ -48,7 +48,7 @@ Inside the main directory do:
 
     mkdir build
     cd build
-    cmake ..
+    cmake -DDISABLE_ROS=ON ..
     make
 
 The code can be installed to the system by doing:
@@ -57,7 +57,7 @@ The code can be installed to the system by doing:
 
 Note the default CMake location is `/usr/local`, but you can redefine this by invoking cmake in this way instead:
 
-    cmake -DCMAKE_INSTALL_PREFIX=/usr ..
+    cmake -DDISABLE_ROS=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 
 # Usage Manual
 
