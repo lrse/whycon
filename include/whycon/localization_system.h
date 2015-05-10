@@ -48,13 +48,10 @@ namespace cv {
       double fc[2]; // focal length X,Y
       double cc[2]; // principal point X,Y
       double kc[6]; // distortion coefficients
-      void transform(float x_in, float y_in, float& x_out, float& y_out) const;
+      void transform(double x_in, double y_in, double& x_out, double& y_out) const;
 
       void precompute_undistort_map(void);
       cv::Mat undistort_map;
-      
-      
-      cv::Vec3f eigen(const cv::Matx33d& data) const;
   };
 }
 

@@ -38,29 +38,9 @@ bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int atte
   return detector.detect(image, reset, attempts, max_refine);
 }
 
-cv::Vec3f cv::LocalizationSystem::eigen(const cv::Matx33d& data) const
-{
-	cv::Vec3d eigenvalues;
-	cv::Matx33d eigenvectors;
-	cv::eigen(data, eigenvalues, eigenvectors);
-
-	double L1 = eigenvalues(1);
-	double L2 = eigenvalues(0);
-	double L3 = eigenvalues(2);
-	int V2 = 0;
-	int V3 = 2;
-
-	double z = circle_diameter/sqrt(-L2*L3)/2.0;
-	cv::Matx13d result_mat = L3 * sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + L2 * sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
-	cv::Vec3f result(result_mat(0), result_mat(1), result_mat(2));
-	result *= (result(2) * z < 0 ? -z : z);
-
-	return result;
-}
-
 cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const {
   Pose result;
-	float x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
+  double x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
   
   //transform the center
 	transform(circle.x,circle.y, x, y);
@@ -97,7 +77,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	minor = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
 
 	//construct the conic
-	float a,b,c,d,e,f;
+	double a,b,c,d,e,f;
 	a = v0*v0/(major*major)+v1*v1/(minor*minor);
 	b = v0*v1*(1/(major*major)-1/(minor*minor));
 	c = v0*v0/(minor*minor)+v1*v1/(major*major);
@@ -107,11 +87,6 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	cv::Matx33d data(a,b,d,
 									 b,c,e,
 									 d,e,f);
-
-  /*result.pos = eigen(data);
-  result.rot(0) = acos(circle.m1/circle.m0);
-  result.rot(1) = atan2(circle.v1,circle.v0);
-  result.rot(2) = circle.v1/circle.v0;*/
 
 	// compute conic eigenvalues and eigenvectors
 	cv::Vec3d eigenvalues;
@@ -131,6 +106,10 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	result.pos = cv::Vec3f(position_mat(0), position_mat(1), position_mat(2));
 	int S3 = (result.pos(2) * z < 0 ? -1 : 1);
 	result.pos *= S3 * z;
+
+  /*result.rot(0) = acos(circle.m1/circle.m0);
+  result.rot(1) = atan2(circle.v1,circle.v0);
+  result.rot(2) = circle.v1/circle.v0;*/
 
 	// rotation
 	//cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
@@ -169,24 +148,12 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
   ManyCircleDetector axis_detector(4, width, height);
   if (!axis_detector.detect(image, true, max_attempts, refine_steps)) return false;
 
-  // get poses of each calibration circle
-  /*float minx, miny;
-  minx = miny = numeric_limits<float>::max();
-  int zero_i;*/
-  
   Pose circle_poses[4];
   for (int i = 0; i < 4; i++) {
     origin_circles[i] = axis_detector.circles[i];
     circle_poses[i] = get_pose(axis_detector.circles[i]);
-    /*float x = circle_poses[i].pos(0);
-    float y = circle_poses[i].pos(1);
-    if (x < minx) { zero_i = i; x = minx; }
-    if (y < miny) { zero_i = i; y = miny; }*/
   }
 
-  // set (0,0) of circle at top, left
-  /*std::swap(origin_circles[zero_i], origin_circles[0]);
-  std::swap(circle_poses[zero_i], circle_poses[0]);*/
   cv::Vec3f vecs[3];  
   for (int i = 0; i < 3; i++) {
     vecs[i] = circle_poses[i + 1].pos - circle_poses[0].pos;
@@ -289,14 +256,14 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 }
 
 /* normalize coordinates: move from image to canonical and remove distortion */
-void cv::LocalizationSystem::transform(float x_in, float y_in, float& x_out, float& y_out) const
+void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, double& y_out) const
 {
   #if defined(ENABLE_FULL_UNDISTORT)
   x = (x-cc[0])/fc[0];
   y = (y-cc[1])/fc[1];
   #else
-  vector<cv::Vec2f> src(1, cv::Vec2f(x_in, y_in));
-  vector<cv::Vec2f> dst(1);
+  vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
+  vector<cv::Vec2d> dst(1);
   cv::undistortPoints(src, dst, K, dist_coeff);
   x_out = dst[0](0); y_out = dst[0](1);
   #endif
