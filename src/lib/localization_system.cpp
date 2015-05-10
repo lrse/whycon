@@ -107,6 +107,8 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	int S3 = (result.pos(2) * z < 0 ? -1 : 1);
 	result.pos *= S3 * z;
 
+	WHYCON_DEBUG("ellipse center: " << x << "," << y << " " << " computed position: " << result.pos << " " << result.pos / result.pos(2));
+
   /*result.rot(0) = acos(circle.m1/circle.m0);
   result.rot(1) = atan2(circle.v1,circle.v0);
   result.rot(2) = circle.v1/circle.v0;*/
@@ -259,8 +261,8 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, double& y_out) const
 {
   #if defined(ENABLE_FULL_UNDISTORT)
-  x = (x-cc[0])/fc[0];
-  y = (y-cc[1])/fc[1];
+  x_out = (x_in-cc[0])/fc[0];
+  y_out = (y_in-cc[1])/fc[1];
   #else
   vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
   vector<cv::Vec2d> dst(1);
