@@ -16,6 +16,8 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   n.param("inner_diameter", inner_diameter, WHYCON_DEFAULT_INNER_DIAMETER);
   n.param("max_attempts", max_attempts, 1);
   n.param("max_refine", max_refine, 1);
+  n.param("xscale", xscale, 1.0);
+  n.param("yscale", yscale, 1.0);
 
   /* initialize ros */
   int input_queue_size = 1;
@@ -44,7 +46,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
     system = boost::make_shared<cv::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
     if (!axis_file.empty()) {
       ROS_INFO_STREAM("opening axis file: " << axis_file + ".yml");
-      system->read_axis(axis_file + ".yml");
+      system->read_axis(axis_file + ".yml", xscale, yscale);
     }
   }
 

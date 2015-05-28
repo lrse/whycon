@@ -15,7 +15,7 @@ namespace whycon {
       boost::shared_ptr<tf::TransformBroadcaster> broadcaster;
 
       double axis_length_tolerance;
-      std::string world_frame, target_frame;
+      std::string world_frame, target_frame, axis_file;
       void on_poses(const geometry_msgs::PoseArrayConstPtr& pose_array);
   };
 }

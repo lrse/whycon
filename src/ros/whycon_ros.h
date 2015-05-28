@@ -20,6 +20,7 @@ namespace whycon {
 
       int targets;
       double outer_diameter, inner_diameter;
+      double xscale, yscale;
       
       boost::shared_ptr<cv::LocalizationSystem> system;
       bool is_tracking, should_reset;

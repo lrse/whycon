@@ -33,7 +33,7 @@ cv::CircleDetector::CircleDetector(int _width, int _height, Context* _context, f
   threshold = (3 * 256) / 2;
   threshold_counter = 0;
 
-  use_local_window = true;
+  use_local_window = false;
   local_window_multiplier = 2.5;
 }
 

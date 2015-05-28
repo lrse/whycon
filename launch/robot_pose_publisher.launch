@@ -1,0 +1,21 @@
+<launch>
+  <include file="$(find launchers)/launch/cameras/mono.launch"/>
+  <!--<group ns="camera">
+    <node pkg="image_proc" type="image_proc" name="image_proc"/>
+  </group>-->
+
+   <node name="whycon" type="whycon" pkg="whycon" _launch-prefix="konsole --new-tab -e bash /home/v01d/misc/scripts/ros-debug"  output="screen">
+    <param name="targets" value="3"/>
+    <param name="max_refine" value="5"/>
+    <param name="max_attempts" value="5"/>
+    <param name="outer_diameter" value="0.0118"/>
+    <param name="inner_diameter" value="0.0048"/>
+    <param name="yscale" value="0.845"/>
+    <param name="xscale" value="1.366"/>
+  </node>
+
+  <node name="robot_pose_publisher" type="robot_pose_publisher" pkg="whycon" output="screen"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="static_pose" args="0 0 0 1.570796 0 0 target base_link 100"/>
+</launch>
+  

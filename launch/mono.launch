@@ -1,12 +1,15 @@
 <launch>
-  <group ns="camera">
+  <include file="$(find launchers)/launch/cameras/mono.launch"/>
+  <!--<group ns="camera">
     <node pkg="image_proc" type="image_proc" name="image_proc"/>
-  </group>
+  </group>-->
 
    <node name="whycon" type="whycon" pkg="whycon" _launch-prefix="konsole --new-tab -e bash /home/v01d/misc/scripts/ros-debug"  output="screen">
-    <param name="targets" value="1"/>
+    <param name="targets" value="4"/>
     <param name="max_refine" value="5"/>
     <param name="max_attempts" value="5"/>
+    <param name="xscale" value="0.9855"/>
+    <param name="yscale" value="1.48"/>
   </node>
 </launch>
   

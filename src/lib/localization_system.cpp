@@ -138,8 +138,8 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
 {
   Pose pose;  
   pose.pos = coordinates_transform * get_pose(circle).pos;
-  pose.pos(0) /= pose.pos(2);
-  pose.pos(1) /= pose.pos(2);
+  pose.pos(0) /= pose.pos(2) * xscale;
+  pose.pos(1) /= pose.pos(2) * yscale;
   pose.pos(2) = 0;
   return pose;
 }
@@ -233,7 +233,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
   return true;
 }
 
-void cv::LocalizationSystem::read_axis(const std::string& file) {
+void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, float _yscale) {
   cv::FileStorage fs(file, cv::FileStorage::READ);
   if (!fs.isOpened()) throw std::runtime_error("could not axis open file");
   cv::Mat m;
@@ -243,6 +243,10 @@ void cv::LocalizationSystem::read_axis(const std::string& file) {
   origin_circles[1].read(fs["c1"]);
   origin_circles[2].read(fs["c2"]);
   origin_circles[3].read(fs["c3"]);
+
+  xscale = _xscale;
+  yscale = _yscale;
+
   axis_set = true;
   WHYCON_DEBUG("transformation: " << coordinates_transform);
 }

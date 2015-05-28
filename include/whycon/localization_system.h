@@ -11,7 +11,7 @@ namespace cv {
         float outer_diameter = WHYCON_DEFAULT_OUTER_DIAMETER, float inner_diameter = WHYCON_DEFAULT_INNER_DIAMETER);
       
       bool set_axis(const cv::Mat& image, int attempts = 1, int max_refine = 1, const std::string& output = std::string());
-      void read_axis(const std::string& input);
+      void read_axis(const std::string& input, float xscale, float yscale);
       void draw_axis(cv::Mat& image);
       
       bool localize(const cv::Mat& image, bool reset = false, int attempts = 1, int max_refine = 1);
