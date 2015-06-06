@@ -56,9 +56,9 @@ void whycon::RobotPosePublisher::on_poses(const geometry_msgs::PoseArrayConstPtr
   v2[0] /= n2; v2[1] /= n2;
 
   if (angles::normalize_angle(atan2(v1[1], v1[0]) - atan2(v2[1], v2[0])) > 0)
-    T.setRotation(tf::createQuaternionFromYaw(atan2(v1[1], v1[0])));
-  else
     T.setRotation(tf::createQuaternionFromYaw(atan2(v2[1], v2[0])));
+  else
+    T.setRotation(tf::createQuaternionFromYaw(atan2(v1[1], v1[0])));
 
   broadcaster->sendTransform(tf::StampedTransform(T, pose_array->header.stamp, world_frame, target_frame));
 }
