@@ -39,7 +39,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   camera_model.fromCameraInfo(info_msg);
   if (camera_model.fullResolution().width == 0) { ROS_ERROR_STREAM("camera is not calibrated!"); return; }
 
-  cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image_msg);
+  cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image_msg, "rgb8");
   const cv::Mat& image = cv_ptr->image;
 
   if (!system) {
