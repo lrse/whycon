@@ -164,7 +164,7 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
       p.position.x = pose.pos(0);
       p.position.y = pose.pos(1);
       p.position.z = pose.pos(2);
-      p.orientation = tf::createQuaternionMsgFromRollPitchYaw(pose.rot(0), pose.rot(1), pose.rot(2));
+      p.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, pose.rot(0), pose.rot(1));
       pose_array.poses.push_back(p);
     }
 

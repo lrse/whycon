@@ -109,14 +109,14 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 
 	WHYCON_DEBUG("ellipse center: " << x << "," << y << " " << " computed position: " << result.pos << " " << result.pos / result.pos(2));
 
-  /*result.rot(0) = acos(circle.m1/circle.m0);
-  result.rot(1) = atan2(circle.v1,circle.v0);
-  result.rot(2) = circle.v1/circle.v0;*/
-
 	// rotation
-	//cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
-	result.rot = cv::Vec3f(0, 0, 0); // TODO: get angles from normal_mat
-  
+	cv::Matx13d normal_mat = sqrt((L2 - L1) / (L2 - L3)) * eigenvectors.row(V2) + sqrt((L1 - L3) / (L2 - L3)) * eigenvectors.row(V3);
+	cv::normalize(cv::Vec3f(normal_mat(0), normal_mat(1), normal_mat(2)), result.rot, 1, cv::NORM_L2SQR);
+	result.rot(0) = atan2(result.rot(1), result.rot(0));
+	result.rot(1) = acos(result.rot(2));
+	result.rot(2) = 0; /* not recoverable */
+	/* TODO: to be checked */
+
   return result;
 }
 
