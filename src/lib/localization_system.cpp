@@ -253,7 +253,7 @@ void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, f
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 {
-  static string names[4] = { "0,0", "1,0", "0,1", "1,1" };
+  static std::string names[4] = { "0,0", "1,0", "0,1", "1,1" };
   for (int i = 0; i < 4; i++) {
     std::ostringstream ostr;
     //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
@@ -268,8 +268,8 @@ void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, 
   x_out = (x_in-cc[0])/fc[0];
   y_out = (y_in-cc[1])/fc[1];
   #else
-  vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
-  vector<cv::Vec2d> dst(1);
+  std::vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
+  std::vector<cv::Vec2d> dst(1);
   cv::undistortPoints(src, dst, K, dist_coeff);
   x_out = dst[0](0); y_out = dst[0](1);
   #endif
@@ -321,7 +321,7 @@ void cv::LocalizationSystem::precompute_undistort_map(void)
 {
   undistort_map.create(height, width, CV_32FC2);
   for (int i = 0; i < height; i++) {
-    vector<cv::Vec2f> coords_in(width);
+    std::vector<cv::Vec2f> coords_in(width);
     for (int j = 0; j < width; j++)
       coords_in[j] = cv::Vec2f(j,i); // TODO: reverse y? add 0.5?
 
