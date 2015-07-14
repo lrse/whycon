@@ -9,10 +9,10 @@
     <param name="targets" value="3"/>
     <param name="max_refine" value="5"/>
     <param name="max_attempts" value="5"/>
-    <param name="outer_diameter" value="0.0118"/>
-    <param name="inner_diameter" value="0.0048"/>
-    <param name="xscale" value="0.795"/>
-    <param name="yscale" value="1.3"/>
+    <param name="outer_diameter" value="0.118"/>
+    <param name="inner_diameter" value="0.048"/>
+    <param name="yscale" value="1.90"/>
+    <param name="xscale" value="1.50"/>
   </node>
 
   <node name="robot_pose_publisher" type="robot_pose_publisher" pkg="whycon" />
