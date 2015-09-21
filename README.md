@@ -36,7 +36,7 @@ Note that this .bib includes not only the references to the scientific works tha
 
 ----
 
-## Installation
+## Installing WhyCon
 
 The code can be compiled either as a ROS package (shared library) or in a standalone version.
 
@@ -75,10 +75,12 @@ Note the default CMake location is `/usr/local`, but you can redefine this by in
 
     cmake -DDISABLE_ROS=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 
-## Usage Manual
+## Using WhyCon
 
 Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
+
 ----
+
 ###Acknowledgements
 
 The development of this work was supported by EU within its Seventh Framework Programme project ICT-600623 ``STRANDS''.
