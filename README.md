@@ -1,5 +1,5 @@
 # WhyCon
-## precise, efficient and low-cost localization
+## A precise, efficient and low-cost localization system
 
 ### What is WhyCon ? 
 
