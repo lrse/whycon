@@ -7,9 +7,10 @@ The system is capable of efficient real-time detection and precise position esti
 It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic sysetms that require real-time, precise position estimation.
 _WhyCon_ is meant as an alternative to widely used and expensive localization systems. It is fully open-source.
 
-| Video of the WhyCon example application | Application description |
+
+| WhyCon example application (video)  | Scenario description |
 | ------ | ----------- |
-|[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/WhyCon/pics/whycon.png)](https://www.youtube.com/watch?v=KgKrN8_EmUA"AAAA")|-precise docking to a charging station (EU Project STRANDS),<br/> -fitness evaluation for self-evolving robots (EU project SYMBRION),<br/>-relative localization of UAV-UGV formations (CZ-USA project COLOS),<br/>-energy source localization in (EU project REPLICATOR),<br/>-robotic swarm localization (EU HAZCEPT).|
+|[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/WhyCon/pics/whycon.png)](https://www.youtube.com/watch?v=KgKrN8_EmUA"AAAA")|-precise docking to a charging station (EU project STRANDS),<br/> -fitness evaluation for self-evolving robots (EU proj. SYMBRION),<br/>-relative localization of UAV-UGV formations (CZ-USA project COLOS),<br/>-energy source localization in (EU proj REPLICATOR),<br/>-robotic swarm localization (EU proj HAZCEPT).|
 
 ##Who did it ?
 The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
@@ -28,6 +29,12 @@ Note that this .bib includes not only the references to the scientific works tha
 also a reference to the implementation for a specific (stable) version of the code on GitHub (look for the DOI containing
 the word "zenodo").
 
+------
+###References
+1. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.bib)].
+2. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.bib)].
+3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.bib)].
+
 ----
 
 ## Installation
@@ -40,14 +47,14 @@ Stable [releases](https://github.com/lrse/whycon/releases) are available periodi
 
 For the latest development version (which should also work and may contain new experimental features) you can clone the repository directly.
 
-## ROS
+### ROS
 
 The main directory should be placed inside a catkin workspace source-space (eg: ~catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
 
-## Standalone
+### Standalone
 
 The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on ubuntu, simply perform the following:
 
@@ -69,15 +76,10 @@ Note the default CMake location is `/usr/local`, but you can redefine this by in
 
     cmake -DDISABLE_ROS=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 
-# Usage Manual
+## Usage Manual
 
 Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
-------
-###References
-1. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.bib)].
-2. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.bib)].
-3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.bib)].
-
+----
 ###Acknowledgements
 
 The development of this work was supported by EU within its Seventh Framework Programme project ICT-600623 ``STRANDS''.
