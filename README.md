@@ -9,7 +9,7 @@ _WhyCon_ is meant as an alternative to widely used and expensive localization sy
 
 | Video of the WhyCon example application | Application description |
 | ------ | ----------- |
-|[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/WhyCon/pics/whycon.png)](https://www.youtube.com/watch?v=KgKrN8_EmUA"AAAA")|precise docking to a charging station (EU Project STRANDS), fitness evaluation for self-evolving robots (EU project SYMBRION), relative localization of UAV-UGV formations (CZ-USA project COLOS), energy source localization in (EU project REPLICATOR), robotic swarm localization (EU HAZCEPT). |
+|[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/WhyCon/pics/whycon.png)](https://www.youtube.com/watch?v=KgKrN8_EmUA"AAAA")|1. precise docking to a charging station (EU Project STRANDS), 2. fitness evaluation for self-evolving robots (EU project SYMBRION), 3. relative localization of UAV-UGV formations (CZ-USA project COLOS), 4. energy source localization in (EU project REPLICATOR), 5. robotic swarm localization (EU HAZCEPT). |
 
 ##Who did it ?
 The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
