@@ -1,4 +1,6 @@
-## WhyCon - a precise, efficient and low-cost localization system
+# WhyCon
+## precise, efficient and low-cost localization
+
 ### What is WhyCon ? 
 
 _WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
