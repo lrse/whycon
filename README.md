@@ -1,30 +1,46 @@
-# Description
+## WhyCon - a precise, efficient and low-cost localization system
+### What is WhyCon ? 
 
 _WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
+These characteristics allow its use as an alternative to more expensive localization systems available. 
+The system is capable of efficient real-time detection and precise position estimation of several circular markers in a video stream. 
+It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic sysetms that require real-time, precise position estimation.
+_WhyCon_ is meant as an alternative to widely used and expensive localization systems. It is fully open-source.
 
-These characteristics enable it to be used as an alternative to more expensive systems available for research communities. 
+###Who did it ?
+The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
+The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao), [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) and [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en).
 
-The system is capable of detecting several targets very efficiently which are detected by a video camera. This can be used as a source for ground-truth data
-for experiments or for on-line pose information.
+###Any details ?
 
-WhyCon is proposed as an alternative to widely used and expensive localization systems. It is fully open-source.
+A short overview of the <i>WhyCon</i> system was first presented on International Conference on Advanced Robotics 2013 [[1](#references)] and a detailed description in the Journal of Intelligent and Robotics Systems [[2](#references)].
+An overview of _WhyCon's_ applications was presented at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)].
+Nowadays, the system is being used in several research projects the globe, see the video,   
 
-# Publication and citation
-
-If you use this software for your publication it is mandatory to cite using the references in the provided `cite.bib`
-file (you can download it [here](https://raw.github.com/lrse/whycon/master/cite.bib)).
-
+###Can I use it ?
+ 
+If you decide to use this _WhyCon_ for your research, please cite it using the one of the references provided in this [bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/WhyCon.bib) file.
 Note that this .bib includes not only the references to the scientific works that describe the underlying method, but
 also a reference to the implementation for a specific (stable) version of the code on GitHub (look for the DOI containing
 the word "zenodo").
 
-# Installation
+###References
+1. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.bib)].
+2. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.bib)].
+3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/WhyCon/WhyCon/papers/2015_irososar_whycon.bib)].
+
+###Acknowledgements
+
+The development of this work was supported by EU within its Seventh Framework Programme project ICT-600623 ``STRANDS''.
+The Czech Republic and Argentina have given support through projects 7AMB12AR022, ARC/11/11 and 13-18316P.
+We sincerely acknowledge [Jean Pierre Moreau](http://jean-pierre.moreau.pagesperso-orange.fr/infos.html) for his excellent libraries for numerical analysis that we use in our project. 
+----
+
+## Installation
 
 The code can be compiled either as a ROS package (shared library) or in a standalone version.
 
-**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference
-application is provided as a series of ROS nodes, which utilize the whycon shared library. For an example of how to implement your own standalone application, the ROS
-node should be used as a reference.
+**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference application is provided as a series of ROS nodes, which utilize the _Whycon_ shared library. For an example of how to implement your own standalone application, see the ROS node.
 
 Stable [releases](https://github.com/lrse/whycon/releases) are available periodically. Latest stable release can be downloaded by clicking [here](https://github.com/lrse/whycon/releases/latest). 
 
