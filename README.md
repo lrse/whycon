@@ -7,6 +7,9 @@ The system is capable of efficient real-time detection and precise position esti
 It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic sysetms that require real-time, precise position estimation.
 _WhyCon_ is meant as an alternative to widely used and expensive localization systems. It is fully open-source.
 
+[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/fremen/pics/features.png)](https://www.youtube.com/watch?v=KgKrN8__EmUA"AAAA")
+Example applications of the WhyCon system
+
 ###Who did it ?
 The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
 The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao), [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) and [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en).
