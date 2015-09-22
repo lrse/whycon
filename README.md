@@ -4,7 +4,7 @@
 _WhyCon_ is a vision-based localization system that can be used with low-cost web cameras, and achieves millimiter precision with very high performance.
 These characteristics allow its use as an alternative to more expensive localization systems available. 
 The system is capable of efficient real-time detection and precise position estimation of several circular markers in a video stream. 
-It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic sysetms that require real-time, precise position estimation.
+It can be used both off-line, as a source of ground-truth for robotics experiments, or on-line as a component of robotic systems that require real-time, precise position estimation.
 _WhyCon_ is meant as an alternative to widely used and expensive localization systems. It is fully open-source.
 
 
@@ -27,7 +27,7 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 ####How does it work ?
 
 A six-page overview of the <i>WhyCon</i> system was first presented at the ICAR conference [[1](#references)].
-A deteiled description was published in the Journal of Intelligent and Robotics Systems [[2](#references)].
+A detailed description was published in the Journal of Intelligent and Robotics Systems [[2](#references)].
 An overview of _WhyCon's_ applications was presented at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)].
 Nowadays, the system is being used in several research projects the globe, see the following video for examples.
 
@@ -40,7 +40,7 @@ Note that this .bib includes not only the references to the scientific works tha
 ###References
 1. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.bib)].
 2. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.bib)].
-3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficent, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.bib)].
+3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficient, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.bib)].
 4. J. Faigl, T. Krajník et al.: <b>[Low-cost embedded system for relative localization in robotic swarms.](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6630694)</b> International Conference on Robotics and Automation (ICRA), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/CosPhi/papers/2013_icra_whycon.bib)].
 
 ----
@@ -49,7 +49,7 @@ Note that this .bib includes not only the references to the scientific works tha
 
 The code can be compiled either as a ROS package (shared library) or in a standalone version.
 
-**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference application is provided as a series of ROS nodes, which utilize the _Whycon_ shared library. For an example of how to implement your own standalone application, see the ROS node.
+**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference application is provided as a series of ROS nodes, which utilize the _WhyCon_ shared library. For an example of how to implement your own standalone application, see the ROS node.
 
 Stable [releases](https://github.com/lrse/whycon/releases) are available periodically. Latest stable release can be downloaded by clicking [here](https://github.com/lrse/whycon/releases/latest). 
 
@@ -57,14 +57,14 @@ For the latest development version (which should also work and may contain new e
 
 ### ROS
 
-The main directory should be placed inside a catkin workspace source-space (eg: ~catkin_ws/src).
+The main directory should be placed inside a catkin workspace source-space (e.g.: ~catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
 
 ### Standalone
 
-The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on ubuntu, simply perform the following:
+The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on Ubuntu, simply perform the following:
 
     sudo apt-get install libopencv-dev libboost-all-dev
 
