@@ -16,11 +16,13 @@ _WhyCon_ is meant as an alternative to widely used and expensive localization sy
 The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
 The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao), [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) and [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en). Each of these contributors maintains a slightly different version of WhyCon.
 
-| WhyCon version  | Application | Features | Maintainer|
+| WhyCon version  | Application | Main features | Maintainer|
 | --------------- | ----------- | ------ | ----- |
 | [WhyCon-ROS](https://github.com/lrse/whycon) | general | 2D, 3D, ROS | [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao) |
-| [SwarmCon-ROS](https://github.com/gestom/cosphi/localization) | swarms | 2D, robots have IDs | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
-| [Caspa-WhyCon](https://github.com/gestom/cosphi/localization) | embedded | 2D, robots have IDs | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
+| [WhyCon-Mini](http://labe.felk.cvut.cz/~tkrajnik/circle_detection/) | general | 2D, 3D, lightweight | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao)|
+| [SwarmCon](https://github.com/gestom/cosphi/localization) | μ-swarms | 2D, individual IDs | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
+| [Caspa-WhyCon](http://robotics.fel.cvut.cz/faigl/caspa/) | UAVs | embedded solution | [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en) |
+| [Social-card]() | human-robot interaction | 3D + orientation, ROS  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 
 ####How does it work ?
 
