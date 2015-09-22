@@ -25,7 +25,7 @@ Nowadays, the system is being used in several research projects the globe, see t
 
 ####How can I use it ?
  
-If you decide to use this _WhyCon_ for your research, please cite it using the one of the references provided in this [bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/WhyCon.bib) file.
+If you decide to use this _WhyCon_ for your research, please cite it using the one of the references provided in this [bibtex](https://github.com/lrse/whycon/blob/master/cite.bib) file.
 Note that this .bib includes not only the references to the scientific works that describe the underlying method, but also a reference to the implementation for a specific (stable) version of the code on GitHub (look for the DOI containing the word "zenodo").
 
 ------
