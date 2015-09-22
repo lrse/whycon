@@ -22,7 +22,7 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 | [WhyCon-Mini](http://labe.felk.cvut.cz/~tkrajnik/circle_detection/) | general | 2D, 3D, lightweight | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao)|
 | [SwarmCon](https://github.com/gestom/cosphi/localization) | μ-swarms | 2D, individual IDs | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 | [Caspa-WhyCon](http://robotics.fel.cvut.cz/faigl/caspa/) | UAVs | embedded solution | [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en) |
-| [Social-card]() | human-robot interaction | 3D + orientation, ROS  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
+| [Social-card](https://github.com/strands-project/strands_social/tree/hydro-devel/social_card_reader) | human-robot interaction | 3D + orientation, ROS  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 
 ####How does it work ?
 
