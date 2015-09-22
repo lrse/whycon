@@ -12,7 +12,6 @@ _WhyCon_ is meant as an alternative to widely used and expensive localization sy
 | ------ | ----------- |
 |[![WhyCon applications](https://raw.githubusercontent.com/wiki/gestom/WhyCon/pics/whycon.png)](https://www.youtube.com/watch?v=KgKrN8_EmUA"AAAA")|-precise docking to a charging station (EU project STRANDS),<br/> -fitness evaluation for self-evolving robots (EU proj. SYMBRION),<br/>-relative localization of UAV-UGV formations (CZ-USA project COLOS),<br/>-energy source localization in (EU proj REPLICATOR),<br/>-robotic swarm localization (EU proj HAZCEPT).|
 
-####Who created it ?
 The _WhyCon_ system was developed as a joint project between the University of Buenos Aires, Czech Technical University and University of Lincoln, UK.
 The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao), [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) and [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en). Each of these contributors maintains a slightly different version of WhyCon.
 
@@ -29,9 +28,9 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 A six-page overview of the <i>WhyCon</i> system was first presented at the ICAR conference [[1](#references)].
 A detailed description was published in the Journal of Intelligent and Robotics Systems [[2](#references)].
 An overview of _WhyCon's_ applications was presented at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)].
-Nowadays, the system is being used in several research projects the globe, see the following video for examples.
+Nowadays, the system is being used in several research projects the across globe, see the following video for examples.
 
-####How can I use it ?
+####Can I use it ?
  
 If you decide to use this _WhyCon_ for your research, please cite it using the one of the references provided in this [bibtex](https://github.com/lrse/whycon/blob/master/cite.bib) file.
 Note that this .bib includes not only the references to the scientific works that describe the underlying method, but also a reference to the implementation for a specific (stable) version of the code on GitHub (look for the DOI containing the word "zenodo").
