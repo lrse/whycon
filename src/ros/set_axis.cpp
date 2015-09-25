@@ -32,8 +32,10 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
     system = boost::make_shared<cv::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
 
   if (set_axis_now) {
-    set_axis_now = false;
-    if (!system->set_axis(image, 5, 5, axis_name + ".yml")) ROS_ERROR_STREAM("could not set axis!");
+		if (!system->set_axis(image, 5, 5, axis_name + ".yml"))
+			ROS_ERROR_STREAM("could not set axis, attempting again");
+		else
+			set_axis_now = false;
   }
 
   if (system->axis_set) {
