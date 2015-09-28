@@ -85,7 +85,7 @@ Note the default CMake location is `/usr/local`, but you can redefine this by in
 
 ## Using WhyCon
 
-Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
+For a step-by-step tutorial, please refer to the [wiki](wiki/Tutorial).
 
 ----
 
