@@ -17,48 +17,49 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   xscale(1), yscale(1), detector(_targets, _width, _height, _inner_diameter / _outer_diameter),
   targets(_targets), width(_width), height(_height), axis_set(false), circle_diameter(_outer_diameter)
 {
-  _K.copyTo(K);
-  _dist_coeff.copyTo(dist_coeff);
-  
-  fc[0] = K.at<double>(0,0);
-  fc[1] = K.at<double>(1,1);
-  cc[0] = K.at<double>(0,2);
-  cc[1] = K.at<double>(1,2);
-  
-  kc[0] = 1;
-  for (int i = 0; i < 5; i++) kc[i + 1] = dist_coeff.at<double>(i);
+	_K.copyTo(K);
+	_dist_coeff.copyTo(dist_coeff);
 
-  coordinates_transform = cv::Matx33f(1, 0, 0, 0, 1, 0, 0, 0, 1);
-  precompute_undistort_map();
+	fc[0] = K.at<double>(0,0);
+	fc[1] = K.at<double>(1,1);
+	cc[0] = K.at<double>(0,2);
+	cc[1] = K.at<double>(1,2);
 
-  cout.precision(30);
+	kc[0] = 1;
+	for (int i = 0; i < 5; i++) kc[i + 1] = dist_coeff.at<double>(i);
+
+	coordinates_transform = cv::Matx33f(1, 0, 0, 0, 1, 0, 0, 0, 1);
+	precompute_undistort_map();
+
+	cout.precision(30);
 }
 
 bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int attempts, int max_refine) {
   return detector.detect(image, reset, attempts, max_refine);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const {
-  Pose result;
-  double x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
-  
-  //transform the center
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const 
+{
+	Pose result;
+	double x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
+
+	//transform the center
 	transform(circle.x,circle.y, x, y);
-  
-  //calculate the major axis 
+
+	//calculate the major axis 
 	//endpoints in image coords
 	sx1 = circle.x + circle.v0 * circle.m0 * 2;
 	sx2 = circle.x - circle.v0 * circle.m0 * 2;
 	sy1 = circle.y + circle.v1 * circle.m0 * 2;
 	sy2 = circle.y - circle.v1 * circle.m0 * 2;
 
-  //endpoints in camera coords 
+	//endpoints in camera coords 
 	transform(sx1, sy1, x1, y1);
 	transform(sx2, sy2, x2, y2);
 
-  //semiaxis length 
+	//semiaxis length 
 	major = sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2))/2.0;
-  
+
 	v0 = (x2-x1)/major/2.0;
 	v1 = (y2-y1)/major/2.0;
 
@@ -68,7 +69,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	sx2 = circle.x - circle.v1 * circle.m1 * 2;
 	sy1 = circle.y - circle.v0 * circle.m1 * 2;
 	sy2 = circle.y + circle.v0 * circle.m1 * 2;
-  
+
 	//endpoints in camera coords 
 	transform(sx1, sy1, x1, y1);
 	transform(sx2, sy2, x2, y2);
@@ -85,8 +86,8 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	e = (-y*c-b*x);
 	f = (a*x*x+c*y*y+2*b*x*y-1);
 	cv::Matx33d data(a,b,d,
-									 b,c,e,
-									 d,e,f);
+			b,c,e,
+			d,e,f);
 
 	// compute conic eigenvalues and eigenvectors
 	cv::Vec3d eigenvalues;
@@ -117,7 +118,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
 	result.rot(2) = 0; /* not recoverable */
 	/* TODO: to be checked */
 
-  return result;
+	return result;
 }
 
 const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)
@@ -130,11 +131,16 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id) const
   return get_pose(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) const {
-  return get_transformed_pose(detector.circles[id]);
+
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose_2d(int id) const {
+  return get_transformed_pose_2d(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle) const
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose_3d(int id) const {
+  return get_transformed_pose_3d(detector.circles[id]);
+}
+
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose_2d(const cv::CircleDetector::Circle& circle) const
 {
   Pose pose;  
   pose.pos = coordinates_transform * get_pose(circle).pos;
@@ -144,93 +150,115 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
   return pose;
 }
 
+cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose_3d(const cv::CircleDetector::Circle& circle) const
+{
+	Pose pose;  
+	pose.pos = coordinates_transform_3d_rot * (get_pose(circle).pos-coordinates_transform_3d_trn);
+	return pose;
+}
+
 // TODO: allow user to choose calibration circles, now the circles are read in the order of detection
 bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, int refine_steps, const std::string& file)
 {
-  ManyCircleDetector axis_detector(4, width, height);
-  if (!axis_detector.detect(image, true, max_attempts, refine_steps)) return false;
+	ManyCircleDetector axis_detector(4, width, height);
+	if (!axis_detector.detect(image, true, max_attempts, refine_steps)) return false;
 
-  Pose circle_poses[4];
-  for (int i = 0; i < 4; i++) {
-    origin_circles[i] = axis_detector.circles[i];
-    circle_poses[i] = get_pose(axis_detector.circles[i]);
-  }
+	Pose circle_poses[4];
+	for (int i = 0; i < 4; i++) {
+		origin_circles[i] = axis_detector.circles[i];
+		circle_poses[i] = get_pose(axis_detector.circles[i]);
+	}
 
-  cv::Vec3f vecs[3];  
-  for (int i = 0; i < 3; i++) {
-    vecs[i] = circle_poses[i + 1].pos - circle_poses[0].pos;
-    cout << "vec " << i+1 << "->0 " << vecs[i] << endl;
-  }
-  int min_prod_i = 0;
-  float min_prod = numeric_limits<float>::max();
-  for (int i = 0; i < 3; i++) {
-    float prod = fabsf(vecs[(i + 2) % 3].dot(vecs[i]));
-    cout << "prod: " << ((i + 2) % 3 + 1) << " " << i + 1 << " " << vecs[(i + 2) % 3] << " " << vecs[i] << " " << prod << endl;
-    if (prod < min_prod) { min_prod = prod; min_prod_i = i; }
-  }
-  int axis1_i = (((min_prod_i + 2) % 3) + 1);
-  int axis2_i = (min_prod_i + 1);
-  if (fabsf(circle_poses[axis1_i].pos(0)) < fabsf(circle_poses[axis2_i].pos(0))) std::swap(axis1_i, axis2_i);
-  int xy_i = 0;
-  for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
-  cout << "axis ids: " << axis1_i << " " << axis2_i << " " << xy_i << endl;
+	cv::Vec3f vecs[3];  
+	for (int i = 0; i < 3; i++) {
+		vecs[i] = circle_poses[i + 1].pos - circle_poses[0].pos;
+		cout << "vec " << i+1 << "->0 " << vecs[i] << endl;
+	}
+	int min_prod_i = 0;
+	float min_prod = numeric_limits<float>::max();
+	for (int i = 0; i < 3; i++) {
+		float prod = fabsf(vecs[(i + 2) % 3].dot(vecs[i]));
+		cout << "prod: " << ((i + 2) % 3 + 1) << " " << i + 1 << " " << vecs[(i + 2) % 3] << " " << vecs[i] << " " << prod << endl;
+		if (prod < min_prod) { min_prod = prod; min_prod_i = i; }
+	}
+	int axis1_i = (((min_prod_i + 2) % 3) + 1);
+	int axis2_i = (min_prod_i + 1);
+	if (fabsf(circle_poses[axis1_i].pos(0)) < fabsf(circle_poses[axis2_i].pos(0))) std::swap(axis1_i, axis2_i);
+	int xy_i = 0;
+	for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
+	cout << "axis ids: " << axis1_i << " " << axis2_i << " " << xy_i << endl;
 
-  CircleDetector::Circle origin_circles_reordered[4];
-  origin_circles_reordered[0] = origin_circles[0];
-  origin_circles_reordered[1] = origin_circles[axis1_i];
-  origin_circles_reordered[2] = origin_circles[axis2_i];
-  origin_circles_reordered[3] = origin_circles[xy_i];
-  for (int i = 0; i < 4; i++) {
-    origin_circles[i] = origin_circles_reordered[i];
-    circle_poses[i] = get_pose(origin_circles[i]);
-    cout << "original poses: " << circle_poses[i].pos << endl;
-  }
-    
-  float dim_x = 1.0;
-  float dim_y = 1.0;
-  cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
-  
-  // build matrix of coefficients and independent term for linear eq. system
-  cv::Mat A(8, 8, CV_64FC1), b(8, 1, CV_64FC1), x(8, 1, CV_64FC1);
-  
-  cv::Vec2f tmp[4];
-  for (int i = 0; i < 4; i++) tmp[i] = cv::Vec2f(circle_poses[i].pos(0), circle_poses[i].pos(1)) / circle_poses[i].pos(2);
-  for (int i = 0; i < 4; i++) {
-    cv::Mat r_even = (cv::Mat_<double>(1, 8) << -tmp[i](0), -tmp[i](1), -1, 0, 0, 0, targets[i](0) * tmp[i](0), targets[i](0) * tmp[i](1));
-    cv::Mat r_odd = (cv::Mat_<double>(1, 8) << 0, 0, 0, -tmp[i](0), -tmp[i](1), -1, targets[i](1) * tmp[i](0), targets[i](1) * tmp[i](1));
-    r_even.copyTo(A.row(2 * i));
-    r_odd.copyTo(A.row(2 * i + 1));    
-    b.at<double>(2 * i)     = -targets[i](0);
-    b.at<double>(2 * i + 1) = -targets[i](1);
-  }
+	CircleDetector::Circle origin_circles_reordered[4];
+	origin_circles_reordered[0] = origin_circles[0];
+	origin_circles_reordered[1] = origin_circles[axis1_i];
+	origin_circles_reordered[2] = origin_circles[axis2_i];
+	origin_circles_reordered[3] = origin_circles[xy_i];
+	for (int i = 0; i < 4; i++) {
+		origin_circles[i] = origin_circles_reordered[i];
+		circle_poses[i] = get_pose(origin_circles[i]);
+		cout << "original poses: " << circle_poses[i].pos << endl;
+	}
 
-  // solve linear system and obtain transformation
-  cv::solve(A, b, x);
-  x.push_back(1.0);
-  coordinates_transform = x.reshape(1, 3);
-  cout << "H " << coordinates_transform << endl;
+	float dim_x = 1.0;
+	float dim_y = 1.0;
+	cv::Vec2f targets[4] = { cv::Vec2f(0,0), cv::Vec2f(dim_x, 0), cv::Vec2f(0, dim_y), cv::Vec2f(dim_x, dim_y) };
 
-  // TODO: compare H obtained by OpenCV with the hand approach
-  std::vector<cv::Vec2f> src(4), dsts(4);
-  for (int i = 0; i < 4; i++) {
-    src[i] = tmp[i];
-    dsts[i] = targets[i];
-    cout << tmp[i] << " -> " << targets[i] << endl;
-  }
+	//building the homography matrix for 3D->2D transformation
+	// build matrix of coefficients and independent term for linear eq. system
+	cv::Mat A(8, 8, CV_64FC1), b(8, 1, CV_64FC1), x(8, 1, CV_64FC1);
 
-  /*cv::Matx33f H = cv::findHomography(src, dsts, CV_LMEDS);
-  cout << "OpenCV H " << H << endl;*/
+	cv::Vec2f tmp[4];
+	for (int i = 0; i < 4; i++) tmp[i] = cv::Vec2f(circle_poses[i].pos(0), circle_poses[i].pos(1)) / circle_poses[i].pos(2);
+	for (int i = 0; i < 4; i++) {
+		cv::Mat r_even = (cv::Mat_<double>(1, 8) << -tmp[i](0), -tmp[i](1), -1, 0, 0, 0, targets[i](0) * tmp[i](0), targets[i](0) * tmp[i](1));
+		cv::Mat r_odd = (cv::Mat_<double>(1, 8) << 0, 0, 0, -tmp[i](0), -tmp[i](1), -1, targets[i](1) * tmp[i](0), targets[i](1) * tmp[i](1));
+		r_even.copyTo(A.row(2 * i));
+		r_odd.copyTo(A.row(2 * i + 1));    
+		b.at<double>(2 * i)     = -targets[i](0);
+		b.at<double>(2 * i + 1) = -targets[i](1);
+	}
 
-  if (!file.empty()) {
-    cv::FileStorage fs(file, cv::FileStorage::WRITE);
-    fs << "H" << cv::Mat(cv::Matx33d(coordinates_transform)); // store as double to get more decimals
-    fs << "c0"; origin_circles[0].write(fs);
-    fs << "c1"; origin_circles[1].write(fs);
-    fs << "c2"; origin_circles[2].write(fs);
-    fs << "c3"; origin_circles[3].write(fs);
-  }
-  axis_set = true;
-  return true;
+	// solve linear system and obtain transformation
+	cv::solve(A, b, x);
+	x.push_back(1.0);
+	coordinates_transform = x.reshape(1, 3);
+	cout << "H " << coordinates_transform << endl;
+
+	// TODO: compare H obtained by OpenCV with the hand approach
+	std::vector<cv::Vec2f> src(4), dsts(4);
+	for (int i = 0; i < 4; i++) {
+		src[i] = tmp[i];
+		dsts[i] = targets[i];
+		cout << tmp[i] << " -> " << targets[i] << endl;
+	}
+
+	/*cv::Matx33f H = cv::findHomography(src, dsts, CV_LMEDS);
+	  cout << "OpenCV H " << H << endl;*/
+
+	//recovering translation vector and rotation matrix for 3D->3D transformation
+
+	//get axis X,Y from the three circles and calculate Z by their cross-product
+	Vec3f v[3];
+	v[0] = circle_poses[1].pos-circle_poses[0].pos;
+	v[1] = circle_poses[2].pos-circle_poses[0].pos;
+	v[2] = v[0].cross(v[1]);
+	for (int i = 0;i<3;i++) v[i] = v[i]/norm(v[i]);
+	coordinates_transform_3d_trn = circle_poses[0].pos;
+	for (int i = 0;i<9;i++) coordinates_transform_3d_rot(i%3,i/3) = v[i/3][i%3];
+	coordinates_transform_3d_rot = coordinates_transform_3d_rot.inv();
+
+	if (!file.empty()) {
+		cv::FileStorage fs(file, cv::FileStorage::WRITE);
+		fs << "H" << cv::Mat(cv::Matx33d(coordinates_transform)); // store as double to get more decimals
+		fs << "c0"; origin_circles[0].write(fs);
+		fs << "c1"; origin_circles[1].write(fs);
+		fs << "c2"; origin_circles[2].write(fs);
+		fs << "c3"; origin_circles[3].write(fs);
+		fs << "coordinates_transform_3d_trn" << cv::Mat(coordinates_transform_3d_trn);
+		fs << "coordinates_transform_3d_rot" << cv::Mat(cv::Matx33d(coordinates_transform_3d_rot)); // store as double to get more decimals
+	}
+	axis_set = true;
+	return true;
 }
 
 void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, float _yscale) {
@@ -243,12 +271,19 @@ void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, f
   origin_circles[1].read(fs["c1"]);
   origin_circles[2].read(fs["c2"]);
   origin_circles[3].read(fs["c3"]);
+  fs["coordinates_transform_3d_trn"] >> m;
+  coordinates_transform_3d_trn = cv::Vec3f(m.col(0));
+
+  fs["coordinates_transform_3d_rot"] >> m;
+  coordinates_transform_3d_rot = cv::Matx33f(m);
 
   xscale = _xscale;
   yscale = _yscale;
 
   axis_set = true;
-  WHYCON_DEBUG("transformation: " << coordinates_transform);
+  WHYCON_DEBUG("transformation 2D: " << coordinates_transform);
+  WHYCON_DEBUG("transformation 3D - trans: " << coordinates_transform_3d_trn);
+  WHYCON_DEBUG("transformation 3D - rotat: " << coordinates_transform_3d_rot);
 }
 
 void cv::LocalizationSystem::draw_axis(cv::Mat& image)
@@ -257,64 +292,65 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
   for (int i = 0; i < 4; i++) {
     std::ostringstream ostr;
     //ostr << std::fixed << std::setprecision(5) << names[i] << endl << get_pose(origin_circles[i]).pos;
-    origin_circles[i].draw(image, /*ostr.str()*/names[i], cv::Vec3b((i == 0 || i == 3 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 || i == 3 ? 255 : 0)));
+    origin_circles[i].draw(image, /*ostr.str()*/names[i],"", cv::Vec3b((i == 0 || i == 3 ? 255 : 0), (i == 1 ? 255 : 0), (i == 2 || i == 3 ? 255 : 0)));
   }
 }
 
 /* normalize coordinates: move from image to canonical and remove distortion */
 void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, double& y_out) const
 {
-  #if defined(ENABLE_FULL_UNDISTORT)
-  x_out = (x_in-cc[0])/fc[0];
-  y_out = (y_in-cc[1])/fc[1];
-  #else
-  std::vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
-  std::vector<cv::Vec2d> dst(1);
-  cv::undistortPoints(src, dst, K, dist_coeff);
-  x_out = dst[0](0); y_out = dst[0](1);
-  #endif
+#if defined(ENABLE_FULL_UNDISTORT)
+	x_out = (x_in-cc[0])/fc[0];
+	y_out = (y_in-cc[1])/fc[1];
+#else
+	std::vector<cv::Vec2d> src(1, cv::Vec2d(x_in, y_in));
+	std::vector<cv::Vec2d> dst(1);
+	cv::undistortPoints(src, dst, K, dist_coeff);
+	x_out = dst[0](0); y_out = dst[0](1);
+#endif
 }
 
 void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
 {
-  std::ifstream file(calib_file.c_str());
-  if (!file) throw std::runtime_error("calibration file not found");
-  std::string line;
-  
-  K = cv::Mat::eye(3, 3, CV_64FC1);
-  dist_coeff.create(5, 1, CV_64FC1);
-  dist_coeff = cv::Scalar(0);
-  
-  while (std::getline(file, line)) {
-    std::string s;
-    std::istringstream istr(line);
-    istr >> s;
-    if (s == "fc") {
-      istr >> s >> s;
-      istr >> K.at<double>(0,0) >> s;
-      istr >> K.at<double>(1,1);
-    }
-    else if (s == "cc") {
-      istr >> s >> s >> K.at<double>(0,2);
-      istr >> s >> K.at<double>(1,2);
-    }
-    else if (s == "kc") {
-      istr >> s >> s;
-      int i = 0; 
-      do {
-        istr >> dist_coeff.at<double>(i) >> s;
-        i++;
-      } while (s != "];");
-    }
-  }
+	std::ifstream file(calib_file.c_str());
+	if (!file) throw std::runtime_error("calibration file not found");
+	std::string line;
+
+	K = cv::Mat::eye(3, 3, CV_64FC1);
+	dist_coeff.create(5, 1, CV_64FC1);
+	dist_coeff = cv::Scalar(0);
+
+	while (std::getline(file, line)) {
+		std::string s;
+		std::istringstream istr(line);
+		istr >> s;
+		if (s == "fc") {
+			istr >> s >> s;
+			istr >> K.at<double>(0,0) >> s;
+			istr >> K.at<double>(1,1);
+		}
+		else if (s == "cc") {
+			istr >> s >> s >> K.at<double>(0,2);
+			istr >> s >> K.at<double>(1,2);
+		}
+		else if (s == "kc") {
+			istr >> s >> s;
+			int i = 0; 
+			do {
+				istr >> dist_coeff.at<double>(i) >> s;
+				i++;
+			} while (s != "];");
+		}
+	}
 }
 
-void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) {
-  cv::FileStorage file(calib_file, cv::FileStorage::READ);
-  if (!file.isOpened()) throw std::runtime_error("calibration file not found");
-  
-  file["K"] >> K;
-  file["dist"] >> dist_coeff;
+void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) 
+{
+	cv::FileStorage file(calib_file, cv::FileStorage::READ);
+	if (!file.isOpened()) throw std::runtime_error("calibration file not found");
+
+	file["K"] >> K;
+	file["dist"] >> dist_coeff;
 }
 
 void cv::LocalizationSystem::precompute_undistort_map(void)

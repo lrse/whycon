@@ -28,14 +28,18 @@ namespace cv {
       Pose get_pose(const CircleDetector::Circle& circle) const;
       const CircleDetector::Circle& get_circle(int id);
       
-      Pose get_transformed_pose(int id) const;
-      Pose get_transformed_pose(const CircleDetector::Circle& circle) const;
+      Pose get_transformed_pose_2d(int id) const;
+      Pose get_transformed_pose_3d(int id) const;
+      Pose get_transformed_pose_2d(const CircleDetector::Circle& circle) const;
+      Pose get_transformed_pose_3d(const CircleDetector::Circle& circle) const;
       
       static void load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       static void load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
       
       CircleDetector::Circle origin_circles[4]; // center, X, Y
       
+      cv::Matx33f coordinates_transform_3d_rot;
+      cv::Vec3f coordinates_transform_3d_trn;
       cv::Matx33f coordinates_transform;      
       ManyCircleDetector detector;
       

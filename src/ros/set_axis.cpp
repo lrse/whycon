@@ -48,7 +48,7 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
       if (!circle.valid) continue;
 
       //cv::LocalizationSystem::Pose pose = system->get_pose(circle);
-      cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
+      cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose_3d(circle);
       //cv::Vec3f coord = pose.pos;
       cv::Vec3f coord_trans = trans_pose.pos;
 
@@ -56,7 +56,7 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
       std::ostringstream ostr;
       ostr << std::fixed << std::setprecision(2);
       ostr << coord_trans << " " << i;
-      circle.draw(image, ostr.str(), cv::Vec3b(0,255,255));
+      circle.draw(image, ostr.str(), "", cv::Vec3b(0,255,255));
     }
   }
   img_pub.publish(cv_ptr);

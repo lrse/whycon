@@ -56,7 +56,7 @@ For the latest development version (which should also work and may contain new e
 
 ### ROS
 
-The main directory should be placed inside a catkin workspace source-space (e.g.: ~catkin_ws/src).
+The main directory should be placed inside a catkin workspace source-space (e.g.: ~/catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
