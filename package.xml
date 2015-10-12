@@ -6,9 +6,15 @@
     WhyCon localization system
   </description>
   <author email="mnitsche@dc.uba.ar">Matias Nitsche</author>
-  <maintainer email="mnitsche@dc.uba.ar">Matias Nitsche</maintainer>
+  <!--<maintainer email="mnitsche@dc.uba.ar">Matias Nitsche</maintainer>-->
+  <!-- LCAS local maintainers for this fork: -->
+  <maintainer email="marc@hanheide.net">Marc Hanheide</maintainer>
+  <maintainer email="JPulidoFentanes@lincoln.ac.uk ">Jaime Pulido Fentanes</maintainer>
+  <maintainer email="tkrajnik@lincoln.ac.uk ">Tom Krajnik</maintainer>
+  
   <url type="repository">https://github.com/lrse/whycon</url>
   <url type="bugtracker">https://github.com/lrse/whycon</url>
+  
   <license>LGPLv3</license>
 
   <buildtool_depend>catkin</buildtool_depend>
