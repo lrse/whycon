@@ -10,7 +10,7 @@
   <!-- LCAS local maintainers for this fork: -->
   <maintainer email="marc@hanheide.net">Marc Hanheide</maintainer>
   <maintainer email="JPulidoFentanes@lincoln.ac.uk">Jaime Pulido Fentanes</maintainer>
-  <maintainer email="tkrajnik@lincoln.ac.uk ">Tom Krajnik</maintainer>
+  <maintainer email="tkrajnik@lincoln.ac.uk">Tom Krajnik</maintainer>
   
   <url type="repository">https://github.com/lrse/whycon</url>
   <url type="bugtracker">https://github.com/lrse/whycon</url>
