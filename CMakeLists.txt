@@ -28,6 +28,7 @@ if(NOT DISABLE_ROS)
     image_geometry
     image_transport
     angles
+    std_srvs
     tf
   )
 
