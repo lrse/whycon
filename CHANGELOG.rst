@@ -2,8 +2,8 @@
 Changelog for package whycon
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.2.1 (2015-10-12)
+------------------
 * fixed email
 * fixed email
 * LCAS maintainers
