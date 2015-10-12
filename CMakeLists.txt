@@ -27,6 +27,8 @@ if(NOT DISABLE_ROS)
     message_filters
     image_geometry
     image_transport
+    angles
+    visualization_msgs
     tf
   )
 
