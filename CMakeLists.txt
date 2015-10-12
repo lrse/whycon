@@ -95,7 +95,7 @@ if(NOT DISABLE_ROS)
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   )
   ## Mark executables and/or libraries for installation
-  install(TARGETS whycon
+  install(TARGETS whycon whycon-node triangulator robot_pose_publisher
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
