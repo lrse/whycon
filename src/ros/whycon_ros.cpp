@@ -24,11 +24,12 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   n.param("input_queue_size", input_queue_size, input_queue_size);
   cam_sub = it.subscribeCamera("/camera/image_rect_color", input_queue_size, boost::bind(&WhyConROS::on_image, this, _1, _2));
   
-  image_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
+  image_pub = n.advertise<sensor_msgs::Image>("image_output", 1);
   viz_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
   points_pub = n.advertise<whycon::PointArray>("points", 1);
   poses_pub = n.advertise<geometry_msgs::PoseArray>("poses", 1);
-  trans_poses_pub = n.advertise<geometry_msgs::PoseArray>("trans_poses", 1);
+  trans_poses_2d_pub = n.advertise<geometry_msgs::PoseArray>("trans_poses_2d", 1);
+  trans_poses_3d_pub = n.advertise<geometry_msgs::PoseArray>("trans_poses_3d", 1);
   context_pub = n.advertise<sensor_msgs::Image>("context", 1);
 
   reset_service = n.advertiseService("reset", &WhyConROS::reset, this);
@@ -38,7 +39,6 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
 {
   camera_model.fromCameraInfo(info_msg);
   if (camera_model.fullResolution().width == 0) { ROS_ERROR_STREAM("camera is not calibrated!"); return; }
-
   cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(image_msg, "rgb8");
   const cv::Mat& image = cv_ptr->image;
 
@@ -80,9 +80,10 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
   bool publish_viz = (viz_pub.getNumSubscribers() != 0);
   bool publish_points = (points_pub.getNumSubscribers() != 0);
   bool publish_poses = (poses_pub.getNumSubscribers() != 0);
-  bool publish_trans_poses = (trans_poses_pub.getNumSubscribers() != 0);
+  bool publish_trans_2d_poses = (trans_poses_2d_pub.getNumSubscribers() != 0);
+  bool publish_trans_3d_poses = (trans_poses_3d_pub.getNumSubscribers() != 0);
   
-  if (!publish_images && !publish_viz && !publish_points && !publish_poses && !publish_trans_poses) return;
+  if (!publish_images && !publish_viz && !publish_points && !publish_poses && !publish_trans_2d_poses && !publish_trans_3d_poses) return;
   
   // prepare particle markers
   visualization_msgs::Marker marker, transformed_marker;
@@ -117,55 +118,67 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
   if (publish_images)
     output_image = cv_ptr->image.clone();
 
-  geometry_msgs::PoseArray pose_array, trans_pose_array;
+  geometry_msgs::PoseArray pose_array, trans_pose_array_2d, trans_pose_array_3d;
   whycon::PointArray point_array;
   
   // go through detected targets
   for (int i = 0; i < system->targets; i++) {
     const cv::CircleDetector::Circle& circle = system->get_circle(i);
     cv::LocalizationSystem::Pose pose = system->get_pose(circle);
-    cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
+    cv::LocalizationSystem::Pose trans_pose_2d = system->get_transformed_pose_2d(circle);
+    cv::LocalizationSystem::Pose trans_pose_3d = system->get_transformed_pose_3d(circle);
     cv::Vec3f coord = pose.pos;    
-    cv::Vec3f coord_trans = trans_pose.pos;
+    cv::Vec3f coord_trans_2d = trans_pose_2d.pos;
+    cv::Vec3f coord_trans_3d = trans_pose_3d.pos;
 
     // draw each target
     if (publish_images) {
-      std::ostringstream ostr;
-      ostr << std::fixed << std::setprecision(2);
-      ostr << coord_trans << " " << i;
-      circle.draw(output_image, ostr.str(), cv::Vec3b(0,255,255));
+      std::ostringstream ostr1,ostr2;
+      ostr1 << std::fixed << std::setprecision(2);
+      ostr2 << std::fixed << std::setprecision(2);
+      ostr1 << i << " 2D: [" << coord_trans_2d[0] << " " << coord_trans_2d[1] << "]";
+      ostr2 << "3D: " << coord_trans_3d;
+      circle.draw(output_image, ostr1.str(), ostr2.str(), cv::Vec3b(255,0,255),3);
     }
 
     if (publish_viz) {
-      geometry_msgs::Point marker_point;
-      marker_point.x = coord(0);
-      marker_point.y = coord(1);
-      marker_point.z = coord(2);  
-      marker.points.push_back(marker_point);
-      if (system->axis_set) {
-        marker_point.x = coord_trans(0);
-        marker_point.y = coord_trans(1);
-        marker_point.z = coord_trans(2);  
-        transformed_marker.points.push_back(marker_point);
-      }
+	    geometry_msgs::Point marker_point;
+	    marker_point.x = coord(0);
+	    marker_point.y = coord(1);
+	    marker_point.z = coord(2);  
+	    marker.points.push_back(marker_point);
+	    if (system->axis_set) {
+		    marker_point.x = coord_trans_3d(0);
+		    marker_point.y = coord_trans_3d(1);
+		    marker_point.z = coord_trans_3d(2);  
+		    transformed_marker.points.push_back(marker_point);
+	    }
     }
 
-    if (publish_trans_poses) {
-      geometry_msgs::Pose p;
-      p.position.x = trans_pose.pos(0);
-      p.position.y = trans_pose.pos(1);
-      p.position.z = trans_pose.pos(2);
-      p.orientation = tf::createQuaternionMsgFromRollPitchYaw(trans_pose.rot(0), trans_pose.rot(1), trans_pose.rot(2));
-      trans_pose_array.poses.push_back(p);
+    if (publish_trans_2d_poses) {
+	    geometry_msgs::Pose p;
+	    p.position.x = trans_pose_2d.pos(0);
+	    p.position.y = trans_pose_2d.pos(1);
+	    p.position.z = trans_pose_2d.pos(2);
+	    p.orientation = tf::createQuaternionMsgFromRollPitchYaw(trans_pose_2d.rot(0), trans_pose_2d.rot(1), trans_pose_2d.rot(2));
+	    trans_pose_array_2d.poses.push_back(p);
+    }
+    if (publish_trans_3d_poses) {
+	    geometry_msgs::Pose p;
+	    p.position.x = trans_pose_3d.pos(0);
+	    p.position.y = trans_pose_3d.pos(1);
+	    p.position.z = trans_pose_3d.pos(2);
+	    p.orientation = tf::createQuaternionMsgFromRollPitchYaw(trans_pose_3d.rot(0), trans_pose_3d.rot(1), trans_pose_3d.rot(2));
+	    trans_pose_array_3d.poses.push_back(p);
     }
 
     if (publish_poses) {
-      geometry_msgs::Pose p;
-      p.position.x = pose.pos(0);
-      p.position.y = pose.pos(1);
-      p.position.z = pose.pos(2);
-      p.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, pose.rot(0), pose.rot(1));
-      pose_array.poses.push_back(p);
+	    geometry_msgs::Pose p;
+	    p.position.x = pose.pos(0);
+	    p.position.y = pose.pos(1);
+	    p.position.z = pose.pos(2);
+	    p.orientation = tf::createQuaternionMsgFromRollPitchYaw(0, pose.rot(0), pose.rot(1));
+	    pose_array.poses.push_back(p);
     }
 
     if (publish_points) {
@@ -194,10 +207,16 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     poses_pub.publish(pose_array);
   }
 
-  if (publish_trans_poses) {
-    trans_pose_array.header = header;
-    trans_pose_array.header.frame_id = "/base_link";
-    trans_poses_pub.publish(trans_pose_array);
+  if (publish_trans_2d_poses) {
+    trans_pose_array_2d.header = header;
+    trans_pose_array_2d.header.frame_id = "/base_link";
+    trans_poses_2d_pub.publish(trans_pose_array_2d);
+  }
+
+  if (publish_trans_3d_poses) {
+    trans_pose_array_3d.header = header;
+    trans_pose_array_3d.header.frame_id = "/base_link";
+    trans_poses_3d_pub.publish(trans_pose_array_3d);
   }
 
   if (publish_points) {

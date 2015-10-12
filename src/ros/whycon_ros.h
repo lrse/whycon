@@ -31,7 +31,7 @@ namespace whycon {
       image_transport::CameraSubscriber cam_sub;
       ros::ServiceServer reset_service;
 
-      ros::Publisher image_pub, viz_pub, poses_pub, trans_poses_pub, points_pub, context_pub;
+      ros::Publisher image_pub, viz_pub, poses_pub, trans_poses_2d_pub, trans_poses_3d_pub, points_pub, context_pub;
 
       image_geometry::PinholeCameraModel camera_model;
   };

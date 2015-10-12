@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 project(whycon)
 
 # set some flags
-add_definitions(-std=c++11)
+#add_definitions(-std=c++11)
+add_definitions(-std=gnu++0x)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O4 -march=native -Wfatal-errors")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O0 -g -Wfatal-errors")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-configs")

@@ -13,28 +13,28 @@ cv::CircleDetector::CircleDetector(int _width, int _height, Context* _context, f
 	context(_context)
 {
 	minSize = 10;
-  maxSize = 100*100; // TODO: test!
+	maxSize = 100*100; // TODO: test!
 	centerDistanceToleranceRatio = 0.1;
 	centerDistanceToleranceAbs = 5;
 	circularTolerance = 0.3;
 	ratioTolerance = 1.0;
-	
+
 	//initialization - fixed params
 	width = _width;
 	height = _height;
 	len = width*height;
 	siz = len*3;
-  diameterRatio = _diameter_ratio;
+	diameterRatio = _diameter_ratio;
 	float areaRatioInner_Outer = diameterRatio*diameterRatio;
 	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
 	innerAreaRatio = M_PI/4.0;
 	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
 
-  threshold = (3 * 256) / 2;
-  threshold_counter = 0;
+	threshold = (3 * 256) / 2;
+	threshold_counter = 0;
 
-  use_local_window = false;
-  local_window_multiplier = 2.5;
+	use_local_window = false;
+	local_window_multiplier = 2.5;
 }
 
 cv::CircleDetector::~CircleDetector()
@@ -74,21 +74,21 @@ inline int cv::CircleDetector::threshold_pixel(uchar* ptr)
 
 bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio, bool search_in_window)
 {
-  //int64_t ticks = cv::getTickCount();  
-  // get shorter names for elements in Context
+	//int64_t ticks = cv::getTickCount();  
+	// get shorter names for elements in Context
 	vector<int>& buffer = context->buffer;
-  vector<int>& queue = context->queue;
+	vector<int>& queue = context->queue;
 
-  int vx,vy;
+	int vx,vy;
 	queueOldStart = queueStart;
 	int position = 0;
 	int pos;	
 	bool result = false;
 	int type = buffer[ii];
 	int maxx,maxy,minx,miny;
-  int pixel_class;
+	int pixel_class;
 
-  WHYCON_DEBUG("examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << context->total_segments << ")");
+	WHYCON_DEBUG("examine (type " << type << ") at " << ii / width << "," << ii % width << " (numseg " << context->total_segments << ")");
 
 	int segment_id = context->total_segments++;
 	buffer[ii] = segment_id;
@@ -106,59 +106,59 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 		position = queue[queueStart++];
 		//search neighbours
 
-    int position_x = position % width;
-    int position_y = position / width;
+		int position_x = position % width;
+		int position_y = position / width;
 
-    if ((search_in_window && position_x + 1 < min(local_window_x + local_window_width, width)) ||
-        (!search_in_window && position_x + 1 < width))
-    {
-      pos = position + 1;
-      pixel_class = buffer[pos];
-      if (is_unclassified(pixel_class)) {
-        uchar* ptr = &image.data[pos*3];
-        pixel_class = threshold_pixel(ptr);
-        if (pixel_class != type) buffer[pos] = pixel_class;
-      }
-      if (pixel_class == type) {
-        queue[queueEnd++] = pos;
-        maxx = max(maxx,pos%width);
-        buffer[pos] = segment_id;
-      }
-    }
-    
-    if ((search_in_window && position_x - 1 >= local_window_x) ||
-        (!search_in_window && position_x - 1 >= 0))
-    {
-      pos = position-1;
-      pixel_class = buffer[pos];
-      if (is_unclassified(pixel_class)) {
-        uchar* ptr = &image.data[pos*3];
-        pixel_class = threshold_pixel(ptr);
-        if (pixel_class != type) buffer[pos] = pixel_class;
-      }
-      if (pixel_class == type) {
-        queue[queueEnd++] = pos;
-        minx = min(minx,pos%width);
-        buffer[pos] = segment_id;
-      }
-    }
+		if ((search_in_window && position_x + 1 < min(local_window_x + local_window_width, width)) ||
+				(!search_in_window && position_x + 1 < width))
+		{
+			pos = position + 1;
+			pixel_class = buffer[pos];
+			if (is_unclassified(pixel_class)) {
+				uchar* ptr = &image.data[pos*3];
+				pixel_class = threshold_pixel(ptr);
+				if (pixel_class != type) buffer[pos] = pixel_class;
+			}
+			if (pixel_class == type) {
+				queue[queueEnd++] = pos;
+				maxx = max(maxx,pos%width);
+				buffer[pos] = segment_id;
+			}
+		}
 
-    if ((search_in_window && position_y - 1 >= local_window_y) ||
-        (!search_in_window && position_y - 1 >= 0))
-    {
-      pos = position-width;
-      pixel_class = buffer[pos];
-      if (is_unclassified(pixel_class)) {
-        uchar* ptr = &image.data[pos*3];
-        pixel_class = threshold_pixel(ptr);
-        if (pixel_class != type) buffer[pos] = pixel_class;
-      }
-      if (pixel_class == type) {
-        queue[queueEnd++] = pos;
-        miny = min(miny,pos/width);
-        buffer[pos] = segment_id;
-      }
-    }
+		if ((search_in_window && position_x - 1 >= local_window_x) ||
+				(!search_in_window && position_x - 1 >= 0))
+		{
+			pos = position-1;
+			pixel_class = buffer[pos];
+			if (is_unclassified(pixel_class)) {
+				uchar* ptr = &image.data[pos*3];
+				pixel_class = threshold_pixel(ptr);
+				if (pixel_class != type) buffer[pos] = pixel_class;
+			}
+			if (pixel_class == type) {
+				queue[queueEnd++] = pos;
+				minx = min(minx,pos%width);
+				buffer[pos] = segment_id;
+			}
+		}
+
+		if ((search_in_window && position_y - 1 >= local_window_y) ||
+				(!search_in_window && position_y - 1 >= 0))
+		{
+			pos = position-width;
+			pixel_class = buffer[pos];
+			if (is_unclassified(pixel_class)) {
+				uchar* ptr = &image.data[pos*3];
+				pixel_class = threshold_pixel(ptr);
+				if (pixel_class != type) buffer[pos] = pixel_class;
+			}
+			if (pixel_class == type) {
+				queue[queueEnd++] = pos;
+				miny = min(miny,pos/width);
+				buffer[pos] = segment_id;
+			}
+		}
 
 		if ((search_in_window && position_y + 1 < min(local_window_y + local_window_height, height)) ||
 				(!search_in_window && position_y + 1 < height))
@@ -177,8 +177,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			}
 		}
 
-    //if (queueEnd-queueOldStart > maxSize) return false;
-  }
+		//if (queueEnd-queueOldStart > maxSize) return false;
+	}
 
 	//once the queue is empty, i.e. segment is complete, we compute its size 
 	circle.size = queueEnd-queueOldStart;
@@ -200,7 +200,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 			//if its round, we compute yet another properties 
 			circle.round = true;
 
-      // TODO: mean computation could be delayed until the inner ring also satisfies above condition, right?
+			// TODO: mean computation could be delayed until the inner ring also satisfies above condition, right?
 			circle.mean = 0;
 			for (int p = queueOldStart;p<queueEnd;p++){
 				pos = queue[p];
@@ -213,8 +213,8 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 	}
 	else WHYCON_DEBUG("not large enough (" << circle.size << "/" << minSize << ")");
 
-  //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
-  //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
+	//double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
+	//cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
 
 	return result;
 }
@@ -474,7 +474,7 @@ cv::CircleDetector::Circle::Circle(void)
   round = valid = false;
 }
 
-void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Vec3b color, float thickness) const
+void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text1, const std::string& text2 , cv::Vec3b color, float thickness) const
 {
   for (float e = 0; e < 2 * M_PI; e += 0.05) {
     float fx = x + cos(e) * v0 * m0 * 2 + v1 * m1 * 2 * sin(e);
@@ -488,7 +488,8 @@ void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, c
   float scale = image.size().width / 1800.0f;
   //float thickness = scale * 3.0;
   //if (thickness < 1) thickness = 1;
-  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(color), thickness, CV_AA);
+  cv::putText(image, text1.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(color), thickness, CV_AA);
+  cv::putText(image, text2.c_str(), cv::Point(x + 2 * m0, y + 2 * m1+32*scale), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(color), thickness, CV_AA);
   cv::line(image, cv::Point(x + v0 * m0 * 2, y + v1 * m0 * 2), cv::Point(x - v0 * m0 * 2, y - v1 * m0 * 2), cv::Scalar(color), 1, 8);
   cv::line(image, cv::Point(x + v1 * m1 * 2, y - v0 * m1 * 2), cv::Point(x - v1 * m1 * 2, y + v0 * m1 * 2), cv::Scalar(color), 1, 8); 
 }

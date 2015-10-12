@@ -80,7 +80,7 @@ namespace cv {
           void write(cv::FileStorage& fs) const;
           void read(const cv::FileNode& node);
           
-          void draw(cv::Mat& image, const std::string& text = std::string(), cv::Vec3b color = cv::Vec3b(0,255,0), float thickness = 1) const;
+          void draw(cv::Mat& image, const std::string& text1 = std::string(), const std::string& text2 = std::string(), cv::Vec3b color = cv::Vec3b(0,255,0), float thickness = 1) const;
       };
 
       class Context {

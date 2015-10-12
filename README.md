@@ -17,8 +17,8 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 
 | WhyCon version  | Application | Main features | Maintainer|
 | --------------- | ----------- | ------ | ----- |
-| [WhyCon-ROS](https://github.com/lrse/whycon) | general | 2D, 3D, ROS + lightweight | [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao) |
-| [WhyCon-Mini](http://labe.felk.cvut.cz/~tkrajnik/circle_detector/) | general | 2D, 3D, lightweight, autocalibration | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao)|
+| [WhyCon-ROS](../../) | general | 2D, 3D, ROS + lightweight | [Matias Nitsche](https://scholar.google.co.uk/citations?user=Z0hQoRUAAAAJ&hl=en&oi=ao) |
+| [WhyCon-orig](https://github.com/gestom/whycon-orig/) | general | 2D, 3D, lightweight, autocalibration | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao)|
 | [SwarmCon](https://github.com/gestom/CosPhi/tree/master/Localization) | μ-swarms | 2D, individual IDs, autocalibration | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 | [Caspa-WhyCon](http://robotics.fel.cvut.cz/faigl/caspa/) | UAVs | embedded, open HW-SW solution | [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en) |
 | [Social-card](https://github.com/strands-project/strands_social/tree/hydro-devel/social_card_reader) | HRI | orientation translated to commands  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
@@ -56,7 +56,7 @@ For the latest development version (which should also work and may contain new e
 
 ### ROS
 
-The main directory should be placed inside a catkin workspace source-space (e.g.: ~catkin_ws/src).
+The main directory should be placed inside a catkin workspace source-space (e.g.: ~/catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
@@ -85,7 +85,8 @@ Note the default CMake location is `/usr/local`, but you can redefine this by in
 
 ## Using WhyCon
 
-Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
+For a step-by-step tutorial, please refer to the [wiki tutorial](../../wiki/Tutorial).
+For additional information, please check the [wiki home](../../wiki).
 
 ----
 
