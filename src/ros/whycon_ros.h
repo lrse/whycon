@@ -25,7 +25,7 @@ namespace whycon {
       boost::shared_ptr<cv::LocalizationSystem> system;
       bool is_tracking, should_reset;
       int max_attempts, max_refine;
-      std::string axis_file;
+      std::string axis_file, frame_id;
 
       image_transport::ImageTransport it;
       image_transport::CameraSubscriber cam_sub;

@@ -19,6 +19,9 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   n.param("xscale", xscale, 1.0);
   n.param("yscale", yscale, 1.0);
 
+	frame_id = "whycon";
+	n.param("frame_id", frame_id, frame_id);
+
   /* initialize ros */
   int input_queue_size = 1;
   n.param("input_queue_size", input_queue_size, input_queue_size);
@@ -89,7 +92,7 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
   if (publish_viz)
   {
     marker.header = header;
-    marker.header.frame_id = "/base_link";
+    marker.header.frame_id = frame_id;
 
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
@@ -190,19 +193,19 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
 
   if (publish_poses) {
     pose_array.header = header;
-    pose_array.header.frame_id = "/base_link";
+    pose_array.header.frame_id = frame_id;
     poses_pub.publish(pose_array);
   }
 
   if (publish_trans_poses) {
     trans_pose_array.header = header;
-    trans_pose_array.header.frame_id = "/base_link";
+    trans_pose_array.header.frame_id = frame_id;
     trans_poses_pub.publish(trans_pose_array);
   }
 
   if (publish_points) {
     point_array.header = header;
-    point_array.header.frame_id = "/base_link";
+    point_array.header.frame_id = frame_id;
     points_pub.publish(point_array);
   }
 }
