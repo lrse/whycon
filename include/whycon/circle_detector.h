@@ -19,10 +19,11 @@ namespace whycon {
     int max_size = 100 * 100;
     double center_distance_tolerance_ratio = 0.1;
     double center_distance_tolerance_abs = 5;
-    double circular_tolerance = 0.3;
+    double roundness_tolerance = 0.3;
+    double circularity_tolerance = 0.01;
     double ratio_tolerance = 1.0;
     double inner_diameter = 0.050;
-    double outer_diameter = 0.122;
+    double outer_diameter = 0.122;    
   };
 
   class CircleDetector

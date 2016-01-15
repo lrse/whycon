@@ -21,7 +21,8 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
 	n.getParam("inner_diameter", parameters.inner_diameter);
 	n.getParam("center_distance_tolerance_abs", parameters.center_distance_tolerance_abs);
 	n.getParam("center_distance_tolerance_ratio", parameters.center_distance_tolerance_ratio);
-	n.getParam("circular_tolerance", parameters.circular_tolerance);
+	n.getParam("roundness_tolerance", parameters.roundness_tolerance);
+	n.getParam("circularity_tolerance", parameters.circularity_tolerance);
 	n.getParam("max_size", parameters.max_size);
 	n.getParam("min_size", parameters.min_size);
 	n.getParam("ratio_tolerance", parameters.ratio_tolerance);

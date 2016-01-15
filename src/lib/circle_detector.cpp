@@ -7,7 +7,6 @@ using namespace std;
 
 #define ENABLE_RANDOMIZED_THRESHOLD
 #define MAX_SEGMENTS 10000 // TODO: necessary?
-#define CIRCULARITY_TOLERANCE 0.01
 
 whycon::CircleDetector::CircleDetector(int _width, int _height, Context* _context, const DetectorParameters& _parameters) :
 	parameters(_parameters), context(_context)
@@ -189,7 +188,7 @@ bool whycon::CircleDetector::examineCircle(const cv::Mat& image, whycon::CircleD
 		circle.y = (circle.maxy+circle.miny)/2;
 		circle.roundness = vx*vy*areaRatio/circle.size;
 		//we check if the segment is likely to be a ring 
-		if (fabsf(circle.roundness - 1) < parameters.circular_tolerance)
+		if (fabsf(circle.roundness - 1) < parameters.roundness_tolerance)
 		{
 			//if its round, we compute yet another properties 
 			circle.round = true;
@@ -379,7 +378,7 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
               //ii = start - 1; // track position
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
-							if (fabsf(circularity - 1) < CIRCULARITY_TOLERANCE){
+							if (fabsf(circularity - 1) < parameters.circularity_tolerance){
 								outer.valid = inner.valid = true; // at this point, the target is considered valid
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection
