@@ -19,9 +19,9 @@ namespace whycon {
       void publish_results(const std_msgs::Header& header, const cv_bridge::CvImageConstPtr& cv_ptr);
 
       int targets;
-      double outer_diameter, inner_diameter;
       double xscale, yscale;
       
+			whycon::DetectorParameters parameters;
       boost::shared_ptr<whycon::LocalizationSystem> system;
       bool is_tracking, should_reset;
       int max_attempts, max_refine;

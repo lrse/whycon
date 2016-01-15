@@ -7,8 +7,10 @@ whycon::AxisSetter::AxisSetter(ros::NodeHandle &n) : it(n)
   img_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
 
   if (!n.getParam("axis", axis_name)) throw std::runtime_error("Please specify the name of the axis to be saved");
-  n.param("outer_diameter", outer_diameter, WHYCON_DEFAULT_OUTER_DIAMETER);
-  n.param("inner_diameter", inner_diameter, WHYCON_DEFAULT_INNER_DIAMETER);
+
+	n.getParam("outer_diameter", parameters.outer_diameter);
+	n.getParam("inner_diameter", parameters.inner_diameter);
+	ROS_INFO("Note that only outer/inner diameter parameters are read in this node");
 
   set_axis_service = n.advertiseService("set", &AxisSetter::set_axis, this);
 }
@@ -29,7 +31,7 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
   cv::Mat& image = cv_ptr->image;
 
   if (!system)
-    system = boost::make_shared<whycon::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
+    system = boost::make_shared<whycon::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), parameters);
 
   if (set_axis_now) {
 		if (!system->set_axis(image, 5, 5, axis_name + ".yml"))

@@ -2,12 +2,12 @@
 #include <whycon/many_circle_detector.h>
 using namespace std;
 
-whycon::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) :
+whycon::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, const whycon::DetectorParameters& parameters) :
   context(_width, _height), width(_width), height(_height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
   last_valid_circles.resize(number_of_circles);
-  detectors.resize(number_of_circles, CircleDetector(width, height, &context, _diameter_ratio));
+  detectors.resize(number_of_circles, CircleDetector(width, height, &context, parameters));
 }
 
 whycon::ManyCircleDetector::~ManyCircleDetector(void) {

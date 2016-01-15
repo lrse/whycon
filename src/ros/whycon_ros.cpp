@@ -12,12 +12,19 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   if (!n.getParam("targets", targets)) throw std::runtime_error("Private parameter \"targets\" is missing");
 
   n.param("axis", axis_file, std::string());
-  n.param("outer_diameter", outer_diameter, WHYCON_DEFAULT_OUTER_DIAMETER);
-  n.param("inner_diameter", inner_diameter, WHYCON_DEFAULT_INNER_DIAMETER);
   n.param("max_attempts", max_attempts, 1);
   n.param("max_refine", max_refine, 1);
   n.param("xscale", xscale, 1.0);
   n.param("yscale", yscale, 1.0);
+
+	n.getParam("outer_diameter", parameters.outer_diameter);
+	n.getParam("inner_diameter", parameters.inner_diameter);
+	n.getParam("center_distance_tolerance_abs", parameters.center_distance_tolerance_abs);
+	n.getParam("center_distance_tolerance_ratio", parameters.center_distance_tolerance_ratio);
+	n.getParam("circular_tolerance", parameters.circular_tolerance);
+	n.getParam("max_size", parameters.max_size);
+	n.getParam("min_size", parameters.min_size);
+	n.getParam("ratio_tolerance", parameters.ratio_tolerance);
 
 	frame_id = "whycon";
 	n.param("frame_id", frame_id, frame_id);
@@ -46,7 +53,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   const cv::Mat& image = cv_ptr->image;
 
   if (!system) {
-    system = boost::make_shared<whycon::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
+    system = boost::make_shared<whycon::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), parameters);
     if (!axis_file.empty()) {
       ROS_INFO_STREAM("opening axis file: " << axis_file + ".yml");
       system->read_axis(axis_file + ".yml", xscale, yscale);

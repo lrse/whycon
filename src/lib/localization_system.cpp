@@ -13,9 +13,9 @@ using std::endl;
 using std::numeric_limits;
 
 whycon::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff,
-  float _outer_diameter, float _inner_diameter) :
-  xscale(1), yscale(1), detector(_targets, _width, _height, _inner_diameter / _outer_diameter),
-  targets(_targets), width(_width), height(_height), axis_set(false), circle_diameter(_outer_diameter)
+																							 const whycon::DetectorParameters& parameters) :
+  xscale(1), yscale(1), detector(_targets, _width, _height, parameters),
+  targets(_targets), width(_width), height(_height), axis_set(false), circle_diameter(parameters.outer_diameter)
 {
   _K.copyTo(K);
   _dist_coeff.copyTo(dist_coeff);

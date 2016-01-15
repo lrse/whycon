@@ -14,6 +14,7 @@ namespace whycon {
     public:
       AxisSetter(ros::NodeHandle& n);
 
+			whycon::DetectorParameters parameters;
       boost::shared_ptr<whycon::LocalizationSystem> system;
 
       void on_image(const sensor_msgs::ImageConstPtr& img_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
@@ -21,7 +22,6 @@ namespace whycon {
 
       bool set_axis_now, is_tracking;
       std::string axis_name;
-      double outer_diameter, inner_diameter;
 
       image_transport::ImageTransport it;
       image_transport::CameraSubscriber cam_sub;

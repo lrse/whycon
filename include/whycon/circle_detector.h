@@ -12,18 +12,26 @@
 #include <whycon/config.h>
 #include <unordered_set>
 
-#define WHYCON_DEFAULT_OUTER_DIAMETER 0.122
-#define WHYCON_DEFAULT_INNER_DIAMETER 0.050
-#define WHYCON_DEFAULT_DIAMETER_RATIO (WHYCON_DEFAULT_INNER_DIAMETER/WHYCON_DEFAULT_OUTER_DIAMETER)
-
 namespace whycon {
+  struct DetectorParameters
+  {
+    int min_size = 10;
+    int max_size = 100 * 100;
+    double center_distance_tolerance_ratio = 0.1;
+    double center_distance_tolerance_abs = 5;
+    double circular_tolerance = 0.3;
+    double ratio_tolerance = 1.0;
+    double inner_diameter = 0.050;
+    double outer_diameter = 0.122;
+  };
+
   class CircleDetector
   {
     public:
       class Circle;
       class Context;
       
-      CircleDetector(int width, int height, Context* context, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
+      CircleDetector(int width, int height, Context* context, const DetectorParameters& parameters = DetectorParameters());
       ~CircleDetector();
       
       Circle detect(const cv::Mat& image, bool& fast_cleanup_possible, const Circle& previous_circle = whycon::CircleDetector::Circle());
@@ -35,17 +43,12 @@ namespace whycon {
 
     private:
     
-      int minSize, maxSize; 
-      float diameterRatio;
-      int thresholdStep;
-      float circularTolerance;
-      float ratioTolerance;
-      float centerDistanceToleranceRatio;
-      int centerDistanceToleranceAbs;
+      DetectorParameters parameters;
 
-      float outerAreaRatio,innerAreaRatio,areasRatio;
+      float diameter_ratio, outerAreaRatio,innerAreaRatio,areasRatio;
       int width,height,len,siz;
 
+      int thresholdStep;
       int threshold, threshold_counter;
       void change_threshold(void);
       inline int threshold_pixel(uchar* ptr);

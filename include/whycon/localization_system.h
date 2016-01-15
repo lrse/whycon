@@ -8,7 +8,7 @@ namespace whycon {
   class LocalizationSystem {
     public:
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff,
-        float outer_diameter = WHYCON_DEFAULT_OUTER_DIAMETER, float inner_diameter = WHYCON_DEFAULT_INNER_DIAMETER);
+                         const whycon::DetectorParameters& parameters = DetectorParameters());
       
       bool set_axis(const cv::Mat& image, int attempts = 1, int max_refine = 1, const std::string& output = std::string());
       void read_axis(const std::string& input, float xscale, float yscale);

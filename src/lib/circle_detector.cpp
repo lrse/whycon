@@ -9,26 +9,20 @@ using namespace std;
 #define MAX_SEGMENTS 10000 // TODO: necessary?
 #define CIRCULARITY_TOLERANCE 0.01
 
-whycon::CircleDetector::CircleDetector(int _width, int _height, Context* _context, float _diameter_ratio) :
-	context(_context)
-{
-	minSize = 10;
-  maxSize = 100*100; // TODO: test!
-	centerDistanceToleranceRatio = 0.1;
-	centerDistanceToleranceAbs = 5;
-	circularTolerance = 0.3;
-	ratioTolerance = 1.0;
-	
+whycon::CircleDetector::CircleDetector(int _width, int _height, Context* _context, const DetectorParameters& _parameters) :
+	parameters(_parameters), context(_context)
+{	
 	//initialization - fixed params
 	width = _width;
 	height = _height;
-	len = width*height;
-	siz = len*3;
-  diameterRatio = _diameter_ratio;
-	float areaRatioInner_Outer = diameterRatio*diameterRatio;
-	outerAreaRatio = M_PI*(1.0-areaRatioInner_Outer)/4;
-	innerAreaRatio = M_PI/4.0;
-	areasRatio = (1.0-areaRatioInner_Outer)/areaRatioInner_Outer;
+	len = width * height;
+	siz = len * 3;
+	diameter_ratio = parameters.inner_diameter / parameters.outer_diameter;
+
+	float areaRatioInner_Outer = diameter_ratio * diameter_ratio;
+	outerAreaRatio = M_PI * (1.0 - areaRatioInner_Outer) / 4;
+	innerAreaRatio = M_PI / 4.0;
+	areasRatio = (1.0 - areaRatioInner_Outer) / areaRatioInner_Outer;
 
   threshold = (3 * 256) / 2;
   threshold_counter = 0;
@@ -182,7 +176,7 @@ bool whycon::CircleDetector::examineCircle(const cv::Mat& image, whycon::CircleD
 
 	//once the queue is empty, i.e. segment is complete, we compute its size 
 	circle.size = queueEnd-queueOldStart;
-	if (circle.size > minSize){
+	if (circle.size > parameters.min_size){
 		//and if its large enough, we compute its other properties 
 		circle.maxx = maxx;
 		circle.maxy = maxy;
@@ -195,7 +189,7 @@ bool whycon::CircleDetector::examineCircle(const cv::Mat& image, whycon::CircleD
 		circle.y = (circle.maxy+circle.miny)/2;
 		circle.roundness = vx*vy*areaRatio/circle.size;
 		//we check if the segment is likely to be a ring 
-		if (fabsf(circle.roundness - 1) < circularTolerance)
+		if (fabsf(circle.roundness - 1) < parameters.circular_tolerance)
 		{
 			//if its round, we compute yet another properties 
 			circle.round = true;
@@ -321,10 +315,10 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
           if (examineCircle(image, inner, pos, innerAreaRatio, search_in_window)){
             // it does, now actually check specific properties to see if it is a valid target
 						if (
-								((float)outer.size/areasRatio/(float)inner.size - ratioTolerance < 1.0 &&
-                 (float)outer.size/areasRatio/(float)inner.size + ratioTolerance > 1.0) && 
-								 (fabsf(inner.x - outer.x) <= centerDistanceToleranceAbs + centerDistanceToleranceRatio * ((float)(outer.maxx - outer.minx))) &&
-								 (fabsf(inner.y - outer.y) <= centerDistanceToleranceAbs + centerDistanceToleranceRatio * ((float)(outer.maxy - outer.miny)))
+								((float)outer.size/areasRatio/(float)inner.size - parameters.ratio_tolerance < 1.0 &&
+                 (float)outer.size/areasRatio/(float)inner.size + parameters.ratio_tolerance > 1.0) &&
+								 (fabsf(inner.x - outer.x) <= parameters.center_distance_tolerance_abs + parameters.center_distance_tolerance_ratio * ((float)(outer.maxx - outer.minx))) &&
+								 (fabsf(inner.y - outer.y) <= parameters.center_distance_tolerance_abs + parameters.center_distance_tolerance_ratio * ((float)(outer.maxy - outer.miny)))
 						   )
             {
 							float cm0,cm1,cm2;
@@ -392,7 +386,7 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
                 //cout << "threshold set to average: " << threshold << endl;
 								
                 //pixel leakage correction
-								float r = diameterRatio*diameterRatio;
+								float r = diameter_ratio * diameter_ratio;
 								float m0o = sqrt(f0);
 								float m1o = sqrt(f1);
 								float ratio = (float)inner.size/(outer.size + inner.size);
