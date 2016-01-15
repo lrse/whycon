@@ -4,7 +4,7 @@
 #include <vector>
 #include <whycon/circle_detector.h>
 
-namespace cv {
+namespace whycon {
   class ManyCircleDetector {
     public:
       ManyCircleDetector(int number_of_circles, int width, int height, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);

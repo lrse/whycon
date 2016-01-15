@@ -29,7 +29,7 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
   cv::Mat& image = cv_ptr->image;
 
   if (!system)
-    system = boost::make_shared<cv::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
+    system = boost::make_shared<whycon::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
 
   if (set_axis_now) {
 		if (!system->set_axis(image, 5, 5, axis_name + ".yml"))
@@ -44,11 +44,11 @@ void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, con
   else {
     is_tracking = system->localize(image, !is_tracking, 5, 1);
     for (int i = 0; i < system->targets; i++) {
-      const cv::CircleDetector::Circle& circle = system->get_circle(i);
+      const whycon::CircleDetector::Circle& circle = system->get_circle(i);
       if (!circle.valid) continue;
 
       //cv::LocalizationSystem::Pose pose = system->get_pose(circle);
-      cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
+      whycon::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
       //cv::Vec3f coord = pose.pos;
       cv::Vec3f coord_trans = trans_pose.pos;
 

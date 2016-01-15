@@ -16,7 +16,7 @@
 #define WHYCON_DEFAULT_INNER_DIAMETER 0.050
 #define WHYCON_DEFAULT_DIAMETER_RATIO (WHYCON_DEFAULT_INNER_DIAMETER/WHYCON_DEFAULT_OUTER_DIAMETER)
 
-namespace cv {
+namespace whycon {
   class CircleDetector
   {
     public:
@@ -26,7 +26,7 @@ namespace cv {
       CircleDetector(int width, int height, Context* context, float diameter_ratio = WHYCON_DEFAULT_DIAMETER_RATIO);
       ~CircleDetector();
       
-      Circle detect(const cv::Mat& image, bool& fast_cleanup_possible, const Circle& previous_circle = cv::CircleDetector::Circle());
+      Circle detect(const cv::Mat& image, bool& fast_cleanup_possible, const Circle& previous_circle = whycon::CircleDetector::Circle());
       bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio, bool search_in_window);
       void cover_last_detected(cv::Mat& image);
       

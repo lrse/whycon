@@ -12,7 +12,7 @@ using std::cout;
 using std::endl;
 using std::numeric_limits;
 
-cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff, 
+whycon::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height, const cv::Mat& _K, const cv::Mat& _dist_coeff,
   float _outer_diameter, float _inner_diameter) :
   xscale(1), yscale(1), detector(_targets, _width, _height, _inner_diameter / _outer_diameter),
   targets(_targets), width(_width), height(_height), axis_set(false), circle_diameter(_outer_diameter)
@@ -34,11 +34,11 @@ cv::LocalizationSystem::LocalizationSystem(int _targets, int _width, int _height
   cout.precision(30);
 }
 
-bool cv::LocalizationSystem::localize(const cv::Mat& image, bool reset, int attempts, int max_refine) {
+bool whycon::LocalizationSystem::localize(const cv::Mat& image, bool reset, int attempts, int max_refine) {
   return detector.detect(image, reset, attempts, max_refine);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDetector::Circle& circle) const {
+whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_pose(const whycon::CircleDetector::Circle& circle) const {
   Pose result;
   double x,y,x1,x2,y1,y2,sx1,sx2,sy1,sy2,major,minor,v0,v1;
   
@@ -120,21 +120,21 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(const cv::CircleDe
   return result;
 }
 
-const cv::CircleDetector::Circle& cv::LocalizationSystem::get_circle(int id)
+const whycon::CircleDetector::Circle& whycon::LocalizationSystem::get_circle(int id)
 {
   return detector.circles[id];
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_pose(int id) const
+whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_pose(int id) const
 {
   return get_pose(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(int id) const {
+whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_transformed_pose(int id) const {
   return get_transformed_pose(detector.circles[id]);
 }
 
-cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const cv::CircleDetector::Circle& circle) const
+whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_transformed_pose(const whycon::CircleDetector::Circle& circle) const
 {
   Pose pose;  
   pose.pos = coordinates_transform * get_pose(circle).pos;
@@ -145,7 +145,7 @@ cv::LocalizationSystem::Pose cv::LocalizationSystem::get_transformed_pose(const 
 }
 
 // TODO: allow user to choose calibration circles, now the circles are read in the order of detection
-bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, int refine_steps, const std::string& file)
+bool whycon::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, int refine_steps, const std::string& file)
 {
   ManyCircleDetector axis_detector(4, width, height);
   if (!axis_detector.detect(image, true, max_attempts, refine_steps)) return false;
@@ -233,7 +233,7 @@ bool cv::LocalizationSystem::set_axis(const cv::Mat& image, int max_attempts, in
   return true;
 }
 
-void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, float _yscale) {
+void whycon::LocalizationSystem::read_axis(const std::string& file, float _xscale, float _yscale) {
   cv::FileStorage fs(file, cv::FileStorage::READ);
   if (!fs.isOpened()) throw std::runtime_error("could not axis open file");
   cv::Mat m;
@@ -251,7 +251,7 @@ void cv::LocalizationSystem::read_axis(const std::string& file, float _xscale, f
   WHYCON_DEBUG("transformation: " << coordinates_transform);
 }
 
-void cv::LocalizationSystem::draw_axis(cv::Mat& image)
+void whycon::LocalizationSystem::draw_axis(cv::Mat& image)
 {
   static std::string names[4] = { "0,0", "1,0", "0,1", "1,1" };
   for (int i = 0; i < 4; i++) {
@@ -262,7 +262,7 @@ void cv::LocalizationSystem::draw_axis(cv::Mat& image)
 }
 
 /* normalize coordinates: move from image to canonical and remove distortion */
-void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, double& y_out) const
+void whycon::LocalizationSystem::transform(double x_in, double y_in, double& x_out, double& y_out) const
 {
   #if defined(ENABLE_FULL_UNDISTORT)
   x_out = (x_in-cc[0])/fc[0];
@@ -275,7 +275,7 @@ void cv::LocalizationSystem::transform(double x_in, double y_in, double& x_out, 
   #endif
 }
 
-void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
+void whycon::LocalizationSystem::load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff)
 {
   std::ifstream file(calib_file.c_str());
   if (!file) throw std::runtime_error("calibration file not found");
@@ -309,7 +309,7 @@ void cv::LocalizationSystem::load_matlab_calibration(const std::string& calib_fi
   }
 }
 
-void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) {
+void whycon::LocalizationSystem::load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff) {
   cv::FileStorage file(calib_file, cv::FileStorage::READ);
   if (!file.isOpened()) throw std::runtime_error("calibration file not found");
   
@@ -317,7 +317,7 @@ void cv::LocalizationSystem::load_opencv_calibration(const std::string& calib_fi
   file["dist"] >> dist_coeff;
 }
 
-void cv::LocalizationSystem::precompute_undistort_map(void)
+void whycon::LocalizationSystem::precompute_undistort_map(void)
 {
   undistort_map.create(height, width, CV_32FC2);
   for (int i = 0; i < height; i++) {

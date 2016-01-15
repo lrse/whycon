@@ -22,7 +22,7 @@ namespace whycon {
       double outer_diameter, inner_diameter;
       double xscale, yscale;
       
-      boost::shared_ptr<cv::LocalizationSystem> system;
+      boost::shared_ptr<whycon::LocalizationSystem> system;
       bool is_tracking, should_reset;
       int max_attempts, max_refine;
       std::string axis_file, frame_id;

@@ -46,7 +46,7 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   const cv::Mat& image = cv_ptr->image;
 
   if (!system) {
-    system = boost::make_shared<cv::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
+    system = boost::make_shared<whycon::LocalizationSystem>(targets, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), outer_diameter, inner_diameter);
     if (!axis_file.empty()) {
       ROS_INFO_STREAM("opening axis file: " << axis_file + ".yml");
       system->read_axis(axis_file + ".yml", xscale, yscale);
@@ -125,9 +125,9 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
   
   // go through detected targets
   for (int i = 0; i < system->targets; i++) {
-    const cv::CircleDetector::Circle& circle = system->get_circle(i);
-    cv::LocalizationSystem::Pose pose = system->get_pose(circle);
-    cv::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
+    const whycon::CircleDetector::Circle& circle = system->get_circle(i);
+    whycon::LocalizationSystem::Pose pose = system->get_pose(circle);
+    whycon::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
     cv::Vec3f coord = pose.pos;    
     cv::Vec3f coord_trans = trans_pose.pos;
 

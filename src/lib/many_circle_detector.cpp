@@ -2,7 +2,7 @@
 #include <whycon/many_circle_detector.h>
 using namespace std;
 
-cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) : 
+whycon::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, float _diameter_ratio) :
   context(_width, _height), width(_width), height(_height), number_of_circles(_number_of_circles)
 {
   circles.resize(number_of_circles);
@@ -10,10 +10,10 @@ cv::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, i
   detectors.resize(number_of_circles, CircleDetector(width, height, &context, _diameter_ratio));
 }
 
-cv::ManyCircleDetector::~ManyCircleDetector(void) {
+whycon::ManyCircleDetector::~ManyCircleDetector(void) {
 }
 
-bool cv::ManyCircleDetector::detect(const cv::Mat& input, bool reset, int max_attempts, int refine_max_step)
+bool whycon::ManyCircleDetector::detect(const cv::Mat& input, bool reset, int max_attempts, int refine_max_step)
 {
   bool all_detected = true;
   bool do_fast_cleanup = true;

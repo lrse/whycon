@@ -14,7 +14,7 @@ namespace whycon {
     public:
       AxisSetter(ros::NodeHandle& n);
 
-      boost::shared_ptr<cv::LocalizationSystem> system;
+      boost::shared_ptr<whycon::LocalizationSystem> system;
 
       void on_image(const sensor_msgs::ImageConstPtr& img_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
       bool set_axis(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);

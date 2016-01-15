@@ -9,7 +9,7 @@ using namespace std;
 #define MAX_SEGMENTS 10000 // TODO: necessary?
 #define CIRCULARITY_TOLERANCE 0.01
 
-cv::CircleDetector::CircleDetector(int _width, int _height, Context* _context, float _diameter_ratio) :
+whycon::CircleDetector::CircleDetector(int _width, int _height, Context* _context, float _diameter_ratio) :
 	context(_context)
 {
 	minSize = 10;
@@ -37,16 +37,16 @@ cv::CircleDetector::CircleDetector(int _width, int _height, Context* _context, f
   local_window_multiplier = 2.5;
 }
 
-cv::CircleDetector::~CircleDetector()
+whycon::CircleDetector::~CircleDetector()
 {
 }
 
-int cv::CircleDetector::get_threshold(void) const
+int whycon::CircleDetector::get_threshold(void) const
 {
   return threshold;
 }
 
-void cv::CircleDetector::change_threshold(void)
+void whycon::CircleDetector::change_threshold(void)
 {
   //int old_threshold = threshold;
   #if !defined(ENABLE_RANDOMIZED_THRESHOLD)
@@ -67,12 +67,12 @@ void cv::CircleDetector::change_threshold(void)
 }
 
 /* This thresholds the given pixel (RGB) returning BLACK or WHITE codes */
-inline int cv::CircleDetector::threshold_pixel(uchar* ptr)
+inline int whycon::CircleDetector::threshold_pixel(uchar* ptr)
 {
   return ((ptr[0]+ptr[1]+ptr[2]) > threshold) + BLACK;
 }
 
-bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector::Circle& circle, int ii, float areaRatio, bool search_in_window)
+bool whycon::CircleDetector::examineCircle(const cv::Mat& image, whycon::CircleDetector::Circle& circle, int ii, float areaRatio, bool search_in_window)
 {
   //int64_t ticks = cv::getTickCount();  
   // get shorter names for elements in Context
@@ -220,7 +220,7 @@ bool cv::CircleDetector::examineCircle(const cv::Mat& image, cv::CircleDetector:
 }
 
 /* Returns if the corresponding pixel needs to be classified by the current detector or not */
-inline bool cv::CircleDetector::is_unclassified(int pixel_class)
+inline bool whycon::CircleDetector::is_unclassified(int pixel_class)
 {
 	if (pixel_class < 0) {
 		return (pixel_class != BLACK && pixel_class != WHITE);
@@ -233,7 +233,7 @@ inline bool cv::CircleDetector::is_unclassified(int pixel_class)
 
 }
 
-cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, bool& fast_cleanup_possible, const cv::CircleDetector::Circle& previous_circle)
+whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& image, bool& fast_cleanup_possible, const whycon::CircleDetector::Circle& previous_circle)
 {
   /* this allows to differentiate segments found by this detector from others, and know how many segments where found in this call */
   initial_segment_id = context->total_segments;
@@ -456,7 +456,7 @@ cv::CircleDetector::Circle cv::CircleDetector::detect(const cv::Mat& image, bool
 }
 
 
-void cv::CircleDetector::cover_last_detected(cv::Mat& image)
+void whycon::CircleDetector::cover_last_detected(cv::Mat& image)
 {
   const vector<int>& queue = context->queue;
   for (int i = queueOldStart; i < queueEnd; i++) {
@@ -468,13 +468,13 @@ void cv::CircleDetector::cover_last_detected(cv::Mat& image)
   }
 }
 
-cv::CircleDetector::Circle::Circle(void)
+whycon::CircleDetector::Circle::Circle(void)
 {
   x = y = 0;
   round = valid = false;
 }
 
-void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Vec3b color, float thickness) const
+void whycon::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, cv::Vec3b color, float thickness) const
 {
   for (float e = 0; e < 2 * M_PI; e += 0.05) {
     float fx = x + cos(e) * v0 * m0 * 2 + v1 * m1 * 2 * sin(e);
@@ -493,14 +493,14 @@ void cv::CircleDetector::Circle::draw(cv::Mat& image, const std::string& text, c
   cv::line(image, cv::Point(x + v1 * m1 * 2, y - v0 * m1 * 2), cv::Point(x - v1 * m1 * 2, y + v0 * m1 * 2), cv::Scalar(color), 1, 8); 
 }
 
-void cv::CircleDetector::Circle::write(cv::FileStorage& fs) const {
+void whycon::CircleDetector::Circle::write(cv::FileStorage& fs) const {
   fs << "{" << "x" << x << "y" << y << "size" << size <<
     "maxy" << maxy << "maxx" << maxx << "miny" << miny << "minx" << minx <<
     "mean" << mean << "type" << type << "roundness" << roundness << "bwRatio" << bwRatio <<
     "round" << round << "valid" << valid << "m0" << m0 << "m1" << m1 << "v0" << v0 << "v1" << v1 << "}";
 }
 
-void cv::CircleDetector::Circle::read(const cv::FileNode& node)
+void whycon::CircleDetector::Circle::read(const cv::FileNode& node)
 {
   x = (float)node["x"];
   y = (float)node["y"];
@@ -521,7 +521,7 @@ void cv::CircleDetector::Circle::read(const cv::FileNode& node)
   v1 = (float)node["v1"];
 }
 
-cv::CircleDetector::Context::Context(int _width, int _height)
+whycon::CircleDetector::Context::Context(int _width, int _height)
 {
   width = _width;
   height = _height;
@@ -533,20 +533,20 @@ cv::CircleDetector::Context::Context(int _width, int _height)
   reset();
 }
 
-void cv::CircleDetector::Context::reset(void)
+void whycon::CircleDetector::Context::reset(void)
 {
 	next_detector_id = 0;
 	valid_segment_ids.clear();
 	total_segments = 0;
 }
 
-void cv::CircleDetector::Context::cleanup_buffer(void)
+void whycon::CircleDetector::Context::cleanup_buffer(void)
 {
 	WHYCON_DEBUG("clean whole buffer");
 	memset(&buffer[0], -1, sizeof(int)*buffer.size());
 }
 
-void cv::CircleDetector::Context::cleanup_buffer(const Circle& c) {
+void whycon::CircleDetector::Context::cleanup_buffer(const Circle& c) {
   if (c.valid) // TODO: necessary?
   {
     // zero only parts modified when detecting 'c'
@@ -561,7 +561,7 @@ void cv::CircleDetector::Context::cleanup_buffer(const Circle& c) {
   }
 }
 
-void cv::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat& out)
+void whycon::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat& out)
 {
   std::map<int, cv::Vec3b> colors;
   for (int i = 0; i < total_segments; i++) colors[i] = cv::Vec3b(rand() / (float)RAND_MAX * 255.0, rand() / (float)RAND_MAX * 255.0, rand() / (float)RAND_MAX * 255.0);

@@ -4,7 +4,7 @@
 #include <opencv2/opencv.hpp>
 #include <whycon/many_circle_detector.h>
 
-namespace cv {
+namespace whycon {
   class LocalizationSystem {
     public:
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff,
