@@ -204,7 +204,7 @@ bool whycon::CircleDetector::examineCircle(const cv::Mat& image, whycon::CircleD
 			WHYCON_DEBUG("valid segment of " << circle.size << " pixels, with size " << vx << " x " << vy << " with mean " << circle.mean);
 		} else WHYCON_DEBUG("not round enough (" << circle.roundness << ") vx/vy " << vx << " x " << vy << " ctr " << circle.x << " " << circle.y << " " << circle.size << " " << areaRatio);
 	}
-	else WHYCON_DEBUG("not large enough (" << circle.size << "/" << minSize << ")");
+	else WHYCON_DEBUG("not large enough (" << circle.size << "/" << parameters.min_size << ")");
 
   //double delta = (double)(cv::getTickCount() - ticks) / cv::getTickFrequency();
   //cout << "examineCircle: " << delta << " " << " fps: " << 1/delta << " pix: " << circle.size << " " << threshold << endl;
@@ -378,7 +378,8 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
               //ii = start - 1; // track position
               
 							float circularity = M_PI*4*(inner.m0)*(inner.m1)/queueEnd;
-							if (fabsf(circularity - 1) < parameters.circularity_tolerance){
+							float eccentricity = sqrtf(1 - (inner.m1 * inner.m1) / (inner.m0 * inner.m0));
+							if (fabsf(circularity - 1) < parameters.circularity_tolerance && eccentricity < parameters.max_eccentricity){
 								outer.valid = inner.valid = true; // at this point, the target is considered valid
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection

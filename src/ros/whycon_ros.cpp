@@ -26,6 +26,7 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
 	n.getParam("max_size", parameters.max_size);
 	n.getParam("min_size", parameters.min_size);
 	n.getParam("ratio_tolerance", parameters.ratio_tolerance);
+	n.getParam("max_eccentricity", parameters.max_eccentricity);
 
 	frame_id = "whycon";
 	n.param("frame_id", frame_id, frame_id);

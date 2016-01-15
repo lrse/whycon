@@ -24,6 +24,7 @@ namespace whycon {
     double ratio_tolerance = 1.0;
     double inner_diameter = 0.050;
     double outer_diameter = 0.122;    
+    double max_eccentricity = 1.0;
   };
 
   class CircleDetector
