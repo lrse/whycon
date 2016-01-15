@@ -143,7 +143,7 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     if (publish_images) {
       std::ostringstream ostr;
       ostr << std::fixed << std::setprecision(2);
-      ostr << coord_trans << " " << i;
+			ostr << (system->axis_set ? coord_trans : coord) << " " << i;
       circle.draw(output_image, ostr.str(), cv::Vec3b(0,255,255));
     }
 
