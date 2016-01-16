@@ -3,7 +3,7 @@ project(whycon)
 
 # set some flags
 add_definitions(-std=c++11)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O4 -march=native -Wfatal-errors")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -g -O4 -march=native -Wfatal-errors")
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_RELEASE} -Wall -O0 -g -Wfatal-errors")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake-configs")
 
@@ -35,7 +35,7 @@ if(NOT DISABLE_ROS)
 
   add_message_files(
     FILES
-    PointArray.msg
+    Projection.msg
   )
 
   generate_messages(
@@ -54,9 +54,12 @@ endif()
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS program_options thread system REQUIRED)
 
+find_package(PkgConfig)
+pkg_check_modules(YAML_CPP yaml-cpp)
+
 ### TARGETS ###
 include_directories(
-  ${catkin_INCLUDE_DIRS} include
+  ${catkin_INCLUDE_DIRS} ${YAML_CPP_INCLUDE_DIRS} include
 )
 
 add_library(whycon SHARED src/lib/circle_detector.cpp src/lib/many_circle_detector.cpp src/lib/localization_system.cpp)
@@ -71,16 +74,19 @@ if(NOT DISABLE_ROS)
   add_executable(set_axis src/ros/set_axis_node.cpp src/ros/set_axis.cpp)
   add_executable(triangulator src/ros/triangulator_node.cpp src/ros/triangulator.cpp)
   add_executable(robot_pose_publisher src/ros/robot_pose_publisher.cpp src/ros/robot_pose_publisher_node.cpp)  
+  add_executable(transformer src/ros/transformer.cpp src/ros/transformer_node.cpp)
 
   add_dependencies(whycon-node whycon_generate_messages_cpp)
   add_dependencies(whycon_nodelet whycon_generate_messages_cpp)
   add_dependencies(set_axis whycon_generate_messages_cpp)
   add_dependencies(triangulator whycon_generate_messages_cpp)
   add_dependencies(robot_pose_publisher whycon_generate_messages_cpp)
+  add_dependencies(transformer whycon_generate_messages_cpp)
 
-  target_link_libraries(whycon-node ${catkin_LIBRARIES} whycon)
-  target_link_libraries(whycon_nodelet ${catkin_LIBRARIES} whycon)
-  target_link_libraries(set_axis ${catkin_LIBRARIES} whycon)
+  target_link_libraries(whycon-node ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
+  target_link_libraries(whycon_nodelet ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
+  target_link_libraries(set_axis ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
+  target_link_libraries(transformer ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
   target_link_libraries(triangulator ${catkin_LIBRARIES} whycon)
   target_link_libraries(robot_pose_publisher ${catkin_LIBRARIES} whycon)
 else()

@@ -1,19 +1,15 @@
 <launch>
+  <arg name="name" default="whycon"/>
+  <arg name="targets" default="1"/>
+
   <group ns="camera">
     <node pkg="image_proc" type="image_proc" name="image_proc"/>
   </group>
 
-   <node name="whycon" type="whycon" pkg="whycon">
-    <param name="targets" value="4"/> 
-    <param name="max_refine" value="5"/>
-    <param name="max_attempts" value="5"/>
-
-    <!-- uncomment when already performed 3D->2D calibration -->
-    <!-- 
-      <param name="xscale" value="1"/>
-      <param name="yscale" value="1"/>
-      <param name="axis" value="axis/>
-    --> 
+  <node name="whycon" type="whycon" pkg="whycon">
+    <param name="targets" value="$(arg targets)"/>
   </node>
+
+  <node name="transformer" type="transformer" pkg="whycon" output="screen"/>
 </launch>
   

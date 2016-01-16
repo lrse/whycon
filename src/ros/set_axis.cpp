@@ -1,65 +1,196 @@
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/opencv.hpp>
+#include <fstream>
 #include "set_axis.h"
 
-whycon::AxisSetter::AxisSetter(ros::NodeHandle &n) : it(n)
-{
-  set_axis_now = is_tracking = false;
-  cam_sub = it.subscribeCamera("/camera/image_rect_color", 1, boost::bind(&AxisSetter::on_image, this, _1, _2));
-  img_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
+namespace std {
+	std::ostream& operator<<(std::ostream& str, const tf::Matrix3x3& m)
+	{
+		for (int i = 0; i < 3; i++) {
+			str << std::endl;
+			for (int j = 0; j < 3; j++)
+				str << m[i][j] << " ";
+		}
 
-  if (!n.getParam("axis", axis_name)) throw std::runtime_error("Please specify the name of the axis to be saved");
+		return str;
+	}
 
-	n.getParam("outer_diameter", parameters.outer_diameter);
-	n.getParam("inner_diameter", parameters.inner_diameter);
-	ROS_INFO("Note that only outer/inner diameter parameters are read in this node");
+	std::ostream& operator<<(std::ostream& str, const tf::Vector3& v)
+	{
+		str << v.getX() << " " << v.getY() << " " << v.getZ();
 
-  set_axis_service = n.advertiseService("set", &AxisSetter::set_axis, this);
+		return str;
+	}
 }
 
-bool whycon::AxisSetter::set_axis(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+
+whycon::AxisSetter::AxisSetter(ros::NodeHandle &n)
 {
-  set_axis_now = true;
-  return true;
+	transforms_set = false;
+
+	if (!n.getParam("xscale", xscale) || !n.getParam("yscale", yscale)) throw std::runtime_error("Please specify xscale and yscale");
+
+	poses_sub = n.subscribe("/whycon/poses", 1, &AxisSetter::on_poses, this);
+	image_sub = n.subscribe("/camera/image_rect_color", 1, &AxisSetter::on_image, this);
+	image_pub = n.advertise<sensor_msgs::Image>("image", 1);
 }
 
-
-void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& img_msg, const sensor_msgs::CameraInfoConstPtr& info_msg)
+/**
+ * Return four tf::Point's ordered as (0,0),(0,1),(1,0),(1,1)
+ */
+void whycon::AxisSetter::detect_square(const std::vector<geometry_msgs::Pose>& msg_poses, std::vector<tf::Point>& out_points)
 {
-  camera_model.fromCameraInfo(info_msg);
-  if (camera_model.fullResolution().width == 0) { ROS_ERROR_STREAM("camera is not calibrated!"); return; }
+	std::vector<tf::Point> points(4);
+	for (int i = 0; i < 4; i++)
+		tf::pointMsgToTF(msg_poses[i].position, points[i]);
 
-  cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(img_msg);
-  cv::Mat& image = cv_ptr->image;
+	tf::Point vectors[3];
+	for (int i = 0; i < 3; i++) {
+		vectors[i] = points[i + 1] - points[0];
+	}
 
-  if (!system)
-    system = boost::make_shared<whycon::LocalizationSystem>(4, image.size().width, image.size().height, cv::Mat(camera_model.fullIntrinsicMatrix()), cv::Mat(camera_model.distortionCoeffs()), parameters);
-
-  if (set_axis_now) {
-		if (!system->set_axis(image, 5, 5, axis_name + ".yml"))
-			ROS_ERROR_STREAM("could not set axis, attempting again");
-		else
-			set_axis_now = false;
+  int min_prod_i = 0;
+  float min_prod = std::numeric_limits<float>::max();
+  for (int i = 0; i < 3; i++)
+	{
+    float prod = fabsf(vectors[(i + 2) % 3].dot(vectors[i]));
+    if (prod < min_prod) { min_prod = prod; min_prod_i = i; }
   }
 
-  if (system->axis_set) {
-    system->draw_axis(image);
-  }
-  else {
-    is_tracking = system->localize(image, !is_tracking, 5, 1);
-    for (int i = 0; i < system->targets; i++) {
-      const whycon::CircleDetector::Circle& circle = system->get_circle(i);
-      if (!circle.valid) continue;
+  int axis1_i = (((min_prod_i + 2) % 3) + 1);
+  int axis2_i = (min_prod_i + 1);
+  if (fabsf(points[axis1_i].getX()) < fabsf(points[axis2_i].getX())) std::swap(axis1_i, axis2_i);
+  int xy_i = 0;
+  for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
 
-      //cv::LocalizationSystem::Pose pose = system->get_pose(circle);
-      whycon::LocalizationSystem::Pose trans_pose = system->get_transformed_pose(circle);
-      //cv::Vec3f coord = pose.pos;
-      cv::Vec3f coord_trans = trans_pose.pos;
+	out_points.resize(4);
+	out_points[0] = points[0];
+	out_points[1] = points[axis1_i];
+	out_points[2] = points[axis2_i];
+	out_points[3] = points[xy_i];
 
-      // draw each target
-      std::ostringstream ostr;
-      ostr << std::fixed << std::setprecision(2);
-      ostr << coord_trans << " " << i;
-      circle.draw(image, ostr.str(), cv::Vec3b(0,255,255));
-    }
-  }
-  img_pub.publish(cv_ptr);
+	ROS_INFO_STREAM("Axis: (0,0) -> 0, (1,0) -> " << axis1_i << ", (0,1) -> " << axis2_i << ", (1,1) -> " << xy_i);
+}
+
+tf::Matrix3x3 whycon::AxisSetter::compute_projection(const std::vector<tf::Point>& points, float xscale, float yscale)
+{
+	/* TODO: use only ROS/Eigen for this */
+  std::vector<cv::Vec2d> src(4);
+  for (int i = 0; i < 4; i++) src[i] = cv::Vec2d(points[i].getX(), points[i].getY()) / points[i].getZ();
+	std::vector<cv::Vec2d> dest = { cv::Vec2d(0,0), cv::Vec2d(xscale, 0), cv::Vec2d(0, yscale), cv::Vec2d(xscale, yscale) };
+
+	cv::Matx33d projection = cv::findHomography(src, dest, CV_LMEDS);
+
+	tf::Matrix3x3 m;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			m[i][j] = projection(i, j);
+
+	return m;
+}
+
+tf::Transform whycon::AxisSetter::compute_similarity(const std::vector<tf::Point>& points)
+{
+
+	tf::Point vectors[3];
+	vectors[0] = points[1] - points[0];
+	vectors[1] = points[2] - points[0];
+	vectors[2] = vectors[0].cross(vectors[1]);
+
+	for (int i = 0; i < 3; i++) vectors[i].normalize();
+
+	tf::Matrix3x3 rotation;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0;	j < 3; j++)
+			rotation[j][i] = vectors[i][j];
+
+	tf::Quaternion Q;
+	rotation.getRotation(Q);
+
+	tf::Transform rot_transform;
+	rot_transform.setRotation(Q);
+
+	tf::Transform similarity;
+	similarity.setOrigin(rot_transform.inverse() * -points[0]);
+	similarity.setRotation(Q.inverse());
+
+	ROS_INFO_STREAM("transformed origin -> " << similarity * points[0]);
+	ROS_INFO_STREAM("transformed circle along X -> " << similarity * points[1]);
+	ROS_INFO_STREAM("transformed circle along Y -> " << similarity * points[2]);
+	ROS_INFO_STREAM("transformed circle along XY -> " << similarity * points[3]);
+
+	return similarity;
+}
+
+void whycon::AxisSetter::write_projection(YAML::Emitter& yaml, const tf::Matrix3x3& projection)
+{
+	yaml << YAML::Key << "projection";
+	yaml << YAML::Value << YAML::BeginSeq;
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			yaml << projection[i][j];
+
+	yaml << YAML::EndSeq;
+}
+
+void whycon::AxisSetter::write_similarity(YAML::Emitter& yaml, const tf::Transform& similarity)
+{
+	yaml << YAML::Key << "similarity";
+	yaml << YAML::Value << YAML::BeginMap;
+
+	yaml << YAML::Key << "origin";
+	yaml << YAML::Value;
+
+	yaml << YAML::BeginSeq;
+	yaml << similarity.getOrigin().getX() << similarity.getOrigin().getY() << similarity.getOrigin().getZ();
+	yaml << YAML::EndSeq;
+
+	yaml << YAML::Key << "rotation";
+	yaml << YAML::Value;
+	yaml << YAML::BeginSeq;
+	yaml << similarity.getRotation().getX() << similarity.getRotation().getY() << similarity.getRotation().getZ() << similarity.getRotation().getW();
+	yaml << YAML::EndSeq;
+	yaml << YAML::EndMap;
+}
+
+void whycon::AxisSetter::on_poses(const geometry_msgs::PoseArrayConstPtr& poses_msg)
+{
+	if (transforms_set) return;
+
+	if (poses_msg->poses.size() != 4)
+	{
+		ROS_WARN_STREAM("Received " << poses_msg->poses.size() << " points. Four expected.");
+		return;
+	}
+
+	std::vector<tf::Point> points;
+	detect_square(poses_msg->poses, points);
+
+	tf::Matrix3x3 projection = compute_projection(points, xscale, yscale);
+	tf::Transform similarity = compute_similarity(points);
+
+	ROS_INFO_STREAM("Computed Transformations for \"" << poses_msg->header.frame_id << "\" localizer");
+	ROS_INFO_STREAM("Projection:" << projection);
+	ROS_INFO_STREAM("Similarity Translation:" << similarity.getOrigin());
+	ROS_INFO_STREAM("Similarity Rotation:" << similarity.getBasis());
+
+	YAML::Emitter yaml;
+	yaml << YAML::BeginMap;
+	write_projection(yaml, projection);
+	write_similarity(yaml, similarity);
+	yaml << YAML::EndMap;
+
+	std::string filename = poses_msg->header.frame_id + "_transforms.yml";
+	std::ofstream config_file(filename);
+	config_file << yaml.c_str();
+
+	ROS_INFO_STREAM("Wrote transformations to " << filename);
+
+	transforms_set = true;
+}
+
+void whycon::AxisSetter::on_image(const sensor_msgs::ImageConstPtr& image_msg)
+{
+	cv_bridge::CvImagePtr image_ptr = cv_bridge::toCvCopy(image_msg);
 }

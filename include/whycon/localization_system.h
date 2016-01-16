@@ -10,14 +10,8 @@ namespace whycon {
       LocalizationSystem(int targets, int width, int height, const cv::Mat& K, const cv::Mat& dist_coeff,
                          const whycon::DetectorParameters& parameters = DetectorParameters());
       
-      bool set_axis(const cv::Mat& image, int attempts = 1, int max_refine = 1, const std::string& output = std::string());
-      void read_axis(const std::string& input, float xscale, float yscale);
-      void draw_axis(cv::Mat& image);
-      
       bool localize(const cv::Mat& image, bool reset = false, int attempts = 1, int max_refine = 1);
       
-      float xscale, yscale;
-
       // TODO: use double?
       struct Pose {
         cv::Vec3f pos;
@@ -28,19 +22,9 @@ namespace whycon {
       Pose get_pose(const CircleDetector::Circle& circle) const;
       const CircleDetector::Circle& get_circle(int id);
       
-      Pose get_transformed_pose(int id) const;
-      Pose get_transformed_pose(const CircleDetector::Circle& circle) const;
-      
-      static void load_matlab_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
-      static void load_opencv_calibration(const std::string& calib_file, cv::Mat& K, cv::Mat& dist_coeff);
-      
-      CircleDetector::Circle origin_circles[4]; // center, X, Y
-      
-      cv::Matx33f coordinates_transform;      
       ManyCircleDetector detector;
       
       int targets, width, height;
-      bool axis_set;
       
     private:
       cv::Mat K, dist_coeff;

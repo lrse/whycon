@@ -2,34 +2,33 @@
 #define SET_AXIS_NODE_H
 
 #include <ros/ros.h>
-#include <whycon/localization_system.h>
-#include <image_transport/image_transport.h>
-#include <image_transport/camera_subscriber.h>
-#include <std_srvs/Empty.h>
-#include <image_geometry/pinhole_camera_model.h>
-#include <cv_bridge/cv_bridge.h>
+#include <tf/tf.h>
+#include <geometry_msgs/PoseArray.h>
+#include <yaml-cpp/yaml.h>
+#include <sensor_msgs/Image.h>
 
 namespace whycon {
   class AxisSetter {
     public:
       AxisSetter(ros::NodeHandle& n);
 
-			whycon::DetectorParameters parameters;
-      boost::shared_ptr<whycon::LocalizationSystem> system;
+			ros::Subscriber poses_sub, image_sub;
+			ros::Publisher image_pub;
 
-      void on_image(const sensor_msgs::ImageConstPtr& img_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
-      bool set_axis(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+      void on_poses(const geometry_msgs::PoseArrayConstPtr& poses_msg);
+			void on_image(const sensor_msgs::ImageConstPtr& image_msg);
 
-      bool set_axis_now, is_tracking;
-      std::string axis_name;
+			double xscale, yscale;
+			bool transforms_set;
 
-      image_transport::ImageTransport it;
-      image_transport::CameraSubscriber cam_sub;
-      ros::Publisher img_pub;
-      ros::ServiceServer set_axis_service;
+		private:
+			void detect_square(const std::vector<geometry_msgs::Pose>& msg_poses, std::vector<tf::Point>& points);
+			tf::Matrix3x3 compute_projection(const std::vector<tf::Point>& points, float xscale, float yscale);
+			tf::Transform compute_similarity(const std::vector<tf::Point>& points);
 
-      image_geometry::PinholeCameraModel camera_model;
-  };
+			void write_projection(YAML::Emitter& yaml, const tf::Matrix3x3& projection);
+			void write_similarity(YAML::Emitter& yaml, const tf::Transform& similarity);
+	};
 }
 
 #endif // SET_AXIS_NODE_H

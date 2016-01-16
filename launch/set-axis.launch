@@ -1,8 +1,0 @@
-<launch>
-   <node name="whycon" type="set_axis" pkg="whycon" output="screen">
-     <param name="axis" value="test"/>
-     <!--<param name="inner_diameter" value="0.047"/>-->
-     <!--<param name="outer_diameter" value="0.118"/>-->
-   </node>
-</launch>
-  
