@@ -30,6 +30,11 @@ whycon::AxisSetter::AxisSetter(ros::NodeHandle &n)
 
 	if (!n.getParam("xscale", xscale) || !n.getParam("yscale", yscale)) throw std::runtime_error("Please specify xscale and yscale");
 
+	// axis should be specified in same order as detect_square
+	if (n.getParam("axis_order", axis_order)) {
+		if (axis_order.size() != 4) throw std::runtime_error("Exactly four indices are needed for specifying axis");
+	}
+
 	poses_sub = n.subscribe("/whycon/poses", 1, &AxisSetter::on_poses, this);
 	image_sub = n.subscribe("/camera/image_rect_color", 1, &AxisSetter::on_image, this);
 	image_pub = n.advertise<sensor_msgs::Image>("image", 1);
@@ -38,12 +43,8 @@ whycon::AxisSetter::AxisSetter(ros::NodeHandle &n)
 /**
  * Return four tf::Point's ordered as (0,0),(0,1),(1,0),(1,1)
  */
-void whycon::AxisSetter::detect_square(const std::vector<geometry_msgs::Pose>& msg_poses, std::vector<tf::Point>& out_points)
+void whycon::AxisSetter::detect_square(std::vector<tf::Point>& points)
 {
-	std::vector<tf::Point> points(4);
-	for (int i = 0; i < 4; i++)
-		tf::pointMsgToTF(msg_poses[i].position, points[i]);
-
 	tf::Point vectors[3];
 	for (int i = 0; i < 3; i++) {
 		vectors[i] = points[i + 1] - points[0];
@@ -63,13 +64,24 @@ void whycon::AxisSetter::detect_square(const std::vector<geometry_msgs::Pose>& m
   int xy_i = 0;
   for (int i = 1; i <= 3; i++) if (i != axis1_i && i != axis2_i) { xy_i = i; break; }
 
-	out_points.resize(4);
-	out_points[0] = points[0];
-	out_points[1] = points[axis1_i];
-	out_points[2] = points[axis2_i];
-	out_points[3] = points[xy_i];
+	std::vector<tf::Point> points_original(points);
+	points.resize(4);
+	points[0] = points_original[0];
+	points[1] = points_original[axis1_i];
+	points[2] = points_original[axis2_i];
+	points[3] = points_original[xy_i];
 
 	ROS_INFO_STREAM("Axis: (0,0) -> 0, (1,0) -> " << axis1_i << ", (0,1) -> " << axis2_i << ", (1,1) -> " << xy_i);
+}
+
+void whycon::AxisSetter::build_square(std::vector<tf::Point>& points)
+{
+	std::vector<tf::Point> points_original(points);
+	points.resize(4);
+	for (int i = 0; i < 4; i++)
+		points[i] = points_original[axis_order[i]];
+
+	ROS_INFO_STREAM("Axis: (0,0) -> " << axis_order[0] << ", (1,0) -> " << axis_order[1] << ", (0,1) -> " << axis_order[2] << ", (1,1) -> " << axis_order[3]);
 }
 
 tf::Matrix3x3 whycon::AxisSetter::compute_projection(const std::vector<tf::Point>& points, float xscale, float yscale)
@@ -119,6 +131,17 @@ tf::Transform whycon::AxisSetter::compute_similarity(const std::vector<tf::Point
 	ROS_INFO_STREAM("transformed circle along Y -> " << similarity * points[2]);
 	ROS_INFO_STREAM("transformed circle along XY -> " << similarity * points[3]);
 
+	/*float original_x = (points[1] - points[0]).length();
+	float original_y = (points[2] - points[0]).length();
+	float x = (similarity * points[1] - similarity * points[0]).length();
+	float y = (similarity * points[2] - similarity * points[0]).length();
+	float scaling_x = xscale / x;
+	float scaling_y = yscale / y;
+
+	float xy = (scaling_x * (similarity * points[3]) - scaling_y * (similarity * points[0])).length();
+	ROS_INFO_STREAM("original X " << original_x << " original Y " << original_y << " norm X " << x << " norm Y " << y);
+	ROS_INFO_STREAM("obtained XY scale: " << xy << " expected: " << sqrt(xscale * xscale + yscale * yscale) << " scaling: " << scaling_x << " " << scaling_y);*/
+
 	return similarity;
 }
 
@@ -158,14 +181,19 @@ void whycon::AxisSetter::on_poses(const geometry_msgs::PoseArrayConstPtr& poses_
 {
 	if (transforms_set) return;
 
-	if (poses_msg->poses.size() != 4)
-	{
-		ROS_WARN_STREAM("Received " << poses_msg->poses.size() << " points. Four expected.");
+	if (poses_msg->poses.size() < 4) {
+		ROS_WARN_STREAM("Not computing, only " << poses_msg->poses.size() << " targets detected, need four.");
 		return;
 	}
 
-	std::vector<tf::Point> points;
-	detect_square(poses_msg->poses, points);
+	std::vector<tf::Point> points(4);
+	for (int i = 0; i < 4; i++)
+		tf::pointMsgToTF(poses_msg->poses[i].position, points[i]);
+
+	if (axis_order.empty())
+		detect_square(points);
+	else
+		build_square(points);
 
 	tf::Matrix3x3 projection = compute_projection(points, xscale, yscale);
 	tf::Transform similarity = compute_similarity(points);

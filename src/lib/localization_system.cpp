@@ -106,6 +106,10 @@ whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_pose(const whyc
 	int S3 = (result.pos(2) * z < 0 ? -1 : 1);
 	result.pos *= S3 * z;
 
+	/*float dist = sqrt(L1 * L1 * L1) * circle_diameter * 0.5;
+	std::cout << "d1 " << dist << " " << cv::norm(result.pos) << std::endl;*/
+
+
 	WHYCON_DEBUG("ellipse center: " << x << "," << y << " " << " computed position: " << result.pos << " " << result.pos / result.pos(2));
 
 	// rotation
@@ -115,6 +119,15 @@ whycon::LocalizationSystem::Pose whycon::LocalizationSystem::get_pose(const whyc
 	result.rot(1) = acos(result.rot(2));
 	result.rot(2) = 0; /* not recoverable */
 	/* TODO: to be checked */
+
+	/*cv::Matx33d data_inv;
+	cv::invert(data, data_inv);
+	cv::Matx31d projection = data_inv * normal_mat.t();
+	std::cout << "det " << cv::determinant(data_inv) << std::endl;
+	//cv::Vec3f new_center = cv::normalize(cv::Vec3f(projection(0), projection(1), projection(2))) * dist;
+	cv::Vec3f new_center = cv::Vec3f(projection(0) / projection(2), projection(1) / projection(2), 1) * dist;
+	std::cout << "center: " << new_center(0) << "," << new_center(1) << "," << new_center(2) << " vs " << result.pos << std::endl;
+	std::cout << "normalized: " << cv::normalize(new_center) << " " << cv::normalize(result.pos) << std::endl;*/
 
   return result;
 }

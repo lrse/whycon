@@ -21,13 +21,16 @@ namespace whycon {
 			double xscale, yscale;
 			bool transforms_set;
 
+			std::vector<int> axis_order;
+
 		private:
-			void detect_square(const std::vector<geometry_msgs::Pose>& msg_poses, std::vector<tf::Point>& points);
+			void detect_square(std::vector<tf::Point>& points);
 			tf::Matrix3x3 compute_projection(const std::vector<tf::Point>& points, float xscale, float yscale);
 			tf::Transform compute_similarity(const std::vector<tf::Point>& points);
 
 			void write_projection(YAML::Emitter& yaml, const tf::Matrix3x3& projection);
 			void write_similarity(YAML::Emitter& yaml, const tf::Transform& similarity);
+			void build_square(std::vector<tf::Point>& points);
 	};
 }
 

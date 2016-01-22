@@ -40,7 +40,6 @@ namespace whycon {
       bool examineCircle(const cv::Mat& image, Circle& circle, int ii, float areaRatio, bool search_in_window);
       void cover_last_detected(cv::Mat& image);
       
-      void improveEllipse(const cv::Mat& image, Circle& c);
       int get_threshold(void) const;
 
     private:
@@ -86,6 +85,8 @@ namespace whycon {
           void read(const cv::FileNode& node);
           
           void draw(cv::Mat& image, const std::string& text = std::string(), cv::Vec3b color = cv::Vec3b(0,255,0), float thickness = 1) const;
+
+          Circle improveEllipse(const cv::Mat& image) const;
       };
 
       class Context {

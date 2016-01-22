@@ -384,7 +384,8 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
                 /*inner_id = numSegments; outer_id = numSegments - 1;*/
                 threshold = (outer.mean + inner.mean) / 2; // use a new threshold estimate based on current detection
                 //cout << "threshold set to average: " << threshold << endl;
-								
+
+#if 1
                 //pixel leakage correction
 								float r = diameter_ratio * diameter_ratio;
 								float m0o = sqrt(f0);
@@ -396,7 +397,10 @@ whycon::CircleDetector::Circle whycon::CircleDetector::detect(const cv::Mat& ima
 								float b = -(m0i+m1i)-(m0o+m1o)*r;
 								float c = (m0i*m1i)-(m0o*m1o)*r;
 							 	float t = (-b-sqrt(b*b-4*a*c))/(2*a);
-								m0i-=t;m1i-=t;m0o+=t;m1o+=t;
+								//m0i-=t;m1i-=t;m0o+=t;m1o+=t;
+#else
+								float t = 0;
+#endif
 								
 								inner.m0 = sqrt(f0)+t;
 								inner.m1 = sqrt(f1)+t;
@@ -576,4 +580,58 @@ void whycon::CircleDetector::Context::debug_buffer(const cv::Mat& image, cv::Mat
       else *out_ptr = cv::Vec3b(0, 0, 255); // BLACK
     }
   }
+}
+
+whycon::CircleDetector::Circle whycon::CircleDetector::Circle::improveEllipse(const cv::Mat& image) const
+{
+	Circle new_circle = *this;
+
+	cv::Mat subimg;
+	int delta = 10;
+	cout << image.rows << " x " << image.cols << endl;
+	cv::Range row_range(max(0, miny - delta), min(maxy + delta, image.rows));
+	cv::Range col_range(max(0, minx - delta), min(maxx + delta, image.cols));
+	cout << row_range.start << " " << row_range.end << " " << col_range.start << " " << col_range.end << endl;
+	image(row_range, col_range).copyTo(subimg);
+	cv::Mat cannified;
+	cv::Canny(subimg, cannified, 4000, 8000, 5, true);
+
+	/*cv::namedWindow("bleh");
+	cv::imshow("bleh", subimg);
+	cv::waitKey();*/
+
+	std::vector< std::vector<cv::Point> > contours;
+	cv::findContours(cannified, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	if (contours.empty() || contours[0].size() < 5) return new_circle;
+
+	cv::Mat contour_img;
+	subimg.copyTo(contour_img);
+	cv::drawContours(contour_img, contours, 0, cv::Scalar(255,0,255), 1);
+
+	/*cv::namedWindow("bleh2");
+	cv::imshow("bleh2", contour_img);
+	cv::waitKey();*/
+
+
+	cv::RotatedRect rect = cv::fitEllipse(contours[0]);
+	cout << "old: " << x << " " << y << " " << m0 << " " << m1 << " " << v0 << " " << v1 << endl;
+	new_circle.y = rect.center.x + col_range.start; // x/y appear inverted
+	new_circle.x = rect.center.y + row_range.start;
+	/*float max_size = max(rect.size.width, rect.size.height);
+	float min_size = min(rect.size.width, rect.size.height);*/
+	new_circle.m0 = rect.size.width * 0.25;
+	new_circle.m1 = rect.size.height * 0.25;
+	new_circle.v0 = cos(rect.angle / 180.0 * M_PI);
+	new_circle.v1 = sin(rect.angle / 180.0 * M_PI);
+	cout << "new: " << new_circle.x << " " << new_circle.y << " " << new_circle.m0 << " " << new_circle.m1 << " " << new_circle.v0 << " " << new_circle.v1 << endl;
+
+	/*cv::Mat ellipse_img;
+	image(row_range, col_range).copyTo(subimg);
+	subimg.copyTo(ellipse_img);
+	cv::ellipse(ellipse_img, rect, cv::Scalar(255,0,255));
+	cv::namedWindow("bleh3");
+	cv::imshow("bleh3", ellipse_img);
+	cv::waitKey();*/
+
+	return new_circle;
 }
