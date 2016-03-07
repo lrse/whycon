@@ -113,7 +113,7 @@ if(NOT DISABLE_ROS)
   )
 
   ## Mark executables and/or libraries for installation
-  install(FILE nodelets.xml
+  install(FILES nodelets.xml
     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   )
 else()
