@@ -31,6 +31,7 @@ if(NOT DISABLE_ROS)
     visualization_msgs
     tf
     nodelet
+    std_srvs
   )
 
   add_message_files(
@@ -45,8 +46,7 @@ if(NOT DISABLE_ROS)
   catkin_package(
     INCLUDE_DIRS include
     LIBRARIES whycon
-    CATKIN_DEPENDS cv_bridge roscpp sensor_msgs std_msgs message_runtime
-    DEPENDS whycon
+    CATKIN_DEPENDS cv_bridge roscpp sensor_msgs std_msgs message_runtime geometry_msgs
   )
 endif()
 
@@ -110,6 +110,11 @@ if(NOT DISABLE_ROS)
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+  ## Mark executables and/or libraries for installation
+  install(FILE nodelets.xml
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
   )
 else()
   install(TARGETS whycon DESTINATION lib)
