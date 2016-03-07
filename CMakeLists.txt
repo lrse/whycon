@@ -72,14 +72,14 @@ if(NOT DISABLE_ROS)
   add_library(whycon_nodelet src/ros/whycon_nodelet.cpp src/ros/whycon_ros.cpp)
 
   add_executable(set_axis src/ros/set_axis_node.cpp src/ros/set_axis.cpp)
-  add_executable(triangulator src/ros/triangulator_node.cpp src/ros/triangulator.cpp)
+  #add_executable(triangulator src/ros/triangulator_node.cpp src/ros/triangulator.cpp)
   add_executable(robot_pose_publisher src/ros/robot_pose_publisher.cpp src/ros/robot_pose_publisher_node.cpp)  
   add_executable(transformer src/ros/transformer.cpp src/ros/transformer_node.cpp)
 
   add_dependencies(whycon-node whycon_generate_messages_cpp)
   add_dependencies(whycon_nodelet whycon_generate_messages_cpp)
   add_dependencies(set_axis whycon_generate_messages_cpp)
-  add_dependencies(triangulator whycon_generate_messages_cpp)
+  #add_dependencies(triangulator whycon_generate_messages_cpp)
   add_dependencies(robot_pose_publisher whycon_generate_messages_cpp)
   add_dependencies(transformer whycon_generate_messages_cpp)
 
@@ -87,7 +87,7 @@ if(NOT DISABLE_ROS)
   target_link_libraries(whycon_nodelet ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
   target_link_libraries(set_axis ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
   target_link_libraries(transformer ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES} whycon)
-  target_link_libraries(triangulator ${catkin_LIBRARIES} whycon)
+  #target_link_libraries(triangulator ${catkin_LIBRARIES} whycon)
   target_link_libraries(robot_pose_publisher ${catkin_LIBRARIES} whycon)
 else()
   add_executable(whycon-main src/main.cpp)
@@ -106,7 +106,7 @@ if(NOT DISABLE_ROS)
     DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   )
   ## Mark executables and/or libraries for installation
-  install(TARGETS whycon whycon-node triangulator robot_pose_publisher
+  install(TARGETS whycon whycon-node robot_pose_publisher #triangulator
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
