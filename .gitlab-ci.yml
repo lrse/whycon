@@ -1,0 +1,24 @@
+stages:
+  - build
+  - package
+
+before_script:
+   - /prepare.sh
+
+ubuntu_build:
+  tags:
+    - ubuntu
+  stage: build
+  script:
+    - /build.sh
+  except:
+    - tags
+
+ubuntu_package:
+  tags:
+    - ubuntu
+  stage: package
+  script:
+    - /package.sh
+  only:
+    - tags 
