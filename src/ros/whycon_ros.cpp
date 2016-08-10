@@ -10,6 +10,7 @@
 
 whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_reset(true), it(n)
 {
+	transformation_loaded = false;
 	similarity.setIdentity();
 
   if (!n.getParam("targets", targets)) throw std::runtime_error("Private parameter \"targets\" is missing");
@@ -134,12 +135,15 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     poses_pub.publish(pose_array);
   }
 
+  if (transformation_loaded)
+  {
 	transform_broadcaster->sendTransform(tf::StampedTransform(similarity, header.stamp, world_frame_id, frame_id));
 
 	whycon::Projection projection_msg;
 	projection_msg.header = header;
 	for (size_t i = 0; i < projection.size(); i++) projection_msg.projection[i] = projection[i];
 	projection_pub.publish(projection_msg);
+  } 
 }
 
 void whycon::WhyConROS::load_transforms(void)
@@ -170,6 +174,8 @@ void whycon::WhyConROS::load_transforms(void)
 
 	similarity.setOrigin(origin);
 	similarity.setRotation(Q);
+
+	transformation_loaded = true;
 
 	ROS_INFO_STREAM("Loaded transformation from \"" << filename <<  "\"");
 }
