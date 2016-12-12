@@ -68,9 +68,11 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   }
 }
 
-bool whycon::WhyConROS::reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+bool whycon::WhyConROS::reset(whycon::SetNumberOfTargets::Request& request, whycon::SetNumberOfTargets::Response& response)
 {
   should_reset = true;
+  targets = (int)request.number;
+  system = 0;
   return true;
 }
 
