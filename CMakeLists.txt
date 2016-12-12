@@ -37,6 +37,11 @@ if(NOT DISABLE_ROS)
     PointArray.msg
   )
 
+  add_service_files(
+    FILES
+    SetNumberOfTargets.srv
+  )
+
   generate_messages(
     DEPENDENCIES geometry_msgs
   )

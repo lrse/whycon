@@ -5,7 +5,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <image_transport/image_transport.h>
 #include <image_geometry/pinhole_camera_model.h>
-#include <std_srvs/Empty.h>
+#include "whycon/SetNumberOfTargets.h"
 
 namespace whycon {
   class WhyConROS {
@@ -13,7 +13,7 @@ namespace whycon {
       WhyConROS(ros::NodeHandle& n);
 
       void on_image(const sensor_msgs::ImageConstPtr& image_msg, const sensor_msgs::CameraInfoConstPtr& info_msg);
-      bool reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+      bool reset(whycon::SetNumberOfTargets::Request& request, whycon::SetNumberOfTargets::Response& response);
 
     private:
       void publish_results(const std_msgs::Header& header, const cv_bridge::CvImageConstPtr& cv_ptr);
