@@ -1,24 +1,8 @@
-stages:
-  - build
-  - package
-
 before_script:
    - /prepare.sh
 
 ubuntu_build:
   tags:
-    - ubuntu
-  stage: build
+    - ros
   script:
     - /build.sh
-  except:
-    - tags
-
-ubuntu_package:
-  tags:
-    - ubuntu
-  stage: package
-  script:
-    - /package.sh
-  only:
-    - tags 
