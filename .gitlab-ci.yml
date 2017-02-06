@@ -7,6 +7,13 @@ indigo_build:
   script:
     - /build.sh
 
+indigo_opencv3_build:
+  tags:
+    - ros-indigo
+  script:
+    - apt-get install -y ros-indigo-opencv3
+    - /build.sh
+
 kinetic_build:
   tags:
     - ros-kinetic
