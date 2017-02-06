@@ -23,20 +23,20 @@ The main contributors were [Matias Nitsche](https://scholar.google.co.uk/citatio
 | [Caspa-WhyCon](http://robotics.fel.cvut.cz/faigl/caspa/) | UAVs | embedded, open HW-SW solution | [Jan Faigl](https://scholar.google.co.uk/citations?user=-finD_sAAAAJ&hl=en) |
 | [Social-card](https://github.com/strands-project/strands_social/tree/hydro-devel/social_card_reader) | HRI | orientation translated to commands  | [Tom Krajnik](http://scholar.google.co.uk/citations?user=Qv3nqgsAAAAJ&hl=en&oi=ao) |
 
-####How does it work ?
+#### How does it work ?
 
 A six-page overview of the <i>WhyCon</i> system was first presented at the ICAR conference [[1](#references)].
 A detailed description was published in the Journal of Intelligent and Robotics Systems [[2](#references)].
 An overview of _WhyCon's_ applications was presented at the Workshop on Open Source Aerial Robotics during the International Conference on Intelligent Robotic Systems, 2015 [[3](#references)].
 Nowadays, the system is being used in several research projects the across globe, see the following video for examples.
 
-####Can I use it ?
+#### Can I use it ?
  
 If you decide to use this _WhyCon_ for your research, please cite it using the one of the references provided in this [bibtex](https://github.com/lrse/whycon/blob/master/cite.bib) file.
 Note that this .bib includes not only the references to the scientific works that describe the underlying method, but also a reference to the implementation for a specific (stable) version of the code on GitHub (look for the DOI containing the word "zenodo").
 
 ------
-###References
+### References
 1. T. Krajník, M. Nitsche et al.: <b>[External localization system for mobile robotics.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.pdf)</b> International Conference on Advanced Robotics (ICAR), 2013. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2013_icar_whycon.bib)].
 2. T. Krajník, M. Nitsche et al.: <b>[A Practical Multirobot Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.pdf)</b> Journal of Intelligent and Robotic Systems (JINT), 2014. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_JINT_whycon.bib)].
 3. M. Nitsche, T. Krajník et al.: <b>[WhyCon: An Efficient, Marker-based Localization System.](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.pdf)</b> IROS Workshop on Open Source Aerial Robotics, 2015. [[bibtex](http://raw.githubusercontent.com/wiki/gestom/WhyCon/papers/2015_irososar_whycon.bib)].
@@ -89,7 +89,7 @@ Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
 
 ----
 
-###Acknowledgements
+### Acknowledgements
 
 The development of this work was supported by EU within its Seventh Framework Programme project ICT-600623 ``STRANDS''.
 The Czech Republic and Argentina have given support through projects 7AMB12AR022, ARC/11/11 and 13-18316P.
