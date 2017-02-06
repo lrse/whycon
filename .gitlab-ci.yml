@@ -1,8 +1,14 @@
 before_script:
    - /prepare.sh
 
-ubuntu_build:
+indigo_build:
   tags:
-    - ros
+    - ros-indigo
+  script:
+    - /build.sh
+
+kinetic_build:
+  tags:
+    - ros-kinetic
   script:
     - /build.sh
