@@ -56,12 +56,33 @@ For the latest development version (which should also work and may contain new e
 
 ### ROS
 
+Only LTS versions are targeted. At the moment, Indigo and Kinetic are targeted.
+
+#### Dependencies
+
+It is recommended to install required dependencies using
+
+    rosdep install -y --from-path <path to whycon source package directory>
+
+**NOTE**: it is recommended to use OpenCV 3 since it is actually latest stable version. In ROS Kinetic this is installed by default.
+On ROS Indigo, you should install it by doing:
+
+    apt-get install ros-indigo-opencv3
+
+#### Compilation
+
 The main directory should be placed inside a catkin workspace source-space (e.g.: ~catkin_ws/src).
 It can then be compiled simply by:
 
     catkin_make
 
+Or, if you are using catkin-tools
+
+    catkin build
+
 ### Standalone
+
+**NOTE**: as previously mentioned, this version is not actively maintained and cannot provide support for it
 
 The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on Ubuntu, simply perform the following:
 
