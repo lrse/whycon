@@ -52,6 +52,7 @@ endif()
 
 ### SYSTEM DEPENDENCIES ###
 find_package(OpenCV REQUIRED)
+message(STATUS "Using OpenCV version ${OpenCV_VERSION}")
 find_package(Boost COMPONENTS program_options thread system REQUIRED)
 
 find_package(PkgConfig)
