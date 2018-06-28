@@ -4,35 +4,37 @@
 #include <tf/tf.h>
 #include <sstream>
 #include <geometry_msgs/PoseArray.h>
+#include <geometry_msgs/Pose.h>
 #include <yaml-cpp/yaml.h>
 #include <whycon/Projection.h>
 #include "whycon_ros.h"
+using std::cout;
 
 whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_reset(true), it(n)
 {
-	transformation_loaded = false;
-	similarity.setIdentity();
+  transformation_loaded = false;
+  similarity.setIdentity();
 
   if (!n.getParam("targets", targets)) throw std::runtime_error("Private parameter \"targets\" is missing");
 
   n.param("name", frame_id, std::string("whycon"));
-	n.param("world_frame", world_frame_id, std::string("world"));
+  n.param("world_frame", world_frame_id, std::string("world"));
   n.param("max_attempts", max_attempts, 1);
   n.param("max_refine", max_refine, 1);
 
-	n.getParam("outer_diameter", parameters.outer_diameter);
-	n.getParam("inner_diameter", parameters.inner_diameter);
-	n.getParam("center_distance_tolerance_abs", parameters.center_distance_tolerance_abs);
-	n.getParam("center_distance_tolerance_ratio", parameters.center_distance_tolerance_ratio);
-	n.getParam("roundness_tolerance", parameters.roundness_tolerance);
-	n.getParam("circularity_tolerance", parameters.circularity_tolerance);
-	n.getParam("max_size", parameters.max_size);
-	n.getParam("min_size", parameters.min_size);
-	n.getParam("ratio_tolerance", parameters.ratio_tolerance);
-	n.getParam("max_eccentricity", parameters.max_eccentricity);
+  n.getParam("outer_diameter", parameters.outer_diameter);
+  n.getParam("inner_diameter", parameters.inner_diameter);
+  n.getParam("center_distance_tolerance_abs", parameters.center_distance_tolerance_abs);
+  n.getParam("center_distance_tolerance_ratio", parameters.center_distance_tolerance_ratio);
+  n.getParam("roundness_tolerance", parameters.roundness_tolerance);
+  n.getParam("circularity_tolerance", parameters.circularity_tolerance);
+  n.getParam("max_size", parameters.max_size);
+  n.getParam("min_size", parameters.min_size);
+  n.getParam("ratio_tolerance", parameters.ratio_tolerance);
+  n.getParam("max_eccentricity", parameters.max_eccentricity);
 
-	load_transforms();
-	transform_broadcaster = boost::make_shared<tf::TransformBroadcaster>();
+  load_transforms();
+  transform_broadcaster = boost::make_shared<tf::TransformBroadcaster>();
 
   /* initialize ros */
   int input_queue_size = 1;
@@ -42,7 +44,9 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   image_pub = n.advertise<sensor_msgs::Image>("image_out", 1);
   poses_pub = n.advertise<geometry_msgs::PoseArray>("poses", 1);
   context_pub = n.advertise<sensor_msgs::Image>("context", 1);
-	projection_pub = n.advertise<whycon::Projection>("projection", 1);
+  projection_pub = n.advertise<whycon::Projection>("projection", 1);
+
+  circlecenter_pub = n.advertise<geometry_msgs::Pose>("circle_center", 1);
 
   reset_service = n.advertiseService("reset", &WhyConROS::reset, this);
 }
@@ -76,9 +80,12 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   }
 }
 
-bool whycon::WhyConROS::reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+bool whycon::WhyConROS::reset(whycon::SetNumberOfTargets::Request& request, whycon::SetNumberOfTargets::Response& response)
 {
   should_reset = true;
+  targets = (int)request.number;
+  response.targets = targets;
+  system = 0;
   return true;
 }
 
@@ -95,22 +102,34 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     output_image = cv_ptr->image.clone();
 
   geometry_msgs::PoseArray pose_array;
-  
+  geometry_msgs::Pose circle_pose;
   // go through detected targets
+
   for (int i = 0; i < system->targets; i++) {
     const whycon::CircleDetector::Circle& circle = system->get_circle(i);
+    
+    // cout<<circle.x;
+    // cout<<" ";
+    // cout<<circle.y;
+    // cout<<" ";
+    circle_pose.position.x = circle.x;
+    circle_pose.position.y = circle.y;
+    circle_pose.position.z = 0;
+    circlecenter_pub.publish(circle_pose);
+
     whycon::LocalizationSystem::Pose pose = system->get_pose(circle);
     cv::Vec3f coord = pose.pos;
+
 
     // draw each target
     if (publish_images) {
       std::ostringstream ostr;
       ostr << std::fixed << std::setprecision(2);
-			ostr << coord << " " << i;
+      ostr << coord << " " << i;
       circle.draw(output_image, ostr.str(), cv::Vec3b(0,255,255));
-			/*whycon::CircleDetector::Circle new_circle = circle.improveEllipse(cv_ptr->image);
-			new_circle.draw(output_image, ostr.str(), cv::Vec3b(0,255,0));*/
-			cv::circle(output_image, camera_model.project3dToPixel(cv::Point3d(coord)), 1, cv::Scalar(255,0,255), 1, CV_AA);
+      // whycon::CircleDetector::Circle new_circle = circle.improveEllipse(cv_ptr->image);
+      // new_circle.draw(output_image, ostr.str(), cv::Vec3b(0,255,0));
+      cv::circle(output_image, camera_model.project3dToPixel(cv::Point3d(coord)), 1, cv::Scalar(255,0,255), 1, CV_AA);
     }
 
     if (publish_poses) {
@@ -135,49 +154,49 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     poses_pub.publish(pose_array);
   }
 
-  if (transformation_loaded)
-  {
-	transform_broadcaster->sendTransform(tf::StampedTransform(similarity, header.stamp, world_frame_id, frame_id));
+ //  if (transformation_loaded)
+ //  {
+  // transform_broadcaster->sendTransform(tf::StampedTransform(similarity, header.stamp, world_frame_id, frame_id));
 
-	whycon::Projection projection_msg;
-	projection_msg.header = header;
-	for (size_t i = 0; i < projection.size(); i++) projection_msg.projection[i] = projection[i];
-	projection_pub.publish(projection_msg);
-  } 
+  // whycon::Projection projection_msg;
+  // projection_msg.header = header;
+  // for (size_t i = 0; i < projection.size(); i++) projection_msg.projection[i] = projection[i];
+  // projection_pub.publish(projection_msg);
+ //  } 
 }
 
 void whycon::WhyConROS::load_transforms(void)
 {
-	std::string filename = frame_id + "_transforms.yml";
-	ROS_INFO_STREAM("Loading file " << filename);
+  std::string filename = frame_id + "_transforms.yml";
+  ROS_INFO_STREAM("Loading file " << filename);
 
-	std::ifstream file(filename);
-	if (!file) {
-		ROS_WARN_STREAM("Could not load \"" << filename << "\"");
-		return;
-	}
+  std::ifstream file(filename);
+  if (!file) {
+    ROS_WARN_STREAM("Could not load \"" << filename << "\"");
+    return;
+  }
 
-	YAML::Node node = YAML::Load(file);
+  YAML::Node node = YAML::Load(file);
 
-	projection.resize(9);
-	for (int i = 0; i < 9; i++)
-		projection[i] = node["projection"][i].as<double>();
+  projection.resize(9);
+  for (int i = 0; i < 9; i++)
+    projection[i] = node["projection"][i].as<double>();
 
-	std::vector<double> similarity_origin(3);
-	for (int i = 0; i < 3; i++) similarity_origin[i] = node["similarity"]["origin"][i].as<double>();
+  std::vector<double> similarity_origin(3);
+  for (int i = 0; i < 3; i++) similarity_origin[i] = node["similarity"]["origin"][i].as<double>();
 
-	std::vector<double> similarity_rotation(4);
-	for (int i = 0; i < 4; i++) similarity_rotation[i] = node["similarity"]["rotation"][i].as<double>();
+  std::vector<double> similarity_rotation(4);
+  for (int i = 0; i < 4; i++) similarity_rotation[i] = node["similarity"]["rotation"][i].as<double>();
 
-	tf::Vector3 origin(similarity_origin[0], similarity_origin[1], similarity_origin[2]);
-	tf::Quaternion Q(similarity_rotation[0], similarity_rotation[1], similarity_rotation[2], similarity_rotation[3]);
+  tf::Vector3 origin(similarity_origin[0], similarity_origin[1], similarity_origin[2]);
+  tf::Quaternion Q(similarity_rotation[0], similarity_rotation[1], similarity_rotation[2], similarity_rotation[3]);
 
-	similarity.setOrigin(origin);
-	similarity.setRotation(Q);
+  similarity.setOrigin(origin);
+  similarity.setRotation(Q);
 
-	transformation_loaded = true;
+  transformation_loaded = true;
 
-	ROS_INFO_STREAM("Loaded transformation from \"" << filename <<  "\"");
+  ROS_INFO_STREAM("Loaded transformation from \"" << filename <<  "\"");
 }
 
 
