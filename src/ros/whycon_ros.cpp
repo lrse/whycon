@@ -4,11 +4,9 @@
 #include <tf/tf.h>
 #include <sstream>
 #include <geometry_msgs/PoseArray.h>
-#include <geometry_msgs/Pose.h>
 #include <yaml-cpp/yaml.h>
 #include <whycon/Projection.h>
 #include "whycon_ros.h"
-using std::cout;
 
 whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_reset(true), it(n)
 {
@@ -46,7 +44,7 @@ whycon::WhyConROS::WhyConROS(ros::NodeHandle& n) : is_tracking(false), should_re
   context_pub = n.advertise<sensor_msgs::Image>("context", 1);
   projection_pub = n.advertise<whycon::Projection>("projection", 1);
 
-  circlecenter_pub = n.advertise<geometry_msgs::Pose>("circle_center", 1);
+  circlecenter_pub = n.advertise<geometry_msgs::PoseArray>("circle_center", 1);
 
   reset_service = n.advertiseService("reset", &WhyConROS::reset, this);
 }
@@ -80,12 +78,9 @@ void whycon::WhyConROS::on_image(const sensor_msgs::ImageConstPtr& image_msg, co
   }
 }
 
-bool whycon::WhyConROS::reset(whycon::SetNumberOfTargets::Request& request, whycon::SetNumberOfTargets::Response& response)
+bool whycon::WhyConROS::reset(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
   should_reset = true;
-  targets = (int)request.number;
-  response.targets = targets;
-  system = 0;
   return true;
 }
 
@@ -102,19 +97,20 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     output_image = cv_ptr->image.clone();
 
   geometry_msgs::PoseArray pose_array;
-  geometry_msgs::Pose circle_pose;
+  geometry_msgs::PoseArray circle_pose;
   // go through detected targets
 
   for (int i = 0; i < system->targets; i++) {
     const whycon::CircleDetector::Circle& circle = system->get_circle(i);
     
-    // cout<<circle.x;
-    // cout<<" ";
-    // cout<<circle.y;
-    // cout<<" ";
-    circle_pose.position.x = circle.x;
-    circle_pose.position.y = circle.y;
-    circle_pose.position.z = 0;
+    geometry_msgs::Pose c;
+    c.position.x = circle.x;
+    c.position.y = circle.y;
+    c.position.z = 0;
+    circle_pose.poses.push_back(c);
+    //circle_pose.position.x = circle.x;
+    //circle_pose.position.y = circle.y;
+    //circle_pose.position.z = 0;
     circlecenter_pub.publish(circle_pose);
 
     whycon::LocalizationSystem::Pose pose = system->get_pose(circle);
@@ -154,15 +150,15 @@ void whycon::WhyConROS::publish_results(const std_msgs::Header& header, const cv
     poses_pub.publish(pose_array);
   }
 
- //  if (transformation_loaded)
- //  {
-  // transform_broadcaster->sendTransform(tf::StampedTransform(similarity, header.stamp, world_frame_id, frame_id));
+  if (transformation_loaded)
+  {
+  transform_broadcaster->sendTransform(tf::StampedTransform(similarity, header.stamp, world_frame_id, frame_id));
 
-  // whycon::Projection projection_msg;
-  // projection_msg.header = header;
-  // for (size_t i = 0; i < projection.size(); i++) projection_msg.projection[i] = projection[i];
-  // projection_pub.publish(projection_msg);
- //  } 
+  whycon::Projection projection_msg;
+  projection_msg.header = header;
+  for (size_t i = 0; i < projection.size(); i++) projection_msg.projection[i] = projection[i];
+  projection_pub.publish(projection_msg);
+  } 
 }
 
 void whycon::WhyConROS::load_transforms(void)
