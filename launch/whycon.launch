@@ -1,16 +1,25 @@
 <launch>
   <arg name="name" default="whycon"/>
   <arg name="targets" default="1"/>
-
-  <group ns="camera">
-    <node pkg="image_proc" type="image_proc" name="image_proc"/>
-  </group>
+  <arg name="outer_diameter" default=".55"/>
+  <arg name="inner_diameter" default=".20"/>
+  <arg name="input_queue_size" default="100"/>
 
   <node name="whycon" type="whycon" pkg="whycon" output="screen">
     <param name="targets" value="$(arg targets)"/>
+    <param name="outer_diameter" value="$(arg outer_diameter)"/>
+    <param name="inner_diameter" value="$(arg inner_diameter)"/> 
+    <param name="input_queue_size" value="$(arg input_queue_size)"/> 
     <param name="name" value="$(arg name)"/>
+
+    <remap to=" " from=" " />
+    <remap to=" " from=" " />  
+  
   </node>
 
-  <node name="transformer" type="transformer" pkg="whycon" output="screen"/>
+  <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+    <remap from="image" to="/whycon/image_out"/>
+    <param name="autosize" value="true" />
+  </node>
+ 
 </launch>
-  
