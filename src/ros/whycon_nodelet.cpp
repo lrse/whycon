@@ -15,6 +15,6 @@ namespace whycon {
   };
 }
 
-PLUGINLIB_DECLARE_CLASS(whycon, WhyconNodelet, whycon::WhyconNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(whycon::WhyconNodelet, nodelet::Nodelet)
 
 
