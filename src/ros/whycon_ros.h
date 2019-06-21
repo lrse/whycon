@@ -28,7 +28,7 @@ namespace whycon {
       std::string world_frame_id, frame_id;
 			int targets;
       double xscale, yscale;
-
+      
 			std::vector<double> projection;
 			tf::Transform similarity;
 
@@ -36,7 +36,7 @@ namespace whycon {
       image_transport::CameraSubscriber cam_sub;
       ros::ServiceServer reset_service;
 
-      ros::Publisher image_pub, poses_pub, context_pub, projection_pub;
+      ros::Publisher image_pub, poses_pub, context_pub, projection_pub, circlecenter_pub;
 			boost::shared_ptr<tf::TransformBroadcaster>	transform_broadcaster;
 
       image_geometry::PinholeCameraModel camera_model;
