@@ -9,7 +9,7 @@
 #include <opencv2/opencv.hpp>
 #include <math.h>
 #include <vector>
-#include <whycon/config.h>
+#include <whycon/config.h> //recheck
 #include <unordered_set>
 
 namespace whycon {

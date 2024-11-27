@@ -6,8 +6,8 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
-#include <whycon/circle_detector.h>
-#include <whycon/localization_system.h>
+#include <whycon/circle_detector.hpp>
+#include <whycon/localization_system.hpp>
 using std::cout;
 using std::endl;
 using std::numeric_limits;

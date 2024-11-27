@@ -1,5 +1,5 @@
 #include <iostream>
-#include <whycon/many_circle_detector.h>
+#include <whycon/many_circle_detector.hpp>
 using namespace std;
 
 whycon::ManyCircleDetector::ManyCircleDetector(int _number_of_circles, int _width, int _height, const whycon::DetectorParameters& parameters) :

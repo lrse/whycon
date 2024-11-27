@@ -46,73 +46,39 @@ Note that this .bib includes not only the references to the scientific works tha
 
 ## Installing WhyCon
 
-The code can be compiled either as a ROS package (shared library) or in a standalone version.
+The code can be compiled as a ROS 2 package
 
-**NOTE**: while the standalone version includes a demo application, this demo is not actively maintained anymore and will probably be removed soon. The reference application is provided as a series of ROS nodes, which utilize the _WhyCon_ shared library. For an example of how to implement your own standalone application, see the ROS node.
-
-Stable [releases](https://github.com/lrse/whycon/releases) are available periodically. Latest stable release can be downloaded by clicking [here](https://github.com/lrse/whycon/releases/latest). 
+Stable [releases](https://github.com/arunser/whycon2/releases) are available periodically. Latest stable release can be downloaded by clicking [here](https://github.com/arunser/whycon2/releases/latest). 
 
 For the latest development version (which should also work and may contain new experimental features) you can clone the repository directly.
 
-### ROS
+### ROS 2
 
-Only LTS versions are targeted. At the moment, Indigo and Kinetic are targeted.
+Only LTS versions are targeted. At the moment, only Humble is targeted.
 
 #### Dependencies
 
 It is recommended to install required dependencies using
 
-    rosdep install -y --from-path <path to whycon source package directory>
-
-**NOTE**: it is recommended to use OpenCV 3 since it is actually latest stable version. In ROS Kinetic this is installed by default.
-On ROS Indigo, you should install it by doing:
-
-    apt-get install ros-indigo-opencv3
+    sudo apt install ros-humble-usb-cam
+    sudo apt install ros-humble-image-view
 
 #### Compilation
 
-The main directory should be placed inside a catkin workspace source-space (e.g.: ~catkin_ws/src).
-It can then be compiled simply by:
+The main directory should be placed inside a colcon workspace source-space (e.g.: ~whycon_ws/src).
+It can then be build using:
+    
+    cd ~whycon_ws/
+    colcon build
 
-    catkin_make
-
-Or, if you are using catkin-tools
-
-    catkin build
-
-### Standalone
-
-**NOTE**: as previously mentioned, this version is not actively maintained and cannot provide support for it
-
-The standalone version requires you to take care of installing the correct dependencies: OpenCV and Boost. If you are on Ubuntu, simply perform the following:
-
-    sudo apt-get install libopencv-dev libboost-all-dev
-
-The installation process is really straightforward, as with any CMake based project.
-Inside the main directory do:
-
-    mkdir build
-    cd build
-    cmake -DDISABLE_ROS=ON ..
-    make
-
-The code can be installed to the system by doing:
-
-    make install
-
-Note the default CMake location is `/usr/local`, but you can redefine this by invoking cmake in this way instead:
-
-    cmake -DDISABLE_ROS=ON -DCMAKE_INSTALL_PREFIX=/usr ..
 
 ## Using WhyCon
 
-Please refer to the [wiki](https://github.com/lrse/whycon/wiki).
+Please refer to the [wiki](https://github.com/arunser/whycon2/wiki).
 
 ----
 
 ### Acknowledgements
 
-The development of this work was supported by EU within its Seventh Framework Programme project ICT-600623 ``STRANDS''.
-The Czech Republic and Argentina have given support through projects 7AMB12AR022, ARC/11/11 and 13-18316P.
 
 

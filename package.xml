@@ -1,53 +1,42 @@
 <?xml version="1.0"?>
-<package>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>whycon</name>
-  <version>1.2.0</version>
-  <description>
-    WhyCon localization system
-  </description>
-  <author email="mnitsche@dc.uba.ar">Matias Nitsche</author>
-  <maintainer email="mnitsche@dc.uba.ar">Matias Nitsche</maintainer>
-  <url type="repository">https://github.com/lrse/whycon</url>
-  <url type="bugtracker">https://github.com/lrse/whycon</url>
+  <version>2.0.0</version>
+  <description>WhyCon for ROS 2</description>
+  <maintainer email="stormbreaker.004@gmail.com">arunser</maintainer>
   <license>LGPLv3</license>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <build_depend>message_generation</build_depend>
   <build_depend>cv_bridge</build_depend>
-  <build_depend>roscpp</build_depend>
+  <build_depend>rclcpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
   <build_depend>camera_info_manager</build_depend>
   <build_depend>image_geometry</build_depend>
-  <build_depend>angles</build_depend>
   <build_depend>std_srvs</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>visualization_msgs</build_depend>
-  <build_depend>nodelet</build_depend>
-
-  <run_depend>message_runtime</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>camera_info_manager</run_depend>
-  <run_depend>image_geometry</run_depend>
-  <run_depend>angles</run_depend>
-  <run_depend>std_srvs</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>nodelet</run_depend>
-
+  <build_depend>tf2</build_depend>
+  <build_depend>tf2_geometry_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>image_transport</build_depend>
-  <build_depend>message_filters</build_depend>
 
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>image_transport</run_depend>
-  <run_depend>message_filters</run_depend>
 
- <export>
-    <nodelet plugin="${prefix}/nodelets.xml"/>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>rclcpp</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>camera_info_manager</exec_depend>
+  <exec_depend>image_geometry</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
   </export>
 </package>

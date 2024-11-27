@@ -1,5 +1,7 @@
 #include <cstdio>
-#include <whycon/circle_detector.h>
+#include <whycon/circle_detector.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/core/types.hpp>
 using namespace std;
 
 #define min(a,b) ((a) < (b) ? (a) : (b))
@@ -486,7 +488,7 @@ void whycon::CircleDetector::Circle::draw(cv::Mat& image, const std::string& tex
   float scale = image.size().width / 1800.0f;
   //float thickness = scale * 3.0;
   //if (thickness < 1) thickness = 1;
-  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), CV_FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(color), thickness, CV_AA);
+  cv::putText(image, text.c_str(), cv::Point(x + 2 * m0, y + 2 * m1), cv::FONT_HERSHEY_SIMPLEX, scale, cv::Scalar(color), thickness, cv::LINE_AA);
   cv::line(image, cv::Point(x + v0 * m0 * 2, y + v1 * m0 * 2), cv::Point(x - v0 * m0 * 2, y - v1 * m0 * 2), cv::Scalar(color), 1, 8);
   cv::line(image, cv::Point(x + v1 * m1 * 2, y - v0 * m1 * 2), cv::Point(x - v1 * m1 * 2, y + v0 * m1 * 2), cv::Scalar(color), 1, 8); 
 }
@@ -601,7 +603,7 @@ whycon::CircleDetector::Circle whycon::CircleDetector::Circle::improveEllipse(co
 	cv::waitKey();*/
 
 	std::vector< std::vector<cv::Point> > contours;
-	cv::findContours(cannified, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	cv::findContours(cannified, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
 	if (contours.empty() || contours[0].size() < 5) return new_circle;
 
 	cv::Mat contour_img;
